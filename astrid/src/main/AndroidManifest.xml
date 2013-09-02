@@ -40,6 +40,7 @@
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
   
   <!-- Used to initiate sync when device comes back online -->
+  <!-- Also required by dropbox -->
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
   <!-- ============================================== Exported Permissions = -->
@@ -173,8 +174,31 @@
     <activity android:name="com.todoroo.astrid.service.UpgradeService$UpgradeActivity"
         android:screenOrientation="portrait"
         android:theme="@android:style/Theme" />
-    
-    <!-- ======================================================= Receivers = -->
+
+      <!-- =========================================================== DropBox = -->
+
+      <activity android:name=".dropbox.DropBoxLinkActivity"/>
+
+      <activity android:name="com.dropbox.sync.android.DbxAuthActivity" />
+      <activity
+          android:name="com.dropbox.client2.android.AuthActivity"
+          android:launchMode="singleTask" >
+          <intent-filter>
+              <data android:scheme="db-j2af4tdhxvm6ra9" />
+              <action android:name="android.intent.action.VIEW" />
+              <category android:name="android.intent.category.BROWSABLE" />
+              <category android:name="android.intent.category.DEFAULT" />
+          </intent-filter>
+      </activity>
+
+      <service
+          android:name="com.dropbox.sync.android.DbxSyncService"
+          android:enabled="true"
+          android:exported="false"
+          android:label="Dropbox Sync" />
+
+
+      <!-- ======================================================= Receivers = -->
 
     <receiver android:name="com.todoroo.astrid.reminders.Notifications" />
     

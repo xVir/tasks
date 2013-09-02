@@ -79,6 +79,9 @@ public class DependencyInjectionService {
         if(packageName.startsWith("com.timsu")) {
             return true;
         }
+        if(packageName.startsWith("org.astrid")) {
+            return true;
+        }
         if(packageName.startsWith("org.weloveastrid")) {
             return true;
         }

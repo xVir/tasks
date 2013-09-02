@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.activity;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.animation.LayoutTransition;
 import android.app.Activity;
 import android.app.SearchManager;
@@ -26,14 +22,12 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.PopupWindow.OnDismissListener;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.ActionBar;
-import org.astrid.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.sql.QueryTemplate;
@@ -71,6 +65,13 @@ import com.todoroo.astrid.utility.AstridPreferences;
 import com.todoroo.astrid.utility.Constants;
 import com.todoroo.astrid.utility.Flags;
 
+import org.astrid.R;
+import org.astrid.dropbox.DropBoxSyncManager;
+import org.astrid.preferences.AstridPreferenceManager;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class TaskListActivity extends AstridActivity implements MainMenuListener, OnPageChangeListener {
 
     public static final String TOKEN_SELECTED_FILTER = "selectedFilter"; //$NON-NLS-1$
@@ -95,7 +96,14 @@ public class TaskListActivity extends AstridActivity implements MainMenuListener
 
     public static final int REQUEST_CODE_RESTART = 10;
 
-    @Autowired private TagMetadataDao tagMetadataDao;
+    @Autowired
+    private TagMetadataDao tagMetadataDao;
+
+    @Autowired
+    DropBoxSyncManager dropboxSyncManager;
+
+    @Autowired
+    AstridPreferenceManager astridPreferenceManager;
 
     private View listsNav;
     private ImageView listsNavDisclosure;
@@ -212,6 +220,14 @@ public class TaskListActivity extends AstridActivity implements MainMenuListener
 
         if (getIntent().hasExtra(TOKEN_SOURCE)) {
             trackActivitySource();
+        }
+
+        setupDropbox();
+    }
+
+    private void setupDropbox() {
+        if (astridPreferenceManager.isDropboxSyncEnabled()) {
+            dropboxSyncManager.resumeLink(this);
         }
     }
 

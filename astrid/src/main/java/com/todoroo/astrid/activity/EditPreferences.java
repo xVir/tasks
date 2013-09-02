@@ -5,12 +5,6 @@
  */
 package com.todoroo.astrid.activity;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map.Entry;
-
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
@@ -26,8 +20,8 @@ import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.text.TextUtils;
+import android.widget.Toast;
 
-import org.astrid.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -61,6 +55,17 @@ import com.todoroo.astrid.voice.VoiceOutputService;
 import com.todoroo.astrid.voice.VoiceRecognizer;
 import com.todoroo.astrid.widget.TasksWidget;
 
+import org.astrid.R;
+import org.astrid.dropbox.DropBoxLinkActivity;
+import org.astrid.dropbox.DropBoxSyncManager;
+import org.astrid.preferences.AstridPreferenceManager;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map.Entry;
+
 /**
  * Displays the preference screen for users to edit their preferences
  *
@@ -79,9 +84,20 @@ public class EditPreferences extends TodorooPreferenceActivity {
 
     // --- instance variables
 
-    @Autowired private TaskService taskService;
-    @Autowired private AddOnService addOnService;
-    @Autowired private ActFmPreferenceService actFmPreferenceService;
+    @Autowired
+    private TaskService taskService;
+
+    @Autowired
+    private AddOnService addOnService;
+
+    @Autowired
+    private ActFmPreferenceService actFmPreferenceService;
+
+    @Autowired
+    private AstridPreferenceManager astridPreferenceManager;
+
+    @Autowired
+    private DropBoxSyncManager dropboxSyncManager;
 
     @Autowired
     private Database database;
@@ -148,6 +164,12 @@ public class EditPreferences extends TodorooPreferenceActivity {
         addPluginPreferences(screen);
 
         addPreferencesFromResource(R.xml.preferences_misc);
+        if (astridPreferenceManager.isExperimentalFeaturesEnabled()) {
+            addPreferencesFromResource(R.xml.preferences_experimental);
+
+            getCheckBoxPreference(R.string.p_sync_with_dropbox)
+                    .setChecked(astridPreferenceManager.isDropboxSyncEnabled());
+        }
 
         final Resources r = getResources();
 
@@ -189,6 +211,15 @@ public class EditPreferences extends TodorooPreferenceActivity {
         preference.setEnabled(Preferences.getIntegerFromString(R.string.p_taskRowStyle_v2, 0) == 0);
 
         removeForbiddenPreferences(screen, r);
+    }
+
+    private CheckBoxPreference getCheckBoxPreference(int key) {
+        String preferenceName = getString(key);
+        Preference preference = findPreference(preferenceName);
+        if (preference instanceof CheckBoxPreference) {
+            return (CheckBoxPreference) preference;
+        }
+        throw new RuntimeException("Not a CheckBoxPreference: " + preferenceName);
     }
 
     public static void removeForbiddenPreferences(PreferenceScreen screen, Resources r) {
@@ -454,6 +485,19 @@ public class EditPreferences extends TodorooPreferenceActivity {
                 preference.setSummary(R.string.EPr_voiceRemindersEnabled_desc_enabled);
             }
             onVoiceReminderStatusChanged(preference, (Boolean) value);
+        } else if (r.getString(R.string.p_sync_with_dropbox).equals(preference.getKey())) {
+            preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object value) {
+                    if((Boolean) value) {
+                        Intent intent = new Intent(EditPreferences.this, DropBoxLinkActivity.class);
+                        startActivityForResult(intent, DropBoxLinkActivity.REQUEST_LINK_TO_DBX);
+                    } else {
+                        dropboxSyncManager.clearLink();
+                    }
+                    return true;
+                }
+            });
         }
     }
 
@@ -482,6 +526,14 @@ public class EditPreferences extends TodorooPreferenceActivity {
                 Preferences.setString(TaskAttachment.FILES_DIRECTORY_PREF, dir);
             }
             return;
+        } else if (requestCode == DropBoxLinkActivity.REQUEST_LINK_TO_DBX) {
+            CheckBoxPreference preference = getCheckBoxPreference(R.string.p_sync_with_dropbox);
+            if (resultCode == RESULT_OK) {
+                preference.setChecked(true);
+                Toast.makeText(this, R.string.dropbox_account_linked, Toast.LENGTH_SHORT).show();
+            } else {
+                preference.setChecked(false);
+            }
         }
         try {
             VoiceOutputService.getVoiceOutputInstance().handleActivityResult(requestCode, resultCode, data);

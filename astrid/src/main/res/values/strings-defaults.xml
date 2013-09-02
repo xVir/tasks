@@ -93,5 +93,10 @@
   <string-array name="EPr_default_addtocalendar">
     <!-- addtocalendar: labels for "Task Defaults" preference item. -->
     <item>@string/EPr_deactivated</item>
-  </string-array>      
+  </string-array>
+
+    <string name="EPr_experimental">Experimental</string>
+    <string name="EPr_sync_with_dropbox">Sync with DropBox</string>
+    <string name="dropbox_account_linked">DropBox account linked</string>
+
 </resources>

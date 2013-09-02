@@ -5,8 +5,6 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
  
-  <string name="fb_app_id">183862944961271</string>
-    
   <!-- ======================================================== REMINDERS == -->
 
   <!-- whether reminders should appear at all -->
@@ -403,7 +401,9 @@
 
   <!-- Default Calendar Preference Key (do not translate) -->
   <string name="gcal_p_default">default_calendar_id</string>
-  
+
+    <string name="p_sync_with_dropbox">p_sync_with_dropbox</string>
+
   <!-- placeholder string for info about translators (i.e. YOU!) -->
   <string name="about_translators"></string>
   
