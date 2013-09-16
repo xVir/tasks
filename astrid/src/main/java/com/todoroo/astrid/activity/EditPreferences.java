@@ -22,6 +22,7 @@ import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 import android.widget.Toast;
 
+import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -55,7 +56,6 @@ import com.todoroo.astrid.voice.VoiceOutputService;
 import com.todoroo.astrid.voice.VoiceRecognizer;
 import com.todoroo.astrid.widget.TasksWidget;
 
-import org.astrid.R;
 import org.astrid.dropbox.DropBoxLinkActivity;
 import org.astrid.dropbox.DropBoxSyncManager;
 import org.astrid.preferences.AstridPreferenceManager;
