@@ -5,18 +5,12 @@
  */
 package com.todoroo.astrid.repeats;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-
 import android.content.Intent;
 
 import com.google.ical.values.Frequency;
 import com.google.ical.values.RRule;
 import com.google.ical.values.Weekday;
 import com.google.ical.values.WeekdayNum;
-import org.tasks.R;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.sql.Query;
@@ -24,20 +18,23 @@ import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.api.AstridApiConstants;
-import com.todoroo.astrid.dao.MetadataDao;
 import com.todoroo.astrid.dao.TaskDao;
 import com.todoroo.astrid.dao.TaskDao.TaskCriteria;
 import com.todoroo.astrid.data.SyncFlags;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.test.DatabaseTestCase;
 
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+
 public class NewRepeatTests<REMOTE_MODEL> extends DatabaseTestCase {
 
     @Autowired
     protected TaskDao taskDao;
-
-    @Autowired
-    protected MetadataDao metadataDao;
 
     @Override
     protected void setUp() throws Exception {
@@ -62,28 +59,7 @@ public class NewRepeatTests<REMOTE_MODEL> extends DatabaseTestCase {
         AndroidUtilities.sleepDeep(200L); // Delay to make sure changes persist
     }
 
-    /**
-     * @param t
-     * @param expectedDueDate
-     */
-    protected REMOTE_MODEL assertTaskExistsRemotely(Task t, long expectedDueDate) {
-        // Subclasses can override this to check the existence of remote objects
-        return null;
-    }
-
-    /**
-     * @param t task
-     */
-    protected void assertTaskCompletedRemotely(Task t) {
-        // Subclasses can override this to check the status of the corresponding remote task
-    }
-
-
-    /**
-     * @param remoteModel
-     */
-    protected long setCompletionDate(boolean completeBefore, Task t,
-            REMOTE_MODEL remoteModel, long dueDate) {
+    protected long setCompletionDate(boolean completeBefore, Task t, long dueDate) {
         long completionDate;
         if (completeBefore)
             completionDate = dueDate - DateUtilities.ONE_DAY;
@@ -151,13 +127,11 @@ public class NewRepeatTests<REMOTE_MODEL> extends DatabaseTestCase {
 
         waitAndSync();
         t = taskDao.fetch(t.getId(), Task.PROPERTIES); // Refetch
-        REMOTE_MODEL remoteModel = assertTaskExistsRemotely(t, dueDate);
 
-        long completionDate = setCompletionDate(completeBefore, t, remoteModel, dueDate);
+        long completionDate = setCompletionDate(completeBefore, t, dueDate);
         System.err.println("Completion date: " + new Date(completionDate));
 
         waitAndSync();
-        assertTaskCompletedRemotely(t);
 
         TodorooCursor<Task> cursor = taskDao.query(Query.select(Task.PROPERTIES).where(TaskCriteria.notDeleted()));
         try {
@@ -177,7 +151,6 @@ public class NewRepeatTests<REMOTE_MODEL> extends DatabaseTestCase {
             long fromDate = (fromCompletion? completionDate : dueDate);
             long expectedTime = computeNextDueDateFromDate(fromDate, rrule, fromCompletion);
 
-            assertTaskExistsRemotely(t, expectedTime);
             if (frequency == Frequency.WEEKLY) // We do this because DST was making the results be off by an hour
                 assertTimesWithinOneHour(expectedTime, newDueDate);
             else
@@ -197,7 +170,7 @@ public class NewRepeatTests<REMOTE_MODEL> extends DatabaseTestCase {
             result += DateUtilities.ONE_WEEK * rrule.getInterval();
             return result;
         }
-        HashSet<Weekday> weekdays = new HashSet<Weekday>();
+        HashSet<Weekday> weekdays = new HashSet<>();
         for (WeekdayNum curr : weekdayNums) {
             weekdays.add(curr.wday);
         }
@@ -226,7 +199,6 @@ public class NewRepeatTests<REMOTE_MODEL> extends DatabaseTestCase {
                 Weekday curr = allWeekdays[i];
                 daysToAdd++;
                 if (weekdays.contains(curr)) {
-                    next = curr;
                     break;
                 }
             }
@@ -389,7 +361,7 @@ public class NewRepeatTests<REMOTE_MODEL> extends DatabaseTestCase {
 
         int interval = 1;
         rrule.setInterval(interval);
-        List<WeekdayNum> weekdays = new ArrayList<WeekdayNum>();
+        List<WeekdayNum> weekdays = new ArrayList<>();
         weekdays.add(new WeekdayNum(0, Weekday.MO));
         weekdays.add(new WeekdayNum(0, Weekday.WE));
         rrule.setByDay(weekdays);
@@ -402,7 +374,7 @@ public class NewRepeatTests<REMOTE_MODEL> extends DatabaseTestCase {
 
         int interval = 1;
         rrule.setInterval(interval);
-        List<WeekdayNum> weekdays = new ArrayList<WeekdayNum>();
+        List<WeekdayNum> weekdays = new ArrayList<>();
         weekdays.add(new WeekdayNum(0, Weekday.MO));
         weekdays.add(new WeekdayNum(0, Weekday.WE));
         rrule.setByDay(weekdays);

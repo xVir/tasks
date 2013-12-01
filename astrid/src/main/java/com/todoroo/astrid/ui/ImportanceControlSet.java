@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.ui;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import android.app.Activity;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -16,10 +13,14 @@ import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ToggleButton;
 
-import org.tasks.R;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.helper.TaskEditControlSet;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Control Set for setting task importance
@@ -28,14 +29,14 @@ import com.todoroo.astrid.service.ThemeService;
  *
  */
 public class ImportanceControlSet extends TaskEditControlSet {
-    private final List<CompoundButton> buttons = new LinkedList<CompoundButton>();
+    private final List<CompoundButton> buttons = new LinkedList<>();
     private final int[] colors;
-    private final List<ImportanceChangedListener> listeners = new LinkedList<ImportanceChangedListener>();
+    private final List<ImportanceChangedListener> listeners = new LinkedList<>();
 
     private static final int TEXT_SIZE = 18;
 
     public interface ImportanceChangedListener {
-        public void importanceChanged(int i, int color);
+        public void importanceChanged(int i);
     }
 
     public ImportanceControlSet(Activity activity, int layout) {
@@ -47,7 +48,7 @@ public class ImportanceControlSet extends TaskEditControlSet {
         for(CompoundButton b : buttons) {
             if(b.getTag() == i) {
                 b.setChecked(true);
-                b.setBackgroundResource(ThemeService.getDarkVsLight(R.drawable.importance_background_selected, R.drawable.importance_background_selected_dark, false));
+                b.setBackgroundResource(ThemeService.getDarkVsLight(R.drawable.importance_background_selected, R.drawable.importance_background_selected_dark));
             } else {
                 b.setChecked(false);
                 b.setBackgroundResource(0);
@@ -55,7 +56,7 @@ public class ImportanceControlSet extends TaskEditControlSet {
         }
 
         for (ImportanceChangedListener l : listeners) {
-            l.importanceChanged(i, colors[i]);
+            l.importanceChanged(i);
         }
     }
 
@@ -70,12 +71,6 @@ public class ImportanceControlSet extends TaskEditControlSet {
 
     public void addListener(ImportanceChangedListener listener) {
         listeners.add(listener);
-    }
-
-    public void removeListener(ImportanceChangedListener listener) {
-        if (listeners.contains(listener)) {
-            listeners.remove(listener);
-        }
     }
 
     @Override
@@ -143,10 +138,9 @@ public class ImportanceControlSet extends TaskEditControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         if(getImportance() != null) {
             task.setValue(Task.IMPORTANCE, getImportance());
         }
-        return null;
     }
 }

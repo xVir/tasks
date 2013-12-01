@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.gtasks.auth;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
@@ -27,7 +23,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -36,7 +31,12 @@ import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.gtasks.GtasksPreferenceService;
 import com.todoroo.astrid.gtasks.api.GtasksInvoker;
 import com.todoroo.astrid.service.AstridDependencyInjector;
-import com.todoroo.astrid.service.SyncV2Service;
+
+import org.tasks.R;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This activity allows users to sign in or log in to Google Tasks
@@ -48,8 +48,6 @@ import com.todoroo.astrid.service.SyncV2Service;
 public class GtasksLoginActivity extends ListActivity {
 
     @Autowired private GtasksPreferenceService gtasksPreferenceService;
-
-    @Autowired private SyncV2Service syncService;
 
     // --- ui initialization
 
@@ -84,14 +82,14 @@ public class GtasksLoginActivity extends ListActivity {
 
         accountManager = new GoogleAccountManager(this);
         Account[] accounts = accountManager.getAccounts();
-        ArrayList<String> accountNames = new ArrayList<String>();
+        ArrayList<String> accountNames = new ArrayList<>();
         for (Account a : accounts) {
             accountNames.add(a.name);
         }
 
         nameArray = accountNames.toArray(new String[accountNames.size()]);
 
-        setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nameArray));
+        setListAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, nameArray));
         findViewById(R.id.empty_button).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -158,26 +156,6 @@ public class GtasksLoginActivity extends ListActivity {
         Preferences.setString(GtasksPreferenceService.PREF_USER_NAME, accountName);
         setResult(RESULT_OK);
         finish();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
     }
 
     private static final int REQUEST_AUTHENTICATE = 0;

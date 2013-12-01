@@ -5,14 +5,6 @@
  */
 package com.todoroo.astrid.utility;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import android.text.TextUtils;
 
 import com.google.ical.values.Frequency;
@@ -21,6 +13,14 @@ import com.mdimension.jchronic.AstridChronic;
 import com.mdimension.jchronic.Chronic;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.tags.TagService;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TitleParser {
 
@@ -38,24 +38,21 @@ public class TitleParser {
             pattern = pattern.substring(1);
         }
         if ('(' == pattern.charAt(0)) {
-            String list = pattern.substring(1, pattern.length()-1);
-            return list;
+            return pattern.substring(1, pattern.length()-1);
         }
         return pattern;
     }
-    public static boolean listHelper(Task task, ArrayList<String> tags) {
+    public static void listHelper(Task task, ArrayList<String> tags) {
         String inputText = task.getValue(Task.TITLE);
         Pattern tagPattern = Pattern.compile("(\\s|^)#(\\(.*\\)|[^\\s]+)");
         Pattern contextPattern = Pattern.compile("(\\s|^)@(\\(.*\\)|[^\\s]+)");
-        boolean result = false;
 
-        Set<String> addedTags = new HashSet<String>();
+        Set<String> addedTags = new HashSet<>();
         TagService tagService = TagService.getInstance();
 
         while(true) {
             Matcher m = tagPattern.matcher(inputText);
             if(m.find()) {
-                result = true;
                 String tag = TitleParser.trimParenthesis(m.group(2));
                 String tagWithCase = tagService.getTagWithCase(tag);
                 if (!addedTags.contains(tagWithCase)) {
@@ -65,7 +62,6 @@ public class TitleParser {
             } else {
                 m = contextPattern.matcher(inputText);
                 if(m.find()) {
-                    result = true;
                     String tag = TitleParser.trimParenthesis(m.group(2));
                     String tagWithCase = tagService.getTagWithCase(tag);
                     if (!addedTags.contains(tagWithCase)) {
@@ -79,7 +75,6 @@ public class TitleParser {
             inputText = inputText.substring(0, m.start()) + inputText.substring(m.end());
         }
         task.setValue(Task.TITLE, inputText.trim());
-        return result;
     }
 
     //helper method for priorityHelper. converts the string to a Task Importance
@@ -192,8 +187,7 @@ public class TitleParser {
             Matcher m = pattern.matcher(inputText);
             if (m.find()) {
                 String toParse = stripParens(m.group(0));
-                Calendar dayCal = AstridChronic.parse(toParse).getBeginCalendar();
-                cal = dayCal;
+                cal = AstridChronic.parse(toParse).getBeginCalendar();
                 inputText = removeIfParenthetical(m, inputText);
                 //then put it into task
             }
@@ -268,7 +262,7 @@ public class TitleParser {
             inputText = removeIfParenthetical(match, inputText);
         }
 
-        HashMap<String, Integer> dayTimes = new HashMap<String, Integer>();
+        HashMap<String, Integer> dayTimes = new HashMap<>();
         dayTimes.put("(?i)\\bbreakfast\\b", 8);
         dayTimes.put("(?i)\\blunch\\b", 12);
         dayTimes.put("(?i)\\bsupper\\b", 18);
@@ -381,7 +375,7 @@ public class TitleParser {
             return false;
         }
         String inputText = task.getValue(Task.TITLE);
-        HashMap<String, Frequency> repeatTimes = new HashMap<String, Frequency>();
+        HashMap<String, Frequency> repeatTimes = new HashMap<>();
         repeatTimes.put("(?i)\\bevery ?\\w{0,6} days?\\b" , Frequency.DAILY);
         repeatTimes.put("(?i)\\bevery ?\\w{0,6} ?nights?\\b" , Frequency.DAILY);
         repeatTimes.put("(?i)\\bevery ?\\w{0,6} ?mornings?\\b" , Frequency.DAILY);
@@ -392,7 +386,7 @@ public class TitleParser {
         repeatTimes.put("(?i)\\bevery \\w{0,6} ?months?\\b", Frequency.MONTHLY);
         repeatTimes.put("(?i)\\bevery \\w{0,6} ?years?\\b", Frequency.YEARLY);
 
-        HashMap<String, Frequency> repeatTimesIntervalOne = new HashMap<String, Frequency>();
+        HashMap<String, Frequency> repeatTimesIntervalOne = new HashMap<>();
         //pre-determined intervals of 1
         repeatTimesIntervalOne.put( "(?i)\\bdaily\\b" , Frequency.DAILY);
         repeatTimesIntervalOne.put( "(?i)\\beveryday\\b" , Frequency.DAILY);
@@ -432,7 +426,7 @@ public class TitleParser {
 
     //helper method for repeatHelper.
     private static int findInterval(String inputText) {
-        HashMap<String,Integer> wordsToNum = new HashMap<String, Integer>();
+        HashMap<String,Integer> wordsToNum = new HashMap<>();
         String[] words = new String[] {
                 "one", "two", "three", "four", "five", "six",
                 "seven", "eight", "nine", "ten", "eleven", "twelve"

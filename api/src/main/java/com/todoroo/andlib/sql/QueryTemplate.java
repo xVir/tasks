@@ -5,6 +5,8 @@
  */
 package com.todoroo.andlib.sql;
 
+import java.util.ArrayList;
+
 import static com.todoroo.andlib.sql.SqlConstants.COMMA;
 import static com.todoroo.andlib.sql.SqlConstants.GROUP_BY;
 import static com.todoroo.andlib.sql.SqlConstants.LIMIT;
@@ -12,8 +14,6 @@ import static com.todoroo.andlib.sql.SqlConstants.ORDER_BY;
 import static com.todoroo.andlib.sql.SqlConstants.SPACE;
 import static com.todoroo.andlib.sql.SqlConstants.WHERE;
 import static java.util.Arrays.asList;
-
-import java.util.ArrayList;
 
 /**
  * Query Template returns a bunch of criteria that allows a query to be
@@ -24,11 +24,10 @@ import java.util.ArrayList;
  */
 public final class QueryTemplate {
 
-    private final ArrayList<Criterion> criterions = new ArrayList<Criterion>();
-    private final ArrayList<Join> joins = new ArrayList<Join>();
-    private final ArrayList<Field> groupBies = new ArrayList<Field>();
-    private final ArrayList<Order> orders = new ArrayList<Order>();
-    private final ArrayList<Criterion> havings = new ArrayList<Criterion>();
+    private final ArrayList<Criterion> criterions = new ArrayList<>();
+    private final ArrayList<Join> joins = new ArrayList<>();
+    private final ArrayList<Field> groupBies = new ArrayList<>();
+    private final ArrayList<Order> orders = new ArrayList<>();
     private Integer limit = null;
 
     public QueryTemplate join(Join... join) {
@@ -84,14 +83,6 @@ public final class QueryTemplate {
             sql.append(SPACE).append(groupBy).append(COMMA);
         }
         sql.deleteCharAt(sql.length() - 1).append(SPACE);
-        if (havings.isEmpty()) {
-            return;
-        }
-        sql.append("HAVING");
-        for (Criterion havingCriterion : havings) {
-            sql.append(SPACE).append(havingCriterion).append(COMMA);
-        }
-        sql.deleteCharAt(sql.length() - 1).append(SPACE);
     }
 
     private void visitWhereClause(StringBuilder sql) {
@@ -108,11 +99,6 @@ public final class QueryTemplate {
         for (Join join : joins) {
             sql.append(join).append(SPACE);
         }
-    }
-
-    public QueryTemplate having(Criterion criterion) {
-        this.havings.add(criterion);
-        return this;
     }
 
     public QueryTemplate limit(int limitValue) {

@@ -5,8 +5,6 @@
  */
 package com.todoroo.astrid.ui;
 
-import java.util.Calendar;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.text.format.DateUtils;
@@ -19,9 +17,12 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.LinearLayout;
 import android.widget.ToggleButton;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
+
+import org.tasks.R;
+
+import java.util.Calendar;
 
 public class AstridTimePicker extends LinearLayout {
 
@@ -118,7 +119,7 @@ public class AstridTimePicker extends LinearLayout {
         NumberPicker.OnChangedListener autoEnableTimeCheck = new NumberPicker.OnChangedListener() {
 
             @Override
-            public int onChanged(NumberPicker picker, int oldVal, int newVal) {
+            public int onChanged(int newVal) {
                 setHasTime(true);
                 return newVal;
             }

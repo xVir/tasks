@@ -5,14 +5,6 @@
  */
 package com.todoroo.astrid.adapter;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
@@ -22,7 +14,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -40,11 +31,9 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
-import com.todoroo.astrid.actfm.TagViewFragment;
 import com.todoroo.astrid.activity.AstridActivity;
 import com.todoroo.astrid.activity.FilterListFragment;
 import com.todoroo.astrid.activity.TaskListFragment;
@@ -53,23 +42,22 @@ import com.todoroo.astrid.api.AstridFilterExposer;
 import com.todoroo.astrid.api.Filter;
 import com.todoroo.astrid.api.FilterCategory;
 import com.todoroo.astrid.api.FilterCategoryWithNewButton;
-import com.todoroo.astrid.api.FilterListHeader;
 import com.todoroo.astrid.api.FilterListItem;
 import com.todoroo.astrid.api.FilterWithCustomIntent;
 import com.todoroo.astrid.api.FilterWithUpdate;
-import com.todoroo.astrid.data.RemoteModel;
-import com.todoroo.astrid.helper.AsyncImageView;
-import com.todoroo.astrid.service.MarketStrategy.NookMarketStrategy;
 import com.todoroo.astrid.service.TaskService;
-import com.todoroo.astrid.tags.TagService;
-import com.todoroo.astrid.utility.Constants;
-import com.todoroo.astrid.utility.ResourceDrawableCache;
+
+import org.tasks.R;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FilterAdapter extends ArrayAdapter<Filter> {
-
-    public static interface FilterDataSourceChangedListener {
-        public void filterDataSourceChanged();
-    }
 
     // --- style constants
 
@@ -83,8 +71,6 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
 
     /** parent activity */
     protected final Activity activity;
-
-    protected final Resources resources;
 
     /** owner listview */
     protected ListView listView;
@@ -112,11 +98,6 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
 
     private final HashMap<Filter, Integer> filterCounts;
 
-    private FilterDataSourceChangedListener listener;
-
-    private final boolean nook;
-
-
     // Previous solution involved a queue of filters and a filterSizeLoadingThread. The filterSizeLoadingThread had
     // a few problems: how to make sure that the thread is resumed when the controlling activity is resumed, and
     // how to make sure that the the filterQueue does not accumulate filters without being processed. I am replacing
@@ -126,9 +107,8 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
     // be added).
     private final ThreadPoolExecutor filterExecutor = new ThreadPoolExecutor(0, 1, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
-    public FilterAdapter(Activity activity, ListView listView,
-            int rowLayout, boolean skipIntentFilters) {
-        this(activity, listView, rowLayout, skipIntentFilters, false);
+    public FilterAdapter(Activity activity, int rowLayout) {
+        this(activity, null, rowLayout, false, false);
     }
 
     public FilterAdapter(Activity activity, ListView listView,
@@ -138,18 +118,11 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         DependencyInjectionService.getInstance().inject(this);
 
         this.activity = activity;
-        this.resources = activity.getResources();
         this.listView = listView;
         this.layout = rowLayout;
         this.skipIntentFilters = skipIntentFilters;
         this.selectable = selectable;
-        this.filterCounts = new HashMap<Filter, Integer>();
-
-        this.nook = (Constants.MARKET_STRATEGY instanceof NookMarketStrategy);
-
-        if (activity instanceof AstridActivity && ((AstridActivity) activity).getFragmentLayout() != AstridActivity.LAYOUT_SINGLE) {
-            filterStyle = R.style.TextAppearance_FLA_Filter_Tablet;
-        }
+        this.filterCounts = new HashMap<>();
 
         inflater = (LayoutInflater) activity.getSystemService(
                 Context.LAYOUT_INFLATER_SERVICE);
@@ -210,15 +183,14 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         offerFilter(item);
     }
 
-    public int addOrLookup(Filter filter) {
+    public void addOrLookup(Filter filter) {
         int index = getPosition(filter);
         if (index >= 0) {
             Filter existing = getItem(index);
             transferImageReferences(filter, existing);
-            return index;
+            return;
         }
         add(filter);
-        return getCount() - 1;
     }
 
     // Helper function: if a filter was created from serialized extras, it may not
@@ -231,7 +203,7 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         }
     }
 
-    public int adjustFilterCount(Filter filter, int delta) {
+    public void adjustFilterCount(Filter filter, int delta) {
         int filterCount = 0;
         if (filterCounts.containsKey(filter)) {
             filterCount = filterCounts.get(filter);
@@ -239,15 +211,14 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         int newCount = Math.max(filterCount + delta, 0);
         filterCounts.put(filter, newCount);
         notifyDataSetChanged();
-        return newCount;
     }
 
-    public int incrementFilterCount(Filter filter) {
-        return adjustFilterCount(filter, 1);
+    public void incrementFilterCount(Filter filter) {
+        adjustFilterCount(filter, 1);
     }
 
-    public int decrementFilterCount(Filter filter) {
-        return adjustFilterCount(filter, -1);
+    public void decrementFilterCount(Filter filter) {
+        adjustFilterCount(filter, -1);
     }
 
     public void refreshFilterCount(final Filter filter) {
@@ -267,27 +238,18 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         });
     }
 
-    public void setDataSourceChangedListener(FilterDataSourceChangedListener listener) {
-        this.listener = listener;
-    }
-
     public void setListView(ListView listView) {
         this.listView = listView;
     }
 
     /**
      * Create or reuse a view
-     * @param convertView
-     * @param parent
-     * @return
      */
     protected View newView(View convertView, ViewGroup parent) {
         if(convertView == null) {
             convertView = inflater.inflate(layout, parent, false);
             ViewHolder viewHolder = new ViewHolder();
             viewHolder.view = convertView;
-            viewHolder.icon = (ImageView)convertView.findViewById(R.id.icon);
-            viewHolder.urlImage = (AsyncImageView)convertView.findViewById(R.id.url_image);
             viewHolder.name = (TextView)convertView.findViewById(R.id.name);
             viewHolder.selected = (ImageView)convertView.findViewById(R.id.selected);
             viewHolder.size = (TextView)convertView.findViewById(R.id.size);
@@ -299,8 +261,6 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
 
     public static class ViewHolder {
         public FilterListItem item;
-        public ImageView icon;
-        public AsyncImageView urlImage;
         public TextView name;
         public TextView size;
         public ImageView selected;
@@ -314,7 +274,7 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
 
         convertView = newView(convertView, parent);
         ViewHolder viewHolder = (ViewHolder) convertView.getTag();
-        viewHolder.item = (FilterListItem) getItem(position);
+        viewHolder.item = getItem(position);
         populateView(viewHolder);
 
         Filter selected = null;
@@ -327,7 +287,7 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         }
 
         if (selected != null && selected.equals(viewHolder.item)) {
-            convertView.setBackgroundColor(activity.getResources().getColor(R.color.tablet_list_selected));
+//            convertView.setBackgroundColor(activity.getResources().getColor(R.color.tablet_list_selected));
         } else {
             convertView.setBackgroundColor(activity.getResources().getColor(android.R.color.transparent));
         }
@@ -347,7 +307,6 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
 
     /**
      * Sets the selected item to this one
-     * @param picked
      */
     public void setSelection(FilterListItem picked) {
         selection = picked;
@@ -362,10 +321,6 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
      */
     public FilterListItem getSelection() {
         return selection;
-    }
-
-    protected boolean shouldDirectlyPopulateFilters() {
-        return true;
     }
 
     /* ======================================================================
@@ -392,26 +347,13 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         @Override
         public void onReceive(Context context, Intent intent) {
             try {
-                if (shouldDirectlyPopulateFilters()) {
-                    for (ResolveInfo filterExposerInfo : filterExposerList) {
-                        String className = filterExposerInfo.activityInfo.name;
-                        AstridFilterExposer filterExposer = null;
-                        filterExposer = (AstridFilterExposer) Class.forName(className, true, FilterAdapter.class.getClassLoader()).newInstance();
+                for (ResolveInfo filterExposerInfo : filterExposerList) {
+                    String className = filterExposerInfo.activityInfo.name;
+                    AstridFilterExposer filterExposer;
+                    filterExposer = (AstridFilterExposer) Class.forName(className, true, FilterAdapter.class.getClassLoader()).newInstance();
 
-                        if (filterExposer != null) {
-                            populateFiltersToAdapter(filterExposer.getFilters());
-                        }
-                    }
-                } else {
-                    try {
-                        Bundle extras = intent.getExtras();
-                        extras.setClassLoader(FilterListHeader.class.getClassLoader());
-                        final Parcelable[] filters = extras.getParcelableArray(AstridApiConstants.EXTRAS_RESPONSE);
-                        populateFiltersToAdapter(filters);
-                    } catch (Exception e) {
-                        Log.e("receive-filter-" +  //$NON-NLS-1$
-                                intent.getStringExtra(AstridApiConstants.EXTRAS_ADDON),
-                                e.toString(), e);
+                    if (filterExposer != null) {
+                        populateFiltersToAdapter(filterExposer.getFilters());
                     }
                 }
             } catch (Exception e) {
@@ -427,11 +369,9 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
             for (Parcelable item : filters) {
                 FilterListItem filter = (FilterListItem) item;
                 if(skipIntentFilters && !(filter instanceof Filter ||
-                            filter instanceof FilterListHeader ||
                             filter instanceof FilterCategory)) {
                     continue;
                 }
-                onReceiveFilter((FilterListItem)item);
 
                 if (filter instanceof FilterCategory) {
                     Filter[] children = ((FilterCategory) filter).children;
@@ -444,14 +384,6 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
             }
 
             notifyDataSetChanged();
-        }
-    }
-
-    @Override
-    public void notifyDataSetChanged() {
-        super.notifyDataSetChanged();
-        if (listener != null) {
-            listener.filterDataSourceChanged();
         }
     }
 
@@ -481,14 +413,6 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         activity.unregisterReceiver(filterReceiver);
     }
 
-    /**
-     * Called when an item comes through. Override if you like
-     * @param item
-     */
-    public void onReceiveFilter(FilterListItem item) {
-        // do nothing
-    }
-
     /* ======================================================================
      * ================================================================ views
      * ====================================================================== */
@@ -506,22 +430,12 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
             viewHolder.decoration = null;
         }
 
-        if(viewHolder.item instanceof FilterListHeader || viewHolder.item instanceof FilterCategory) {
+        if(viewHolder.item instanceof FilterCategory) {
             viewHolder.name.setTextAppearance(activity, headerStyle);
             viewHolder.name.setShadowLayer(1, 1, 1, Color.BLACK);
         } else {
             viewHolder.name.setTextAppearance(activity, filterStyle);
             viewHolder.name.setShadowLayer(0, 0, 0, 0);
-        }
-
-        // update with filter attributes (listing icon, url, update text, size)
-
-        viewHolder.urlImage.setVisibility(View.GONE);
-        viewHolder.icon.setVisibility(View.GONE);
-
-        if(!nook && filter.listingIcon != null) {
-            viewHolder.icon.setVisibility(View.VISIBLE);
-            viewHolder.icon.setImageBitmap(filter.listingIcon);
         }
 
         // title / size
@@ -563,25 +477,6 @@ public class FilterAdapter extends ArrayAdapter<Filter> {
         }
 
         viewHolder.name.getLayoutParams().height = (int) (58 * metrics.density);
-        if(!nook && filter instanceof FilterWithUpdate) {
-            String defaultImageId = RemoteModel.NO_UUID;
-            FilterWithUpdate fwu = (FilterWithUpdate) filter;
-            Bundle customExtras = fwu.customExtras;
-            if (customExtras != null && customExtras.containsKey(TagViewFragment.EXTRA_TAG_UUID)) {
-                defaultImageId = customExtras.getString(TagViewFragment.EXTRA_TAG_UUID);
-            } else {
-                defaultImageId = viewHolder.name.getText().toString();
-            }
-
-            viewHolder.urlImage.setVisibility(View.VISIBLE);
-            viewHolder.urlImage.setDefaultImageDrawable(ResourceDrawableCache.getImageDrawableFromId(resources, TagService.getDefaultImageIDForTag(defaultImageId)));
-            viewHolder.urlImage.setUrl(((FilterWithUpdate)filter).imageUrl);
-        }
-
-        if (nook) {
-            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) viewHolder.name.getLayoutParams();
-            params.setMargins((int) (8 * metrics.density), 0, 0, 0);
-        }
 
         if (filter.color != 0) {
             viewHolder.name.setTextColor(filter.color);

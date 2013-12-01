@@ -10,7 +10,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteConstraintException;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
@@ -21,13 +20,14 @@ import com.todoroo.andlib.sql.Functions;
 import com.todoroo.andlib.sql.Query;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
-import com.todoroo.astrid.actfm.sync.messages.NameMaps;
 import com.todoroo.astrid.api.AstridApiConstants;
 import com.todoroo.astrid.dao.MetadataDao.MetadataCriteria;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.data.TaskApiDao;
 import com.todoroo.astrid.reminders.Notifications;
 import com.todoroo.astrid.reminders.ReminderService;
+
+import org.tasks.R;
 
 /**
  * Data Access layer for {@link Task}-related operations.
@@ -56,14 +56,9 @@ public class TaskDao extends RemoteModelDao<Task> {
      */
     public static class TaskCriteria {
 
-    	/** @returns tasks by id */
+    	/** @return tasks by id */
     	public static Criterion byId(long id) {
     	    return Task.ID.eq(id);
-    	}
-
-    	/** @return tasks that were deleted */
-    	public static Criterion isDeleted() {
-    	    return Task.DELETION_DATE.neq(0);
     	}
 
     	/** @return tasks that were not deleted */
@@ -83,7 +78,6 @@ public class TaskDao extends RemoteModelDao<Task> {
     	    return Criterion.and(Task.COMPLETION_DATE.eq(0),
     	            Task.DELETION_DATE.eq(0),
     	            Task.HIDE_UNTIL.lt(Functions.now()),
-    	            Task.IS_READONLY.eq(0),
     	            Task.USER_ID.eq(0));
     	}
 
@@ -93,25 +87,10 @@ public class TaskDao extends RemoteModelDao<Task> {
     	            Task.DELETION_DATE.eq(0));
     	}
 
-    	/** @return tasks that are due within the next 24 hours */
-    	public static Criterion dueToday() {
-    	    return Criterion.and(TaskCriteria.activeAndVisible(), Task.DUE_DATE.gt(0), Task.DUE_DATE.lt(Functions.fromNow(DateUtilities.ONE_DAY)));
-    	}
-
-    	/** @return tasks that are due within the next 72 hours */
-    	public static Criterion dueSoon() {
-    	    return Criterion.and(TaskCriteria.activeAndVisible(), Task.DUE_DATE.gt(0), Task.DUE_DATE.lt(Functions.fromNow(3 * DateUtilities.ONE_DAY)));
-    	}
-
     	/** @return tasks that are not hidden at current time */
     	public static Criterion isVisible() {
     	    return Task.HIDE_UNTIL.lt(Functions.now());
         }
-
-    	/** @return tasks that are hidden at the current time */
-    	public static Criterion isHidden() {
-    	    return Task.HIDE_UNTIL.gt(Functions.now());
-    	}
 
     	/** @return tasks that have a due date */
     	public static Criterion hasDeadlines() {
@@ -140,22 +119,16 @@ public class TaskDao extends RemoteModelDao<Task> {
 
     	/** Check if a given task belongs to someone else & is read-only */
         public static Criterion ownedByMe() {
-             return Criterion.and(Task.IS_READONLY.eq(0),
-                     Task.USER_ID.eq(0));
+             return Task.USER_ID.eq(0);
         }
 
     }
-
-    // --- custom operations
-
 
     // --- delete
 
     /**
      * Delete the given item
      *
-     * @param database
-     * @param id
      * @return true if delete was successful
      */
     @Override
@@ -179,11 +152,10 @@ public class TaskDao extends RemoteModelDao<Task> {
      * Saves the given task to the database.getDatabase(). Task must already
      * exist. Returns true on success.
      *
-     * @param task
      * @return true if save occurred, false otherwise (i.e. nothing changed)
      */
     public boolean save(Task task) {
-        boolean saveSuccessful = false;
+        boolean saveSuccessful;
         if (task.getId() == Task.NO_ID) {
             try {
                 saveSuccessful = createNew(task);
@@ -248,7 +220,6 @@ public class TaskDao extends RemoteModelDao<Task> {
 
     /**
      * Sets default reminders for the given task if reminders are not set
-     * @param item
      */
     public static void setDefaultReminders(Task item) {
         if(!item.containsValue(Task.REMINDER_PERIOD)) {
@@ -295,11 +266,6 @@ public class TaskDao extends RemoteModelDao<Task> {
         Task.HIDE_UNTIL,
         Task.RECURRENCE
     };
-
-    @Override
-    protected boolean shouldRecordOutstandingEntry(String columnName, Object value) {
-        return NameMaps.shouldRecordOutstandingColumnForTable(NameMaps.TABLE_ID_TASKS, columnName);
-    }
 
     public void saveExistingWithSqlConstraintCheck(Task item) {
         try {
@@ -371,7 +337,7 @@ public class TaskDao extends RemoteModelDao<Task> {
 
         task.markSaved();
         if(values.containsKey(Task.COMPLETION_DATE.name) && task.isCompleted()) {
-            afterComplete(task, values);
+            afterComplete(task);
         } else {
             if(values.containsKey(Task.DUE_DATE.name) ||
                     values.containsKey(Task.REMINDER_FLAGS.name) ||
@@ -422,11 +388,8 @@ public class TaskDao extends RemoteModelDao<Task> {
 
     /**
      * Called after the task was just completed
-     *
-     * @param task
-     * @param values
      */
-    private static void afterComplete(Task task, ContentValues values) {
+    private static void afterComplete(Task task) {
         Notifications.cancelNotifications(task.getId());
     }
 

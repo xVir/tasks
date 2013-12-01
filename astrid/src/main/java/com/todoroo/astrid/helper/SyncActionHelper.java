@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.helper;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -22,7 +18,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.widget.ArrayAdapter;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -37,6 +32,12 @@ import com.todoroo.astrid.gtasks.GtasksPreferences;
 import com.todoroo.astrid.service.SyncV2Service;
 import com.todoroo.astrid.sync.SyncResultCallback;
 import com.todoroo.astrid.sync.SyncV2Provider;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * SyncActionHelper is a helper class for encapsulating UI actions
@@ -53,7 +54,7 @@ public class SyncActionHelper {
 
     public static final String PREF_LAST_AUTO_SYNC = "taskListLastAutoSync"; //$NON-NLS-1$
 
-    private final LinkedHashSet<SyncAction> syncActions = new LinkedHashSet<SyncAction>();
+    private final LinkedHashSet<SyncAction> syncActions = new LinkedHashSet<>();
 
     public final SyncResultCallback syncResultCallback;
 
@@ -89,7 +90,7 @@ public class SyncActionHelper {
     public void initiateAutomaticSync() {
         long tasksPushedAt = Preferences.getLong(PREF_LAST_AUTO_SYNC, 0);
         if (DateUtilities.now() - tasksPushedAt > TaskListFragment.AUTOSYNC_INTERVAL) {
-            performSyncServiceV2Sync(false);
+            performSyncServiceV2Sync();
         }
     }
 
@@ -139,8 +140,8 @@ public class SyncActionHelper {
 
     // --- sync logic
 
-    protected void performSyncServiceV2Sync(boolean manual) {
-        boolean syncOccurred = syncService.synchronizeActiveTasks(manual, syncResultCallback);
+    protected void performSyncServiceV2Sync() {
+        boolean syncOccurred = syncService.synchronizeActiveTasks(false, syncResultCallback);
         if (syncOccurred) {
             Preferences.setLong(PREF_LAST_AUTO_SYNC, DateUtilities.now());
         }
@@ -178,13 +179,11 @@ public class SyncActionHelper {
             PackageManager pm = activity.getPackageManager();
             List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(
                     queryIntent, PackageManager.GET_META_DATA);
-            int length = resolveInfoList.size();
-            ArrayList<Intent> syncIntents = new ArrayList<Intent>();
+            ArrayList<Intent> syncIntents = new ArrayList<>();
 
             // Loop through a list of all packages (including plugins, addons)
             // that have a settings action: filter to sync actions
-            for (int i = 0; i < length; i++) {
-                ResolveInfo resolveInfo = resolveInfoList.get(i);
+            for (ResolveInfo resolveInfo : resolveInfoList) {
                 Intent intent = new Intent(AstridApiConstants.ACTION_SETTINGS);
                 intent.setClassName(resolveInfo.activityInfo.packageName,
                         resolveInfo.activityInfo.name);
@@ -232,10 +231,6 @@ public class SyncActionHelper {
     /**
      * Show menu of sync options. This is shown when you're not logged into any
      * services, or logged into more than one.
-     *
-     * @param <TYPE>
-     * @param items
-     * @param listener
      */
     private <TYPE> void showSyncOptionMenu(TYPE[] items,
             DialogInterface.OnClickListener listener) {
@@ -244,7 +239,7 @@ public class SyncActionHelper {
             return;
         }
 
-        ArrayAdapter<TYPE> adapter = new ArrayAdapter<TYPE>(activity,
+        ArrayAdapter<TYPE> adapter = new ArrayAdapter<>(activity,
                 android.R.layout.simple_spinner_dropdown_item, items);
 
         // show a menu of available options

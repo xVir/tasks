@@ -13,8 +13,9 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.RadioButton;
 
-import org.tasks.R;
 import com.todoroo.astrid.core.SortHelper;
+
+import org.tasks.R;
 
 /**
  * Shows the sort / hidden dialog
@@ -30,8 +31,6 @@ public class SortSelectionActivity {
 
     /**
      * Create the dialog
-     * @param activity
-     * @return
      */
     public static AlertDialog createDialog(Activity activity, boolean showDragDrop,
             OnSortSelectedListener listener, int flags, int sort) {
@@ -114,7 +113,7 @@ public class SortSelectionActivity {
         @Override
         public void onClick(DialogInterface view, int button) {
             int flags = 0;
-            int sort = 0;
+            int sort;
 
             if(((CheckBox)body.findViewById(R.id.reverse)).isChecked()) {
                 flags |= SortHelper.FLAG_REVERSE_SORT;

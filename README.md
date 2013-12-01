@@ -1,17 +1,4 @@
-Getting Started With Development
----------------
+[![Build Status](https://travis-ci.org/abaker/tasks.png?branch=master)](https://travis-ci.org/abaker/tasks)
 
-Tasks is built with [the new Android build system](http://tools.android.com/tech-docs/new-build-system).
+Visit the wiki to [get started with development](https://github.com/abaker/tasks/wiki/Getting-Started-with-Development).
 
-You must install [Gradle](http://www.gradle.org/) and [Android Studio](http://developer.android.com/sdk/installing/studio.html). Eclipse is not yet supported by the new build system.
-
-To Do
------
-* DropBox
-* Browser extensions
-* Continuous Build
-* Widgets
-* Translation workflow
-* Remove dead code
-* Remove unused resources and preferences
-* Fix warnings

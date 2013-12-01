@@ -9,27 +9,15 @@ import com.todoroo.andlib.service.AbstractDependencyInjector;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.service.ExceptionService.AndroidLogReporter;
 import com.todoroo.andlib.service.ExceptionService.ErrorReporter;
-import com.todoroo.andlib.service.HttpRestClient;
-import com.todoroo.astrid.actfm.sync.ActFmInvoker;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
-import com.todoroo.astrid.actfm.sync.ActFmSyncService;
 import com.todoroo.astrid.dao.Database;
-import com.todoroo.astrid.dao.HistoryDao;
 import com.todoroo.astrid.dao.MetadataDao;
 import com.todoroo.astrid.dao.StoreObjectDao;
 import com.todoroo.astrid.dao.TagDataDao;
 import com.todoroo.astrid.dao.TagMetadataDao;
-import com.todoroo.astrid.dao.TagOutstandingDao;
 import com.todoroo.astrid.dao.TaskAttachmentDao;
-import com.todoroo.astrid.dao.TaskAttachmentOutstandingDao;
 import com.todoroo.astrid.dao.TaskDao;
 import com.todoroo.astrid.dao.TaskListMetadataDao;
-import com.todoroo.astrid.dao.TaskListMetadataOutstandingDao;
-import com.todoroo.astrid.dao.TaskOutstandingDao;
-import com.todoroo.astrid.dao.UpdateDao;
 import com.todoroo.astrid.dao.UserActivityDao;
-import com.todoroo.astrid.dao.UserActivityOutstandingDao;
-import com.todoroo.astrid.dao.UserDao;
 import com.todoroo.astrid.gtasks.GtasksListService;
 import com.todoroo.astrid.gtasks.GtasksMetadataService;
 import com.todoroo.astrid.gtasks.GtasksPreferenceService;
@@ -38,8 +26,8 @@ import com.todoroo.astrid.gtasks.sync.GtasksSyncService;
 import com.todoroo.astrid.tags.TagService;
 import com.todoroo.astrid.utility.Constants;
 
-import org.astrid.dropbox.DropBoxSyncManager;
-import org.astrid.preferences.AstridPreferenceManager;
+import org.tasks.dropbox.DropBoxSyncManager;
+import org.tasks.preferences.TasksPreferenceManager;
 
 /**
  * Astrid application dependency injector loads classes in Astrid with the
@@ -68,7 +56,6 @@ public class AstridDependencyInjector extends AbstractDependencyInjector {
 
         // com.todoroo.android.service
         injectables.put("applicationName", "astrid");
-        injectables.put("restClient", HttpRestClient.class);
 
         // com.todoroo.astrid.dao
         injectables.put("database", Database.class);
@@ -77,37 +64,16 @@ public class AstridDependencyInjector extends AbstractDependencyInjector {
         injectables.put("tagMetadataDao", TagMetadataDao.class);
         injectables.put("tagDataDao", TagDataDao.class);
         injectables.put("storeObjectDao", StoreObjectDao.class);
-        injectables.put("updateDao", UpdateDao.class);
         injectables.put("userActivityDao", UserActivityDao.class);
-        injectables.put("userDao", UserDao.class);
-        injectables.put("taskOutstandingDao", TaskOutstandingDao.class);
-        injectables.put("tagOutstandingDao", TagOutstandingDao.class);
-        injectables.put("userActivityOutstandingDao", UserActivityOutstandingDao.class);
-        injectables.put("historyDao", HistoryDao.class);
         injectables.put("taskAttachmentDao", TaskAttachmentDao.class);
-        injectables.put("taskAttachmentOutstandingDao", TaskAttachmentOutstandingDao.class);
         injectables.put("taskListMetadataDao", TaskListMetadataDao.class);
-        injectables.put("taskListMetadataOutstandingDao", TaskListMetadataOutstandingDao.class);
 
         // com.todoroo.astrid.service
         injectables.put("taskService", TaskService.class);
         injectables.put("metadataService", MetadataService.class);
         injectables.put("tagDataService", TagDataService.class);
         injectables.put("upgradeService", UpgradeService.class);
-        injectables.put("addOnService", AddOnService.class);
         injectables.put("syncService", SyncV2Service.class);
-
-        // com.timsu.astrid.data
-        injectables.put("tasksTable", "tasks");
-        injectables.put("tagsTable", "tags");
-        injectables.put("tagTaskTable", "tagTaskMap");
-        injectables.put("alertsTable", "alerts");
-        injectables.put("syncTable", "sync");
-
-        // com.todoroo.astrid.sharing
-        injectables.put("actFmPreferenceService", ActFmPreferenceService.class);
-        injectables.put("actFmInvoker", ActFmInvoker.class);
-        injectables.put("actFmSyncService", ActFmSyncService.class);
 
         // com.todoroo.astrid.gtasks
         injectables.put("gtasksPreferenceService", GtasksPreferenceService.class);
@@ -119,7 +85,7 @@ public class AstridDependencyInjector extends AbstractDependencyInjector {
         // com.todoroo.astrid.tags
         injectables.put("tagService", TagService.class);
 
-        injectables.put("astridPreferenceManager", AstridPreferenceManager.class);
+        injectables.put("tasksPreferenceManager", TasksPreferenceManager.class);
         injectables.put("dropboxSyncManager", DropBoxSyncManager.class);
 
         // these make reference to fields defined above

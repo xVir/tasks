@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.gtasks;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.api.services.tasks.model.TaskList;
 import com.google.api.services.tasks.model.TaskLists;
 import com.todoroo.andlib.service.Autowired;
@@ -16,6 +13,9 @@ import com.todoroo.astrid.data.Metadata;
 import com.todoroo.astrid.data.StoreObject;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.test.DatabaseTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("nls")
 public class GtasksTaskListUpdaterTest extends DatabaseTestCase {
@@ -124,7 +124,7 @@ public class GtasksTaskListUpdaterTest extends DatabaseTestCase {
         super.setUp();
 
         TaskLists lists = new TaskLists();
-        List<TaskList> items = new ArrayList<TaskList>();
+        List<TaskList> items = new ArrayList<>();
         TaskList list = new TaskList();
         list.setId("1");
         list.setTitle("Tim's Tasks");

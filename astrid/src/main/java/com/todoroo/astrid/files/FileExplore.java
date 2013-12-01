@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.files;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -25,8 +21,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.DialogUtilities;
+
+import org.tasks.R;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
 
 /**
  * Based on the Android-File-Explore project by Manish Burman
@@ -36,7 +37,7 @@ import com.todoroo.andlib.utility.DialogUtilities;
 public class FileExplore extends Activity {
 
 	// Stores names of traversed directories
-	ArrayList<String> str = new ArrayList<String>();
+	ArrayList<String> str = new ArrayList<>();
 
 	// Check if the first level of the directory structure is the one showing
 	private Boolean firstLvl = true;
@@ -121,9 +122,7 @@ public class FileExplore extends Activity {
 
 			if (!firstLvl) {
 				Item temp[] = new Item[fileList.length + 1];
-				for (int i = 0; i < fileList.length; i++) {
-					temp[i + 1] = fileList[i];
-				}
+                System.arraycopy(fileList, 0, temp, 1, fileList.length);
 				temp[0] = new Item(upString, R.drawable.directory_up);
 				fileList = temp;
 			}
@@ -173,7 +172,7 @@ public class FileExplore extends Activity {
 
 	@Override
 	protected Dialog onCreateDialog(int id) {
-		Dialog dialog = null;
+		Dialog dialog;
 		AlertDialog.Builder builder = new Builder(this);
 
 		if (fileList == null) {

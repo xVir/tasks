@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.ui;
 
-import java.util.Calendar;
-import java.util.Date;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -32,6 +29,9 @@ import android.view.WindowManager;
 
 import org.tasks.R;
 
+import java.util.Calendar;
+import java.util.Date;
+
 public class CalendarView extends View {
 
 	private static final int PADDING = 0;
@@ -43,17 +43,14 @@ public class CalendarView extends View {
     private float deltaX;
     private boolean ignoreNextTouch;
 
-	private Paint borderPaint;
-	private Paint calendarNumberRightAlignPaint;
+    private Paint calendarNumberRightAlignPaint;
 	private Paint calendarSelectedNumberRightAlignPaint;
 	private Paint backgroundColorPaint;
 	private Paint monthCenterAlignLargePaint;
-	private Paint centerAlignPaint;
-	private Paint rightAlignPaint;
+    private Paint rightAlignPaint;
 	private Paint todayCalendarPaint;
 	private Paint selectedCalendarPaint;
-	private Paint dayPaint;
-	private float density;
+    private float density;
 
 	private int leftArrowHeight;
 	private int leftArrowWidth;
@@ -86,7 +83,6 @@ public class CalendarView extends View {
     /**
      * Constructor.  This version is only needed if you will be instantiating
      * the object manually (not from a layout XML file).
-     * @param context
      */
     public CalendarView(Context context) {
         super(context);
@@ -98,7 +94,7 @@ public class CalendarView extends View {
         initCalendarView(context);
     }
 
-    private final void initCalendarView(Context context) {
+    private void initCalendarView(Context context) {
         Display display = ((WindowManager) context.getSystemService(
                 Context.WINDOW_SERVICE)).getDefaultDisplay();
 
@@ -108,7 +104,7 @@ public class CalendarView extends View {
 
         Resources r = context.getResources();
 
-    	borderPaint = new Paint();
+        Paint borderPaint = new Paint();
     	borderPaint.setAntiAlias(true);
     	borderPaint.setColor(r.getColor(R.color.task_edit_deadline_gray));
     	borderPaint.setStyle(Style.STROKE);
@@ -125,7 +121,7 @@ public class CalendarView extends View {
         calendarSelectedNumberRightAlignPaint.setTextSize(TEXT_SIZE * density);
         calendarSelectedNumberRightAlignPaint.setTextAlign(Paint.Align.RIGHT);
 
-    	dayPaint = new Paint();
+        Paint dayPaint = new Paint();
     	dayPaint.setAntiAlias(true);
     	dayPaint.setColor(Color.rgb(137, 135, 132));
 
@@ -135,7 +131,7 @@ public class CalendarView extends View {
     	monthCenterAlignLargePaint.setTextAlign(Paint.Align.CENTER);
     	monthCenterAlignLargePaint.setTextSize(MONTH_TEXT_SIZE * density);
 
-    	centerAlignPaint = new Paint();
+        Paint centerAlignPaint = new Paint();
     	centerAlignPaint.setAntiAlias(true);
     	centerAlignPaint.setColor(r.getColor(R.color.task_edit_deadline_gray));
     	centerAlignPaint.setTextAlign(Paint.Align.CENTER);
@@ -309,8 +305,8 @@ public class CalendarView extends View {
         boxWidth = (getMeasuredWidth() - (PADDING*2)) / 7.0f;
         boxHeight = (int) (((getMeasuredHeight() - (monthTitleHeight) - 16) - (PADDING * 8)) / 7);
 
-        float textX = 0;
-        float textY = 0;
+        float textX;
+        float textY;
 
         int firstDayOfWeek = calendar.getFirstDayOfWeek();
         calendar.set(Calendar.DAY_OF_WEEK, firstDayOfWeek);

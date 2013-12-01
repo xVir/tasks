@@ -1,8 +1,5 @@
 package com.todoroo.astrid.subtasks;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Log;
@@ -26,6 +23,9 @@ import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.data.TaskListMetadata;
 import com.todoroo.astrid.subtasks.AstridOrderedListUpdater.Node;
 import com.todoroo.astrid.utility.AstridPreferences;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class SubtasksHelper {
 
@@ -103,7 +103,7 @@ public class SubtasksHelper {
 
     @Deprecated
     private static Long[] getIdArray(String serializedTree) {
-        ArrayList<Long> ids = new ArrayList<Long>();
+        ArrayList<Long> ids = new ArrayList<>();
         String[] digitsOnly = serializedTree.split("[\\[\\],\\s]"); // Split on [ ] , or whitespace chars
         for (String idString : digitsOnly) {
             try {
@@ -118,7 +118,7 @@ public class SubtasksHelper {
     }
 
     public static String[] getStringIdArray(String serializedTree) {
-        ArrayList<String> ids = new ArrayList<String>();
+        ArrayList<String> ids = new ArrayList<>();
         String[] values = serializedTree.split("[\\[\\],\"\\s]"); // Split on [ ] , or whitespace chars
         for (String idString : values) {
             if (!TextUtils.isEmpty(idString)) {
@@ -130,8 +130,6 @@ public class SubtasksHelper {
 
     /**
      * Takes a subtasks string containing local ids and remaps it to one containing UUIDs
-     * @param localTree
-     * @return
      */
     public static String convertTreeToRemoteIds(String localTree) {
         Long[] localIds = getIdArray(localTree);
@@ -178,7 +176,7 @@ public class SubtasksHelper {
     }
 
     private static <A, B> HashMap<A, B> getIdMap(A[] keys, Property<A> keyProperty, Property<B> valueProperty) {
-        HashMap<A, B> map = new HashMap<A, B>();
+        HashMap<A, B> map = new HashMap<>();
         TodorooCursor<Task> tasks = PluginServices.getTaskService().query(Query.select(keyProperty, valueProperty).where(keyProperty.in(keys)));
         try {
             for (tasks.moveToFirst(); !tasks.isAfterLast(); tasks.moveToNext()) {

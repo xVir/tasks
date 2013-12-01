@@ -16,9 +16,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
 
 public class EditNotesControlSet extends PopupControlSet {
 
@@ -82,9 +83,8 @@ public class EditNotesControlSet extends PopupControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         task.setValue(Task.NOTES, editText.getText().toString());
-        return null;
     }
 
     @Override
@@ -100,9 +100,4 @@ public class EditNotesControlSet extends PopupControlSet {
         InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(editText.getWindowToken(), 0);
     }
-
-    public boolean hasNotes() {
-        return !TextUtils.isEmpty(editText.getText());
-    }
-
 }

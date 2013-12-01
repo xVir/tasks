@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.gcal;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
@@ -17,10 +14,14 @@ import android.preference.ListPreference;
 import android.provider.CalendarContract;
 import android.util.Log;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.Preferences;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Calendars {
 
@@ -70,23 +71,15 @@ public class Calendars {
 	}
 
 	private static Uri getIcsUri(String table) {
-	    if (CALENDAR_CONTENT_CALENDARS.equals(table)) {
-            return CalendarContract.Calendars.CONTENT_URI;
-        } else if (CALENDAR_CONTENT_EVENTS.equals(table)) {
-            return CalendarContract.Events.CONTENT_URI;
-        } else if (CALENDAR_CONTENT_ATTENDEES.equals(table)) {
-            return CalendarContract.Attendees.CONTENT_URI;
+        switch (table) {
+            case CALENDAR_CONTENT_CALENDARS:
+                return CalendarContract.Calendars.CONTENT_URI;
+            case CALENDAR_CONTENT_EVENTS:
+                return CalendarContract.Events.CONTENT_URI;
+            case CALENDAR_CONTENT_ATTENDEES:
+                return CalendarContract.Attendees.CONTENT_URI;
         }
 	    return null;
-	}
-
-	/** Return calendar package name */
-	public static String getCalendarPackage() {
-	    if(AndroidUtilities.getSdkVersion() >= 8) {
-            return "com.google.android.calendar";
-        } else {
-            return "com.android.calendar";
-        }
 	}
 
 	// --- helper data structure
@@ -107,11 +100,6 @@ public class Calendars {
 
 	/**
 	 * Appends all user-modifiable calendars to listPreference.
-	 *
-	 * @param context
-	 *            context
-	 * @param listPreference
-	 *            preference to init
 	 */
 	public static CalendarResult getCalendars() {
 	    Context context = ContextManager.getContext();
@@ -192,11 +180,11 @@ public class Calendars {
 
         int currentSettingIndex = -1;
 
-        ArrayList<CharSequence> entries = new ArrayList<CharSequence>();
+        ArrayList<CharSequence> entries = new ArrayList<>();
         entries.addAll(Arrays.asList(r.getStringArray(R.array.EPr_default_addtocalendar)));
         entries.addAll(Arrays.asList(calendars.calendars));
 
-        ArrayList<CharSequence> entryValues = new ArrayList<CharSequence>();
+        ArrayList<CharSequence> entryValues = new ArrayList<>();
         entryValues.addAll(Arrays.asList(r.getStringArray(R.array.EPr_default_addtocalendar_values)));
         entryValues.addAll(Arrays.asList(calendars.calendarIds));
 
@@ -233,14 +221,6 @@ public class Calendars {
         listPreference.setValueIndex(currentSettingIndex);
         listPreference.setEnabled(true);
     }
-
-	/**
-	 * sets the default calendar for future use
-	 * @param defaultCalendar default calendar id
-	 */
-	public static void setDefaultCalendar(String defaultCalendar) {
-        Preferences.setString(R.string.gcal_p_default, defaultCalendar);
-	}
 
 	/**
 	 * gets the default calendar for future use

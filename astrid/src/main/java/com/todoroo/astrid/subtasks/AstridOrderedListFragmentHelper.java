@@ -1,11 +1,5 @@
 package com.todoroo.astrid.subtasks;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
 import android.app.Activity;
 import android.database.Cursor;
 import android.text.TextUtils;
@@ -18,7 +12,6 @@ import android.widget.ListView;
 import com.commonsware.cwac.tlv.TouchListView.DropListener;
 import com.commonsware.cwac.tlv.TouchListView.GrabberClickListener;
 import com.commonsware.cwac.tlv.TouchListView.SwipeListener;
-import org.tasks.R;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
@@ -35,11 +28,18 @@ import com.todoroo.astrid.adapter.TaskAdapter.OnCompletedTaskListener;
 import com.todoroo.astrid.api.Filter;
 import com.todoroo.astrid.data.RemoteModel;
 import com.todoroo.astrid.data.Task;
-import com.todoroo.astrid.service.MetadataService;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.ui.DraggableListView;
 import com.todoroo.astrid.utility.AstridPreferences;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class AstridOrderedListFragmentHelper<LIST> implements OrderedListFragmentHelperInterface<LIST> {
 
@@ -49,7 +49,6 @@ public class AstridOrderedListFragmentHelper<LIST> implements OrderedListFragmen
     private final TaskListFragment fragment;
 
     @Autowired TaskService taskService;
-    @Autowired MetadataService metadataService;
 
     private DraggableTaskAdapter taskAdapter;
 
@@ -76,8 +75,7 @@ public class AstridOrderedListFragmentHelper<LIST> implements OrderedListFragmen
     }
 
     public DraggableListView getTouchListView() {
-        DraggableListView tlv = (DraggableListView) fragment.getListView();
-        return tlv;
+        return (DraggableListView) fragment.getListView();
     }
 
     @Override
@@ -185,7 +183,7 @@ public class AstridOrderedListFragmentHelper<LIST> implements OrderedListFragmen
             if(v == null) {
                 return;
             }
-            ((DraggableTaskAdapter) taskAdapter).getListener().onClick(v);
+            taskAdapter.getListener().onClick(v);
         }
     };
 
@@ -194,7 +192,7 @@ public class AstridOrderedListFragmentHelper<LIST> implements OrderedListFragmen
             AtomicReference<String> sqlQueryTemplate) {
 
         taskAdapter = new DraggableTaskAdapter(fragment, TaskListFragment.getTaskRowResource(),
-                cursor, sqlQueryTemplate, false, null);
+                cursor, sqlQueryTemplate);
 
         getTouchListView().setItemHightNormal(taskAdapter.computeFullRowHeight());
 
@@ -211,12 +209,8 @@ public class AstridOrderedListFragmentHelper<LIST> implements OrderedListFragmen
     private final class DraggableTaskAdapter extends TaskAdapter {
 
         private DraggableTaskAdapter(TaskListFragment activity, int resource,
-                Cursor c, AtomicReference<String> query, boolean autoRequery,
-                OnCompletedTaskListener onCompletedTaskListener) {
-            super(activity, resource, c, query, autoRequery,
-                    onCompletedTaskListener);
-
-            applyListeners = APPLY_LISTENERS_NONE;
+                Cursor c, AtomicReference<String> query) {
+            super(activity, resource, c, query, null);
         }
 
         @Override
@@ -252,7 +246,7 @@ public class AstridOrderedListFragmentHelper<LIST> implements OrderedListFragmen
         final Task model = new Task();
         final long completionDate = completedState ? DateUtilities.now() : 0;
 
-        if(completedState == false) {
+        if(!completedState) {
             ArrayList<String> chained = chainedCompletions.get(itemId);
             if(chained != null) {
                 for(String taskId : chained) {
@@ -267,7 +261,7 @@ public class AstridOrderedListFragmentHelper<LIST> implements OrderedListFragmen
             return;
         }
 
-        final ArrayList<String> chained = new ArrayList<String>();
+        final ArrayList<String> chained = new ArrayList<>();
         updater.applyToDescendants(itemId, new AstridOrderedListUpdater.OrderedListNodeVisitor() {
             @Override
             public void visitNode(AstridOrderedListUpdater.Node node) {

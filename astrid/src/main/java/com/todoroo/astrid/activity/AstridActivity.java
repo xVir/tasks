@@ -5,7 +5,6 @@
  */
 package com.todoroo.astrid.activity;
 
-import android.app.PendingIntent.CanceledException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,40 +13,36 @@ import android.speech.SpeechRecognizer;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.view.WindowManager.BadTokenException;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import org.tasks.R;
 import com.todoroo.aacenc.RecognizerApi.RecognizerApiListener;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
-import com.todoroo.astrid.actfm.CommentsActivity;
 import com.todoroo.astrid.actfm.CommentsFragment;
 import com.todoroo.astrid.actfm.TagCommentsFragment;
-import com.todoroo.astrid.actfm.TaskCommentsFragment;
 import com.todoroo.astrid.api.AstridApiConstants;
 import com.todoroo.astrid.api.Filter;
 import com.todoroo.astrid.api.FilterListItem;
 import com.todoroo.astrid.api.FilterWithCustomIntent;
-import com.todoroo.astrid.api.IntentFilter;
 import com.todoroo.astrid.core.CoreFilterExposer;
 import com.todoroo.astrid.core.PluginServices;
-import com.todoroo.astrid.core.SearchFilter;
 import com.todoroo.astrid.dao.TaskDao;
 import com.todoroo.astrid.data.TagData;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.StartupService;
-import com.todoroo.astrid.service.StatisticsConstants;
 import com.todoroo.astrid.subtasks.SubtasksHelper;
 import com.todoroo.astrid.ui.DateChangedAlerts;
 import com.todoroo.astrid.ui.QuickAddBar;
 import com.todoroo.astrid.voice.VoiceRecognizer;
+
+import org.tasks.R;
 
 /**
  * This wrapper activity contains all the glue-code to handle the callbacks between the different
@@ -60,14 +55,13 @@ import com.todoroo.astrid.voice.VoiceRecognizer;
  * @author Arne
  *
  */
-public class AstridActivity extends SherlockFragmentActivity
+public class AstridActivity extends ActionBarActivity
     implements FilterListFragment.OnFilterItemClickedListener,
     TaskListFragment.OnTaskListItemClickedListener,
     RecognizerApiListener {
 
     public static final int LAYOUT_SINGLE = 0;
     public static final int LAYOUT_DOUBLE = 1;
-    public static final int LAYOUT_TRIPLE = 2;
 
     public static final int RESULT_RESTART_ACTIVITY = 50;
 
@@ -79,31 +73,23 @@ public class AstridActivity extends SherlockFragmentActivity
     private TaskDao taskDao;
 
     public FilterListFragment getFilterListFragment() {
-        FilterListFragment frag = (FilterListFragment) getSupportFragmentManager()
+        return (FilterListFragment) getSupportFragmentManager()
                 .findFragmentByTag(FilterListFragment.TAG_FILTERLIST_FRAGMENT);
-
-        return frag;
     }
 
     public TaskListFragment getTaskListFragment() {
-        TaskListFragment frag = (TaskListFragment) getSupportFragmentManager()
+        return (TaskListFragment) getSupportFragmentManager()
                 .findFragmentByTag(TaskListFragment.TAG_TASKLIST_FRAGMENT);
-
-        return frag;
     }
 
     public TaskEditFragment getTaskEditFragment() {
-        TaskEditFragment frag = (TaskEditFragment) getSupportFragmentManager()
+        return (TaskEditFragment) getSupportFragmentManager()
                 .findFragmentByTag(TaskEditFragment.TAG_TASKEDIT_FRAGMENT);
-
-        return frag;
     }
 
     public CommentsFragment getTagUpdatesFragment() {
-        CommentsFragment frag = (CommentsFragment) getSupportFragmentManager()
+        return (CommentsFragment) getSupportFragmentManager()
                 .findFragmentByTag(CommentsFragment.TAG_UPDATES_FRAGMENT);
-
-        return frag;
     }
 
 
@@ -133,11 +119,6 @@ public class AstridActivity extends SherlockFragmentActivity
         AndroidUtilities.tryUnregisterReceiver(this, repeatConfirmationReceiver);
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
     /**
      * Handles items being clicked from the filterlist-fragment. Return true if item is handled.
      */
@@ -146,34 +127,23 @@ public class AstridActivity extends SherlockFragmentActivity
         if (this instanceof TaskListActivity && (item instanceof Filter) ) {
             ((TaskListActivity) this).setSelectedItem((Filter) item);
         }
-        if (item instanceof SearchFilter) {
-            onSearchRequested();
-            return false;
-        } else {
-            // If showing both fragments, directly update the tasklist-fragment
-            Intent intent = getIntent();
+        // If showing both fragments, directly update the tasklist-fragment
+        Intent intent = getIntent();
 
-            if(item instanceof Filter) {
-                Filter filter = (Filter)item;
+        if(item instanceof Filter) {
+            Filter filter = (Filter)item;
 
-                Bundle extras = configureIntentAndExtrasWithFilter(intent, filter);
-                if (fragmentLayout == LAYOUT_TRIPLE && getTaskEditFragment() != null) {
-                    onBackPressed(); // remove the task edit fragment when switching between lists
-                }
-                setupTasklistFragmentWithFilter(filter, extras);
-
-                // no animation for dualpane-layout
-                AndroidUtilities.callOverridePendingTransition(this, 0, 0);
-                return true;
-            } else if(item instanceof IntentFilter) {
-                try {
-                    ((IntentFilter)item).intent.send();
-                } catch (CanceledException e) {
-                    // ignore
-                }
+            Bundle extras = configureIntentAndExtrasWithFilter(intent, filter);
+            if (fragmentLayout == LAYOUT_DOUBLE && getTaskEditFragment() != null) {
+                onBackPressed(); // remove the task edit fragment when switching between lists
             }
-            return false;
+            setupTasklistFragmentWithFilter(filter, extras);
+
+            // no animation for dualpane-layout
+            AndroidUtilities.callOverridePendingTransition(this, 0, 0);
+            return true;
         }
+        return false;
     }
 
     protected Bundle configureIntentAndExtrasWithFilter(Intent intent, Filter filter) {
@@ -199,7 +169,7 @@ public class AstridActivity extends SherlockFragmentActivity
             return;
         }
 
-        if (fragmentLayout == LAYOUT_TRIPLE) {
+        if (fragmentLayout == LAYOUT_DOUBLE) {
             findViewById(R.id.taskedit_fragment_container).setVisibility(View.VISIBLE);
         }
         FragmentManager manager = getSupportFragmentManager();
@@ -243,26 +213,7 @@ public class AstridActivity extends SherlockFragmentActivity
 
     @Override
     public void onTaskListItemClicked(long taskId) {
-        Task task = taskDao.fetch(taskId, Task.IS_READONLY, Task.IS_PUBLIC, Task.USER_ID);
-        if (task != null) {
-            onTaskListItemClicked(taskId, task.isEditable());
-        }
-    }
-
-    public void onTaskListItemClicked(String uuid) {
-        Task task = taskDao.fetch(uuid, Task.ID, Task.IS_READONLY, Task.IS_PUBLIC, Task.USER_ID);
-        if (task != null) {
-            onTaskListItemClicked(task.getId(), task.isEditable());
-        }
-    }
-
-    @Override
-    public void onTaskListItemClicked(long taskId, boolean editable) {
-        if (editable) {
-            editTask(taskId);
-        } else {
-            showComments(taskId);
-        }
+        editTask(taskId);
     }
 
     private void editTask(long taskId) {
@@ -306,13 +257,6 @@ public class AstridActivity extends SherlockFragmentActivity
         }
     }
 
-    private void showComments(long taskId) {
-        Intent intent = new Intent(this, CommentsActivity.class);
-        intent.putExtra(TaskCommentsFragment.EXTRA_TASK, taskId);
-        startActivity(intent);
-        AndroidUtilities.callOverridePendingTransition(this, R.anim.slide_left_in, R.anim.slide_left_out);
-    }
-
     @Override
     public void onBackPressed() {
         if (isFinishing()) {
@@ -323,21 +267,10 @@ public class AstridActivity extends SherlockFragmentActivity
 
     // --- fragment helpers
 
-    protected void removeFragment(String tag) {
-        FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentByTag(tag);
-        if(fragment != null) {
-            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            ft.remove(fragment);
-            ft.commit();
-        }
-    }
-
-    protected Fragment setupFragment(String tag, int container, Class<? extends Fragment> cls, boolean createImmediate, boolean replace) {
+    protected Fragment setupFragment(String tag, int container, Class<? extends Fragment> cls) {
         final FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
-        if(fragment == null || replace) {
-            Fragment oldFragment = fragment;
+        if(fragment == null) {
             try {
                 fragment = cls.newInstance();
             } catch (InstantiationException e) {
@@ -348,23 +281,18 @@ public class AstridActivity extends SherlockFragmentActivity
 
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             if (container == 0) {
-                if (oldFragment != null && replace) {
-                    ft.remove(oldFragment);
-                }
                 ft.add(fragment, tag);
             }
             else {
                 ft.replace(container, fragment, tag);
             }
             ft.commit();
-            if (createImmediate) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        fm.executePendingTransactions();
-                    }
-                });
-            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    fm.executePendingTransactions();
+                }
+            });
         }
         return fragment;
     }
@@ -429,7 +357,7 @@ public class AstridActivity extends SherlockFragmentActivity
     }
 
     /**
-     * @return LAYOUT_SINGLE, LAYOUT_DOUBLE, or LAYOUT_TRIPLE
+     * @return LAYOUT_SINGLE or LAYOUT_DOUBLE
      */
     public int getFragmentLayout() {
         return fragmentLayout;

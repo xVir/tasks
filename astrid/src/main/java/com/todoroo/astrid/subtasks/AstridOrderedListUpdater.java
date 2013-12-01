@@ -1,14 +1,5 @@
 package com.todoroo.astrid.subtasks;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-
 import android.util.Log;
 
 import com.todoroo.andlib.data.TodorooCursor;
@@ -19,6 +10,15 @@ import com.todoroo.astrid.data.RemoteModel;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.TaskService;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public abstract class AstridOrderedListUpdater<LIST> {
 
     @Autowired
@@ -26,7 +26,7 @@ public abstract class AstridOrderedListUpdater<LIST> {
 
     public AstridOrderedListUpdater() {
         DependencyInjectionService.getInstance().inject(this);
-        idToNode = new HashMap<String, Node>();
+        idToNode = new HashMap<>();
     }
 
     public interface OrderedListNodeVisitor {
@@ -37,7 +37,7 @@ public abstract class AstridOrderedListUpdater<LIST> {
         public String uuid;
         public Node parent;
         public int indent;
-        public final ArrayList<Node> children = new ArrayList<Node>();
+        public final ArrayList<Node> children = new ArrayList<>();
 
         public Node(String uuid, Node parent, int indent) {
             this.uuid = uuid;
@@ -80,11 +80,11 @@ public abstract class AstridOrderedListUpdater<LIST> {
     private void verifyTreeModel(LIST list, Filter filter) {
         boolean changedThings = false;
         Set<String> keySet = idToNode.keySet();
-        Set<String> currentIds = new HashSet<String>();
+        Set<String> currentIds = new HashSet<>();
         for (String id : keySet) {
             currentIds.add(id);
         }
-        Set<String> idsInQuery = new HashSet<String>();
+        Set<String> idsInQuery = new HashSet<>();
         String sql = filter.getSqlQuery().replaceAll("ORDER BY .*", "");  //$NON-NLS-1$//$NON-NLS-2$
         sql = sql + String.format(" ORDER BY %s", Task.CREATION_DATE); //$NON-NLS-1$
         TodorooCursor<Task> tasks = taskService.fetchFiltered(sql, null, Task.UUID);
@@ -138,7 +138,7 @@ public abstract class AstridOrderedListUpdater<LIST> {
     }
 
     private String[] getOrderedIds() {
-        ArrayList<String> ids = new ArrayList<String>();
+        ArrayList<String> ids = new ArrayList<>();
         orderedIdHelper(treeRoot, ids);
         return ids.toArray(new String[ids.size()]);
     }
@@ -186,10 +186,6 @@ public abstract class AstridOrderedListUpdater<LIST> {
             visitor.visitNode(child);
             applyToDescendantsHelper(child, visitor);
         }
-    }
-
-    public void iterateOverList(OrderedListNodeVisitor visitor) {
-        applyToDescendantsHelper(treeRoot, visitor);
     }
 
     public void indent(LIST list, Filter filter, String targetTaskId, int delta) {
@@ -408,7 +404,7 @@ public abstract class AstridOrderedListUpdater<LIST> {
     private static void recursivelyBuildChildren(Node node, JSONArray children, JSONTreeModelBuilder callback) throws JSONException {
         for (int i = 1; i < children.length(); i++) {
             JSONArray subarray = children.optJSONArray(i);
-            String uuid = RemoteModel.NO_UUID;
+            String uuid;
             if (subarray == null) {
                 uuid = children.getString(i);
             } else {
@@ -436,15 +432,11 @@ public abstract class AstridOrderedListUpdater<LIST> {
             return tree.toString();
         }
 
-        try {
-            recursivelySerialize(root, tree);
-        } catch (JSONException e) {
-            Log.e("OrderedListUpdater", "Error serializing tree model", e);  //$NON-NLS-1$//$NON-NLS-2$
-        }
+        recursivelySerialize(root, tree);
         return tree.toString();
     }
 
-    private static void recursivelySerialize(Node node, JSONArray serializeTo) throws JSONException {
+    private static void recursivelySerialize(Node node, JSONArray serializeTo) {
         ArrayList<Node> children = node.children;
         serializeTo.put(node.uuid);
         for (Node child : children) {

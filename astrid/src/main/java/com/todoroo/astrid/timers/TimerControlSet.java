@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.Property.IntegerProperty;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.helper.TaskEditControlSet;
@@ -20,6 +19,8 @@ import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.timers.TimerActionControlSet.TimerActionListener;
 import com.todoroo.astrid.ui.PopupControlSet;
 import com.todoroo.astrid.ui.TimeDurationControlSet;
+
+import org.tasks.R;
 
 /**
  * Control Set for managing repeats
@@ -62,12 +63,11 @@ public class TimerControlSet extends PopupControlSet implements TimerActionListe
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         if (initialized) {
             estimated.writeToModel(task);
             elapsed.writeToModel(task);
         }
-        return null;
     }
 
     // --- TimeDurationTaskEditControlSet
@@ -101,9 +101,8 @@ public class TimerControlSet extends PopupControlSet implements TimerActionListe
         }
 
         @Override
-        protected String writeToModelAfterInitialized(Task task) {
+        protected void writeToModelAfterInitialized(Task task) {
             task.setValue(property, controlSet.getTimeDurationInSeconds());
-            return null;
         }
 
         public String getDisplayString() {
@@ -156,7 +155,6 @@ public class TimerControlSet extends PopupControlSet implements TimerActionListe
 
     @Override
     public void timerStarted(Task task) {
-        return;
     }
 
 }

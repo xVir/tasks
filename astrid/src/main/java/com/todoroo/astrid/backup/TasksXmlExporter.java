@@ -5,12 +5,6 @@
  */
 package com.todoroo.astrid.backup;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import org.xmlpull.v1.XmlSerializer;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -19,7 +13,6 @@ import android.util.Log;
 import android.util.Xml;
 import android.widget.Toast;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.AbstractModel;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.Property.PropertyVisitor;
@@ -31,13 +24,21 @@ import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.core.PluginServices;
-import com.todoroo.astrid.dao.Database;
 import com.todoroo.astrid.dao.MetadataDao.MetadataCriteria;
 import com.todoroo.astrid.data.Metadata;
+import com.todoroo.astrid.data.TagData;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.MetadataService;
+import com.todoroo.astrid.service.TagDataService;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.utility.AstridPreferences;
+
+import org.tasks.R;
+import org.xmlpull.v1.XmlSerializer;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class TasksXmlExporter {
 
@@ -48,13 +49,11 @@ public class TasksXmlExporter {
      *
      * @param context context
      * @param exportType from service, manual, or on upgrade
-     * @param runAfterExport runnable to run after exporting
      * @param backupDirectoryOverride new backupdirectory, or null to use default
      */
     public static void exportTasks(Context context, ExportType exportType,
-            Runnable runAfterExport, File backupDirectoryOverride, String versionName) {
-        new TasksXmlExporter(context, exportType, runAfterExport,
-                backupDirectoryOverride, versionName);
+            File backupDirectoryOverride) {
+        new TasksXmlExporter(context, exportType, backupDirectoryOverride);
     }
 
     public static enum ExportType {
@@ -65,13 +64,14 @@ public class TasksXmlExporter {
 
     // --- implementation
 
-    private static final int FORMAT = 2;
+    // 3 is started on Version 4.6.10
+    private static final int FORMAT = 3;
 
     private final Context context;
     private int exportCount = 0;
     private XmlSerializer xml;
-    private final Database database = PluginServices.getDatabase();
     private final TaskService taskService = PluginServices.getTaskService();
+    private final TagDataService tagdataService = PluginServices.getTagDataService();
     private final MetadataService metadataService = PluginServices.getMetadataService();
     private final ExceptionService exceptionService = PluginServices.getExceptionService();
 
@@ -91,12 +91,12 @@ public class TasksXmlExporter {
     }
 
     private TasksXmlExporter(final Context context, final ExportType exportType,
-            final Runnable runAfterExport, File backupDirectoryOverride, String versionName) {
+            File backupDirectoryOverride) {
         this.context = context;
         this.exportCount = 0;
         this.backupDirectory = backupDirectoryOverride == null ?
                 BackupConstants.defaultExportDirectory() : backupDirectoryOverride;
-        this.latestSetVersionName = versionName;
+        this.latestSetVersionName = null;
 
         handler = new Handler();
         progressDialog = new ProgressDialog(context);
@@ -125,8 +125,7 @@ public class TasksXmlExporter {
                         doTasksExport(output);
                     }
 
-                    Preferences.setLong(BackupPreferences.PREF_BACKUP_LAST_DATE,
-                            DateUtilities.now());
+                    Preferences.setLong(BackupPreferences.PREF_BACKUP_LAST_DATE, DateUtilities.now());
                     Preferences.setString(BackupPreferences.PREF_BACKUP_LAST_ERROR, null);
 
                     if (exportType == ExportType.EXPORT_TYPE_MANUAL) {
@@ -148,9 +147,14 @@ public class TasksXmlExporter {
                         break;
                     }
                 } finally {
-                    if(runAfterExport != null) {
-                        runAfterExport.run();
-                    }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(progressDialog.isShowing() && context instanceof Activity) {
+                                DialogUtilities.dismissDialog((Activity) context, progressDialog);
+                            }
+                        }
+                    });
                 }
             }
         }).start();
@@ -174,11 +178,36 @@ public class TasksXmlExporter {
                 Integer.toString(FORMAT));
 
         serializeTasks();
+        serializeTagDatas();
 
         xml.endTag(null, BackupConstants.ASTRID_TAG);
         xml.endDocument();
         xml.flush();
         fos.close();
+    }
+
+    private void  serializeTagDatas() throws IOException {
+        TodorooCursor<TagData> cursor;
+        cursor = tagdataService.query(Query.select(
+                TagData.PROPERTIES).orderBy(Order.asc(TagData.ID)));
+
+        try {
+            TagData tag = new TagData();
+            int length = cursor.getCount();
+            for(int i = 0; i < length; i++) {
+                cursor.moveToNext();
+                tag.readFromCursor(cursor);
+
+                //TODO setProgress(i, length);
+
+                xml.startTag(null, BackupConstants.TAGDATA_TAG);
+                serializeModel(tag, TagData.PROPERTIES, TagData.ID);
+                xml.endTag(null, BackupConstants.TAGDATA_TAG);
+                //this.exportCount++;
+            }
+        } finally {
+            cursor.close();
+        }
     }
 
     private void serializeTasks() throws IOException {
@@ -224,7 +253,6 @@ public class TasksXmlExporter {
 
     /**
      * Turn a model into xml attributes
-     * @param model
      */
     private void serializeModel(AbstractModel model, Property<?>[] properties, Property<?>... excludes) {
         outer: for(Property<?> property : properties) {
@@ -257,11 +285,7 @@ public class TasksXmlExporter {
                 xml.attribute(null, property.name, valueString);
             } catch (UnsupportedOperationException e) {
                 // didn't read this value, do nothing
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalStateException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
+            } catch (IllegalArgumentException | IOException | IllegalStateException e) {
                 throw new RuntimeException(e);
             }
             return null;
@@ -275,29 +299,7 @@ public class TasksXmlExporter {
                 xml.attribute(null, property.name, valueString);
             } catch (UnsupportedOperationException e) {
                 // didn't read this value, do nothing
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalStateException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return null;
-        }
-
-        @Override
-        public Void visitDouble(Property<Double> property, AbstractModel data) {
-            try {
-                Double value = data.getValue(property);
-                String valueString = (value == null) ? XML_NULL : value.toString();
-                xml.attribute(null, property.name, valueString);
-            } catch (UnsupportedOperationException e) {
-                // didn't read this value, do nothing
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalStateException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
+            } catch (IllegalArgumentException | IOException | IllegalStateException e) {
                 throw new RuntimeException(e);
             }
             return null;
@@ -313,11 +315,7 @@ public class TasksXmlExporter {
                 xml.attribute(null, property.name, value);
             } catch (UnsupportedOperationException e) {
                 // didn't read this value, do nothing
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalStateException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
+            } catch (IllegalArgumentException | IOException | IllegalStateException e) {
                 throw new RuntimeException(e);
             }
             return null;
@@ -328,7 +326,6 @@ public class TasksXmlExporter {
         handler.post(new Runnable() {
             @Override
             public void run() {
-
                 if(exportCount == 0) {
                     Toast.makeText(context, context.getString(R.string.export_toast_no_tasks), Toast.LENGTH_LONG).show();
                 } else {
@@ -336,9 +333,6 @@ public class TasksXmlExporter {
                             context.getResources().getQuantityString(R.plurals.Ntasks, exportCount,
                                     exportCount), outputFile);
                     Toast.makeText(context, text, Toast.LENGTH_LONG).show();
-                    if(progressDialog.isShowing() && context instanceof Activity) {
-                        DialogUtilities.dismissDialog((Activity) context, progressDialog);
-                    }
                 }
             }
         });
@@ -346,16 +340,14 @@ public class TasksXmlExporter {
 
     /**
      * Creates directories if necessary and returns fully qualified file
-     * @param directory
      * @return output file name
      * @throws IOException
      */
     private String setupFile(File directory, ExportType exportType) throws IOException {
-        File astridDir = directory;
-        if (astridDir != null) {
+        if (directory != null) {
             // Check for /sdcard/astrid directory. If it doesn't exist, make it.
-            if (astridDir.exists() || astridDir.mkdir()) {
-                String fileName = ""; //$NON-NLS-1$
+            if (directory.exists() || directory.mkdir()) {
+                String fileName;
                 switch(exportType) {
                 case EXPORT_TYPE_SERVICE:
                     fileName = String.format(BackupConstants.BACKUP_FILE_NAME, BackupDateUtilities.getDateForExport());
@@ -369,11 +361,11 @@ public class TasksXmlExporter {
                 default:
                      throw new IllegalArgumentException("Invalid export type"); //$NON-NLS-1$
                 }
-                return astridDir.getAbsolutePath() + File.separator + fileName;
+                return directory.getAbsolutePath() + File.separator + fileName;
             } else {
                 // Unable to make the /sdcard/astrid directory.
                 throw new IOException(context.getString(R.string.DLG_error_sdcard,
-                        astridDir.getAbsolutePath()));
+                        directory.getAbsolutePath()));
             }
         } else {
             // Unable to access the sdcard because it's not in the mounted state.

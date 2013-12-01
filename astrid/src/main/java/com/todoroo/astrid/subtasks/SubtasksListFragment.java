@@ -9,12 +9,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.astrid.activity.TaskListFragment;
 import com.todoroo.astrid.adapter.TaskAdapter;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.data.TaskListMetadata;
+
+import org.tasks.R;
 
 /**
  * Fragment for subtasks
@@ -35,9 +36,7 @@ public class SubtasksListFragment extends TaskListFragment {
     }
 
     protected OrderedListFragmentHelperInterface<?> createFragmentHelper() {
-        AstridOrderedListFragmentHelper<TaskListMetadata> olfh =
-            new AstridOrderedListFragmentHelper<TaskListMetadata>(this, new SubtasksFilterUpdater());
-        return olfh;
+        return new AstridOrderedListFragmentHelper<>(this, new SubtasksFilterUpdater());
     }
 
     @Override

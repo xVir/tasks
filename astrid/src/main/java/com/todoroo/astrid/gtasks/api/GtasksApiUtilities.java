@@ -5,10 +5,10 @@
  */
 package com.todoroo.astrid.gtasks.api;
 
+import com.google.api.client.util.DateTime;
+
 import java.util.Date;
 import java.util.TimeZone;
-
-import com.google.api.client.util.DateTime;
 
 public class GtasksApiUtilities {
 
@@ -48,8 +48,6 @@ public class GtasksApiUtilities {
      * and then truncate h:m:s to 0. This can lead to a loss of date information for
      * us, so we adjust here by doing the normalizing/truncating ourselves and
      * then correcting the date we get back in a similar way.
-     * @param time
-     * @return
      */
     public static DateTime unixTimeToGtasksDueDate(long time) {
         if (time < 0) {
@@ -60,8 +58,7 @@ public class GtasksApiUtilities {
         date.setMinutes(0);
         date.setSeconds(0);
         date.setTime(date.getTime() - date.getTimezoneOffset() * 60000);
-        DateTime dateTime = new DateTime(date, TimeZone.getTimeZone("UTC"));
-        return dateTime;
+        return new DateTime(date, TimeZone.getTimeZone("UTC"));
     }
 
 //    public static DateTime unixTimeToGtasksDueDate(long time) {

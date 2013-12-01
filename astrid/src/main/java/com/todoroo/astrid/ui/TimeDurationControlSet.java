@@ -11,11 +11,12 @@ import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.Property.IntegerProperty;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.ui.NNumberPickerDialog.OnNNumberPickedListener;
+
+import org.tasks.R;
 
 public class TimeDurationControlSet implements OnNNumberPickedListener,
         View.OnClickListener {
@@ -102,7 +103,7 @@ public class TimeDurationControlSet implements OnNNumberPickedListener,
             });
             minutePicker.setOnChangeListener(new NumberPicker.OnChangedListener() {
                 @Override
-                public int onChanged(NumberPicker picker, int oldVal, int newVal) {
+                public int onChanged(int newVal) {
                     if(newVal < 0) {
                         if(hourPicker.getCurrent() == 0) {
                             return 0;

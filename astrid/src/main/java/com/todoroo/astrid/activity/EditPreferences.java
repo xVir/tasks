@@ -22,7 +22,6 @@ import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -31,34 +30,27 @@ import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.andlib.utility.TodorooPreferenceActivity;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.api.AstridApiConstants;
-import com.todoroo.astrid.dao.Database;
 import com.todoroo.astrid.data.TaskAttachment;
 import com.todoroo.astrid.files.FileExplore;
 import com.todoroo.astrid.gcal.CalendarStartupReceiver;
 import com.todoroo.astrid.gtasks.GtasksPreferences;
 import com.todoroo.astrid.helper.MetadataHelper;
-import com.todoroo.astrid.service.AddOnService;
 import com.todoroo.astrid.service.MarketStrategy.AmazonMarketStrategy;
 import com.todoroo.astrid.service.StartupService;
-import com.todoroo.astrid.service.StatisticsConstants;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.sync.SyncProviderPreferences;
-import com.todoroo.astrid.ui.TaskListFragmentPager;
-import com.todoroo.astrid.utility.AstridDefaultPreferenceSpec;
-import com.todoroo.astrid.utility.AstridLitePreferenceSpec;
-import com.todoroo.astrid.utility.AstridPreferenceSpec;
 import com.todoroo.astrid.utility.Constants;
 import com.todoroo.astrid.utility.Flags;
 import com.todoroo.astrid.voice.VoiceInputAssistant;
 import com.todoroo.astrid.voice.VoiceOutputService;
 import com.todoroo.astrid.voice.VoiceRecognizer;
-import com.todoroo.astrid.widget.TasksWidget;
 
-import org.astrid.dropbox.DropBoxLinkActivity;
-import org.astrid.dropbox.DropBoxSyncManager;
-import org.astrid.preferences.AstridPreferenceManager;
+import org.tasks.R;
+import org.tasks.dropbox.DropBoxLinkActivity;
+import org.tasks.dropbox.DropBoxSyncManager;
+import org.tasks.preferences.TasksPreferenceManager;
+import org.tasks.widget.WidgetHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,12 +58,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-/**
- * Displays the preference screen for users to edit their preferences
- *
- * @author Tim Su <tim@todoroo.com>
- *
- */
 public class EditPreferences extends TodorooPreferenceActivity {
 
     private static final int APPEARANCE_PREFERENCE = 0;
@@ -85,22 +71,13 @@ public class EditPreferences extends TodorooPreferenceActivity {
     // --- instance variables
 
     @Autowired
-    private TaskService taskService;
-
-    @Autowired
-    private AddOnService addOnService;
-
-    @Autowired
-    private ActFmPreferenceService actFmPreferenceService;
-
-    @Autowired
-    private AstridPreferenceManager astridPreferenceManager;
-
-    @Autowired
     private DropBoxSyncManager dropboxSyncManager;
 
     @Autowired
-    private Database database;
+    private TaskService taskService;
+
+    @Autowired
+    private TasksPreferenceManager tasksPreferenceManager;
 
     private VoiceInputAssistant voiceInputAssistant;
 
@@ -122,31 +99,6 @@ public class EditPreferences extends TodorooPreferenceActivity {
         }
     }
 
-    private class SetDefaultsClickListener implements OnPreferenceClickListener {
-        private final AstridPreferenceSpec spec;
-        private final int nameId;
-        private final String statistic;
-        public SetDefaultsClickListener(AstridPreferenceSpec spec, int nameId, String statistic) {
-            this.spec = spec;
-            this.nameId = nameId;
-            this.statistic = statistic;
-        }
-
-        @Override
-        public boolean onPreferenceClick(Preference preference) {
-            DialogUtilities.okCancelDialog(EditPreferences.this, getString(R.string.EPr_config_dialog_title),
-                    getString(R.string.EPr_config_dialog_text, getString(nameId)), new OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            spec.resetDefaults();
-                            setResult(RESULT_CODE_PERFORMANCE_PREF_CHANGED);
-                            finish();
-                        }
-                    }, null);
-            return true;
-        }
-    }
-
     @Override
     public int getPreferenceResource() {
         return R.xml.preferences;
@@ -164,11 +116,11 @@ public class EditPreferences extends TodorooPreferenceActivity {
         addPluginPreferences(screen);
 
         addPreferencesFromResource(R.xml.preferences_misc);
-        if (astridPreferenceManager.isExperimentalFeaturesEnabled()) {
+        if (tasksPreferenceManager.isExperimentalFeaturesEnabled()) {
             addPreferencesFromResource(R.xml.preferences_experimental);
 
             getCheckBoxPreference(R.string.p_sync_with_dropbox)
-                    .setChecked(astridPreferenceManager.isDropboxSyncEnabled());
+                    .setChecked(tasksPreferenceManager.isDropboxSyncEnabled());
         }
 
         final Resources r = getResources();
@@ -197,14 +149,9 @@ public class EditPreferences extends TodorooPreferenceActivity {
 
         addPreferenceListeners();
 
-        disablePremiumPrefs();
-
         PreferenceScreen appearance = (PreferenceScreen) screen.getPreference(APPEARANCE_PREFERENCE);
         if (!AndroidUtilities.isTabletSized(this)) {
             appearance.removePreference(screen.findPreference(getString(R.string.p_force_phone_layout)));
-        } else {
-            preference = screen.findPreference(getString(R.string.p_swipe_lists_enabled));
-            preference.setEnabled(Preferences.getBoolean(R.string.p_force_phone_layout, false));
         }
 
         preference = screen.findPreference(getString(R.string.p_showNotes));
@@ -252,19 +199,13 @@ public class EditPreferences extends TodorooPreferenceActivity {
         return false;
     }
 
-    private void disablePremiumPrefs() {
-        boolean hasPowerPack = addOnService.hasPowerPack();
-        findPreference(getString(R.string.p_files_dir)).setEnabled(ActFmPreferenceService.isPremiumUser());
-        findPreference(getString(R.string.p_voiceRemindersEnabled)).setEnabled(hasPowerPack);
-    }
-
     private void showBeastMode() {
         Intent intent = new Intent(this, BeastModePreferences.class);
         intent.setAction(AstridApiConstants.ACTION_SETTINGS);
         startActivity(intent);
     }
 
-    private static final HashMap<Class<?>, Integer> PREFERENCE_REQUEST_CODES = new HashMap<Class<?>, Integer>();
+    private static final HashMap<Class<?>, Integer> PREFERENCE_REQUEST_CODES = new HashMap<>();
     static {
         PREFERENCE_REQUEST_CODES.put(SyncProviderPreferences.class, REQUEST_CODE_SYNC);
     }
@@ -274,14 +215,12 @@ public class EditPreferences extends TodorooPreferenceActivity {
         PackageManager pm = getPackageManager();
         List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(queryIntent,
                 PackageManager.GET_META_DATA);
-        int length = resolveInfoList.size();
         LinkedHashMap<String, ArrayList<Preference>> categoryPreferences =
-            new LinkedHashMap<String, ArrayList<Preference>>();
+            new LinkedHashMap<>();
 
         // Loop through a list of all packages (including plugins, addons)
         // that have a settings action
-        for(int i = 0; i < length; i++) {
-            ResolveInfo resolveInfo = resolveInfoList.get(i);
+        for (ResolveInfo resolveInfo : resolveInfoList) {
             final Intent intent = new Intent(AstridApiConstants.ACTION_SETTINGS);
             intent.setClassName(resolveInfo.activityInfo.packageName,
                     resolveInfo.activityInfo.name);
@@ -323,7 +262,7 @@ public class EditPreferences extends TodorooPreferenceActivity {
 
             String category = MetadataHelper.resolveActivityCategoryName(resolveInfo, pm);
 
-            if(!categoryPreferences.containsKey(category)) {
+            if (!categoryPreferences.containsKey(category)) {
                 categoryPreferences.put(category, new ArrayList<Preference>());
             }
             ArrayList<Preference> arrayList = categoryPreferences.get(category);
@@ -372,7 +311,6 @@ public class EditPreferences extends TodorooPreferenceActivity {
             preference.setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED) {
                 @Override
                 public boolean onPreferenceChange(Preference p, Object newValue) {
-                    String valueString = newValue.toString();
                     Preference notes = findPreference(getString(R.string.p_showNotes));
                     Preference fullTitle = findPreference(getString(R.string.p_fullTaskTitle));
                     try {
@@ -385,7 +323,6 @@ public class EditPreferences extends TodorooPreferenceActivity {
                     return super.onPreferenceChange(p, newValue);
                 }
 
-                ;
             });
 
         } else if (r.getString(R.string.p_showNotes).equals(preference.getKey())) {
@@ -404,36 +341,6 @@ public class EditPreferences extends TodorooPreferenceActivity {
             } else {
                 preference.setSummary(R.string.EPr_fullTask_desc_disabled);
             }
-        } else if (r.getString(R.string.p_theme).equals(preference.getKey())) {
-            if (AndroidUtilities.getSdkVersion() < 5) {
-                preference.setEnabled(false);
-                preference.setSummary(R.string.EPr_theme_desc_unsupported);
-            } else {
-                int index = 0;
-                if (value instanceof String && !TextUtils.isEmpty((String) value)) {
-                    index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_theme_settings), (String) value);
-                }
-                if (index < 0) {
-                    index = 0;
-                }
-                preference.setSummary(getString(R.string.EPr_theme_desc,
-                        r.getStringArray(R.array.EPr_themes)[index]));
-            }
-        } else if (r.getString(R.string.p_theme_widget).equals(preference.getKey())) {
-            if (AndroidUtilities.getSdkVersion() < 5) {
-                preference.setEnabled(false);
-                preference.setSummary(R.string.EPr_theme_desc_unsupported);
-            } else {
-                int index = 0;
-                if (value instanceof String && !TextUtils.isEmpty((String) value)) {
-                    index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_theme_widget_settings), (String) value);
-                }
-                if (index < 0) {
-                    index = 0;
-                }
-                preference.setSummary(getString(R.string.EPr_theme_desc,
-                        r.getStringArray(R.array.EPr_themes_widget)[index]));
-            }
         }
 
         // pp preferences
@@ -446,31 +353,12 @@ public class EditPreferences extends TodorooPreferenceActivity {
             preference.setSummary(r.getString(R.string.p_files_dir_desc, dir));
         } else if (booleanPreference(preference, value, R.string.p_field_missed_calls,
                 R.string.MCA_missed_calls_pref_desc_disabled, R.string.MCA_missed_calls_pref_desc_enabled)) {
-            ;
         } else if (booleanPreference(preference, value, R.string.p_calendar_reminders,
                 R.string.CRA_calendar_reminders_pref_desc_disabled, R.string.CRA_calendar_reminders_pref_desc_enabled)) {
-            ;
         } else if (booleanPreference(preference, value, R.string.p_end_at_deadline,
                 R.string.EPr_cal_end_at_due_time, R.string.EPr_cal_start_at_due_time)) {
-            ;
-        } else if (r.getString(R.string.p_swipe_lists_enabled).equals(preference.getKey())) {
-            preference.setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED) {
-                @Override
-                public boolean onPreferenceChange(Preference p, Object newValue) {
-                    // If the user changes the setting themselves, no need to show the helper
-                    Preferences.setBoolean(TaskListFragmentPager.PREF_SHOWED_SWIPE_HELPER, true);
-                    return super.onPreferenceChange(p, newValue);
-                }
-            });
         } else if (r.getString(R.string.p_force_phone_layout).equals(preference.getKey())) {
-            preference.setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED) {
-                @Override
-                public boolean onPreferenceChange(Preference p, Object newValue) {
-                    Preference swipe = findPreference(getString(R.string.p_swipe_lists_enabled));
-                    swipe.setEnabled((Boolean) newValue);
-                    return super.onPreferenceChange(p, newValue);
-                }
-            });
+            preference.setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
         } else if (r.getString(R.string.p_voiceInputEnabled).equals(preference.getKey())) {
             if (value != null && !(Boolean) value) {
                 preference.setSummary(R.string.EPr_voiceInputEnabled_desc_disabled);
@@ -536,7 +424,7 @@ public class EditPreferences extends TodorooPreferenceActivity {
             }
         }
         try {
-            VoiceOutputService.getVoiceOutputInstance().handleActivityResult(requestCode, resultCode, data);
+            VoiceOutputService.getVoiceOutputInstance().handleActivityResult(requestCode, resultCode);
         } catch (VerifyError e) {
             // unavailable
         }
@@ -544,28 +432,16 @@ public class EditPreferences extends TodorooPreferenceActivity {
     }
 
     public void addPreferenceListeners() {
-        findPreference(getString(R.string.p_theme)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
+        findPreference(getString(R.string.p_use_dark_theme)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
 
         findPreference(getString(R.string.p_fontSize)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
 
         findPreference(getString(R.string.p_hide_plus_button)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
 
-        findPreference(getString(R.string.p_config_default)).setOnPreferenceClickListener(
-                new SetDefaultsClickListener(new AstridDefaultPreferenceSpec(), R.string.EPr_config_dialog_default_id, StatisticsConstants.PREFS_RESET_DEFAULT));
-
-        findPreference(getString(R.string.p_config_lite)).setOnPreferenceClickListener(
-                new SetDefaultsClickListener(new AstridLitePreferenceSpec(), R.string.EPr_config_lite, StatisticsConstants.PREFS_RESET_LITE));
-
-        int[] menuPrefs = { R.string.p_show_menu_search, R.string.p_show_menu_sync, R.string.p_show_menu_sort,
-        };
-        for (int key : menuPrefs) {
-            findPreference(getString(key)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
-        }
-
-        findPreference(getString(R.string.p_theme_widget)).setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+        findPreference(getString(R.string.p_use_dark_theme_widget)).setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                TasksWidget.updateWidgets(EditPreferences.this);
+                WidgetHelper.triggerUpdate(EditPreferences.this);
                 updatePreferences(preference, newValue);
                 return true;
             }

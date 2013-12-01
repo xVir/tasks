@@ -5,18 +5,11 @@
  */
 package com.todoroo.astrid.gtasks;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
 import android.text.TextUtils;
 
 import com.todoroo.andlib.data.AbstractModel;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
-import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.sql.Field;
@@ -33,6 +26,11 @@ import com.todoroo.astrid.subtasks.OrderedMetadataListUpdater.OrderedListIterato
 import com.todoroo.astrid.sync.SyncProviderUtilities;
 import com.todoroo.astrid.utility.SyncMetadataService;
 
+import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Service for working with GTasks metadata
  *
@@ -44,17 +42,10 @@ public final class GtasksMetadataService extends SyncMetadataService<GtasksTaskC
     @Autowired private GtasksPreferenceService gtasksPreferenceService;
 
     public GtasksMetadataService() {
-        super(ContextManager.getContext());
+        super();
         DependencyInjectionService.getInstance().inject(this);
     }
 
-    @Override
-    public GtasksTaskContainer createContainerFromLocalTask(Task task,
-            ArrayList<Metadata> metadata) {
-        return new GtasksTaskContainer(task, metadata);
-    }
-
-    @Override
     public Criterion getLocalMatchCriteria(GtasksTaskContainer remoteTask) {
         return GtasksMetadata.ID.eq(remoteTask.gtaskMetadata.getValue(GtasksMetadata.ID));
     }
@@ -79,7 +70,6 @@ public final class GtasksMetadataService extends SyncMetadataService<GtasksTaskC
         return GtasksMetadata.ID.neq(""); //$NON-NLS-1$
     }
 
-    @Override
     public synchronized void findLocalMatch(GtasksTaskContainer remoteTask) {
         if(remoteTask.task.getId() != Task.NO_ID) {
             return;
@@ -117,7 +107,7 @@ public final class GtasksMetadataService extends SyncMetadataService<GtasksTaskC
 
     @Override
     protected TodorooCursor<Task> filterLocallyUpdated(TodorooCursor<Task> tasks, long lastSyncDate) {
-        HashSet<Long> taskIds = new HashSet<Long>();
+        HashSet<Long> taskIds = new HashSet<>();
         for(tasks.moveToFirst(); !tasks.isAfterLast(); tasks.moveToNext()) {
             taskIds.add(tasks.get(Task.ID));
         }
@@ -170,8 +160,6 @@ public final class GtasksMetadataService extends SyncMetadataService<GtasksTaskC
 
     /**
      * Gets the remote id string of the parent task
-     * @param gtasksMetadata
-     * @return
      */
     public String getRemoteParentId(Metadata gtasksMetadata) {
         String parent = null;
@@ -190,14 +178,11 @@ public final class GtasksMetadataService extends SyncMetadataService<GtasksTaskC
 
     /**
      * Gets the remote id string of the previous sibling task
-     * @param listId
-     * @param gtasksMetadata
-     * @return
      */
     public String getRemoteSiblingId(String listId, Metadata gtasksMetadata) {
-        final AtomicInteger indentToMatch = new AtomicInteger(gtasksMetadata.getValue(GtasksMetadata.INDENT).intValue());
-        final AtomicLong parentToMatch = new AtomicLong(gtasksMetadata.getValue(GtasksMetadata.PARENT_TASK).longValue());
-        final AtomicReference<String> sibling = new AtomicReference<String>();
+        final AtomicInteger indentToMatch = new AtomicInteger(gtasksMetadata.getValue(GtasksMetadata.INDENT));
+        final AtomicLong parentToMatch = new AtomicLong(gtasksMetadata.getValue(GtasksMetadata.PARENT_TASK));
+        final AtomicReference<String> sibling = new AtomicReference<>();
         OrderedListIterator iterator = new OrderedListIterator() {
             @Override
             public void processTask(long taskId, Metadata metadata) {
@@ -205,7 +190,7 @@ public final class GtasksMetadataService extends SyncMetadataService<GtasksTaskC
                 if (t == null || t.isDeleted()) {
                     return;
                 }
-                int currIndent = metadata.getValue(GtasksMetadata.INDENT).intValue();
+                int currIndent = metadata.getValue(GtasksMetadata.INDENT);
                 long currParent = metadata.getValue(GtasksMetadata.PARENT_TASK);
 
                 if (currIndent == indentToMatch.get() && currParent == parentToMatch.get()) {

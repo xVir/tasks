@@ -5,18 +5,18 @@
  */
 package com.todoroo.andlib.utility;
 
+import android.content.Context;
+import android.text.format.DateFormat;
+import android.text.format.DateUtils;
+
+import org.tasks.api.R;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-
-import android.content.Context;
-import android.text.format.DateFormat;
-import android.text.format.DateUtils;
-
-import org.tasks.api.R;
 
 
 public class DateUtilities {
@@ -25,16 +25,8 @@ public class DateUtilities {
      * ============================================================ long time
      * ====================================================================== */
 
-    /** Convert unixtime into date */
-    public static final Date unixtimeToDate(long millis) {
-        if(millis == 0) {
-            return null;
-        }
-        return new Date(millis);
-    }
-
     /** Convert date into unixtime */
-    public static final long dateToUnixtime(Date date) {
+    public static long dateToUnixtime(Date date) {
         if(date == null) {
             return 0;
         }
@@ -49,7 +41,7 @@ public class DateUtilities {
      * @param interval the amount of months to be added
      * @return the calculated time in milliseconds
      */
-    public static final long addCalendarMonthsToUnixtime(long time, int interval) {
+    public static long addCalendarMonthsToUnixtime(long time, int interval) {
         Calendar c = Calendar.getInstance();
         c.setTimeInMillis(time);
         c.add(Calendar.MONTH, interval);
@@ -57,12 +49,12 @@ public class DateUtilities {
     }
 
     /** Returns unixtime for current time */
-    public static final long now() {
+    public static long now() {
         return System.currentTimeMillis();
     }
 
     /** Returns unixtime one month from now */
-    public static final long oneMonthFromNow() {
+    public static long oneMonthFromNow() {
         Date date = new Date();
         date.setMonth(date.getMonth() + 1);
         return date.getTime();
@@ -99,21 +91,17 @@ public class DateUtilities {
      * @param date time to format
      * @return time, with hours and minutes
      */
-    public static String getTimeString(Context context, Date date, boolean excludeZeroMinutes) {
+    public static String getTimeString(Context context, Date date) {
         String value;
         if (is24HourFormat(context)) {
             value = "H:mm";
-        } else if (date.getMinutes() == 0 && excludeZeroMinutes){
+        } else if (date.getMinutes() == 0){
             value = "h a";
         }
         else {
             value = "h:mm a";
         }
         return new SimpleDateFormat(value).format(date);
-    }
-
-    public static String getTimeString(Context context, Date date) {
-        return getTimeString(context, date, true);
     }
 
     /* Returns true if search string is in sortedValues */
@@ -123,13 +111,11 @@ public class DateUtilities {
     }
 
     /**
-     * @param context android context
      * @param date date to format
      * @return date, with month, day, and year
      */
-    public static String getDateString(Context context, Date date, boolean includeYear) {
-        String month = DateUtils.getMonthString(date.getMonth() +
-                Calendar.JANUARY, DateUtils.LENGTH_MEDIUM);
+    public static String getDateString(Date date) {
+        String month = new SimpleDateFormat("MMM").format(date);
         String value;
         String standardDate;
         // united states, you are special
@@ -140,9 +126,7 @@ public class DateUtilities {
         } else {
             value = "d'$' '#'";
         }
-        if (includeYear) {
-            value += ", yyyy";
-        }
+        value += ", yyyy";
         if (arrayBinaryContains(locale.getLanguage(), "ja", "zh")){
             standardDate = new SimpleDateFormat(value).format(date).replace("#", month).replace("$", "\u65E5"); //$NON-NLS-1$
         }else if ("ko".equals(Locale.getDefault().getLanguage())){
@@ -150,18 +134,14 @@ public class DateUtilities {
         }else{
             standardDate = new SimpleDateFormat(value).format(date).replace("#", month).replace("$", "");
         }
-        return standardDate;}
-
-    public static String getDateString(Context context, Date date) {
-        return getDateString(context, date, true);
+        return standardDate;
     }
 
     /**
-     * @param context android context
      * @param date date to format
      * @return date, with month, day, and year
      */
-    public static String getDateStringHideYear(Context context, Date date) {
+    public static String getDateStringHideYear(Date date) {
         String month = DateUtils.getMonthString(date.getMonth() +
                 Calendar.JANUARY, DateUtils.LENGTH_MEDIUM);
         String value;
@@ -191,19 +171,17 @@ public class DateUtilities {
     /**
      * @return date format as getDateFormat with weekday
      */
-    public static String getDateStringWithWeekday(Context context, Date date) {
+    public static String getDateStringWithWeekday(Date date) {
         String weekday = getWeekday(date);
-        return weekday + ", " + getDateString(context, date);
+        return weekday + ", " + getDateString(date);
     }
 
     /**
      * @return weekday
      */
     public static String getWeekday(Date date) {
-        return DateUtils.getDayOfWeekString(date.getDay() + Calendar.SUNDAY,
-                DateUtils.LENGTH_LONG);
+        return new SimpleDateFormat("EEEE").format(date);
     }
-
 
     /**
      * @return weekday
@@ -214,17 +192,10 @@ public class DateUtilities {
     }
 
     /**
-     * @return date format as getDateFormat with weekday
-     */
-    public static String getDateStringWithTimeAndWeekday(Context context, Date date) {
-        return getDateStringWithWeekday(context, date) + " " + getTimeString(context, date);
-    }
-
-    /**
      * @return date with time at the end
      */
     public static String getDateStringWithTime(Context context, Date date) {
-        return getDateString(context, date) + " " + getTimeString(context, date);
+        return getDateString(date) + " " + getTimeString(context, date);
     }
 
     /**
@@ -251,7 +222,7 @@ public class DateUtilities {
             return abbreviated ? DateUtilities.getWeekdayShort(new Date(date)) : DateUtilities.getWeekday(new Date(date));
         }
 
-        return DateUtilities.getDateStringHideYear(context, new Date(date));
+        return DateUtilities.getDateStringHideYear(new Date(date));
     }
 
     public static boolean isEndOfMonth(Date d) {
@@ -322,17 +293,4 @@ public class DateUtilities {
         Date result = new SimpleDateFormat(formatString).parse(iso8601String);
         return result.getTime();
     }
-
-    public static String timeToIso8601(long time, boolean includeTime) {
-        if (time == 0) {
-            return null;
-        }
-        Date date = new Date(time);
-        String formatString = "yyyy-MM-dd'T'HH:mm:ssZ"; //$NON-NLS-1$
-        if (!includeTime) {
-            formatString = "yyyy-MM-dd"; //$NON-NLS-1$
-        }
-        return new SimpleDateFormat(formatString).format(date);
-    }
-
 }

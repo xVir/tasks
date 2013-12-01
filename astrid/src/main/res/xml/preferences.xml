@@ -11,19 +11,17 @@
     <PreferenceScreen
         android:title="@string/EPr_appearance_header"
         android:summary="@string/EPr_appearance_summary">
-        
-        <com.todoroo.astrid.ui.MultilineListPreference
-            android:key="@string/p_theme"
-            android:entries="@array/EPr_themes"
-            android:entryValues="@array/EPr_theme_settings"
-            android:title="@string/EPr_theme_title" />
-        
-        <com.todoroo.astrid.ui.MultilineListPreference
-            android:key="@string/p_theme_widget"
-            android:entries="@array/EPr_themes_widget"
-            android:entryValues="@array/EPr_theme_widget_settings"
-            android:title="@string/EPr_theme_widget_title" />
-        
+
+        <CheckBoxPreference
+            android:title="@string/EPr_use_dark_theme"
+            android:key="@string/p_use_dark_theme"
+            android:defaultValue="false"/>
+
+        <CheckBoxPreference
+            android:title="@string/EPr_use_dark_theme_widget"
+            android:key="@string/p_use_dark_theme_widget"
+            android:defaultValue="false"/>
+
         <PreferenceScreen android:title="@string/EPr_taskRowPrefs_title" android:key="@string/p_taskRowPrefs">
         
 	        <com.todoroo.astrid.ui.MultilineListPreference
@@ -84,26 +82,6 @@
         </PreferenceScreen>
         
         <PreferenceScreen android:title="@string/EPr_list_view" android:key="@string/p_list_view">
-            <PreferenceScreen android:title="@string/EPr_menu_items" android:key="@string/p_menu_items">
-	            <com.todoroo.astrid.ui.MultilineCheckboxPreference
-	                android:key="@string/p_show_menu_search"
-	                android:title="@string/TLA_menu_search"
-	                android:defaultValue="true" />
-	            <com.todoroo.astrid.ui.MultilineCheckboxPreference
-	                android:key="@string/p_show_menu_sync"
-	                android:title="@string/TLA_menu_sync"
-	                android:defaultValue="true"/>
-	            <com.todoroo.astrid.ui.MultilineCheckboxPreference
-	                android:key="@string/p_show_menu_sort"
-	                android:title="@string/TLA_menu_sort"
-	                android:defaultValue="true"/>
-	            <com.todoroo.astrid.ui.MultilineCheckboxPreference
-		            android:key="@string/p_use_filters"
-		            android:title="@string/EPr_use_filters_title"
-		            android:summary="@string/EPr_use_filters_subtitle"
-		            android:defaultValue="true"/>
-            </PreferenceScreen>
-        
 	        <PreferenceScreen android:title="@string/EPr_filters_to_show_title" android:key="@string/p_filters_to_show">
 	            <com.todoroo.astrid.ui.MultilineCheckboxPreference
 	                android:key="@string/p_show_my_tasks_filter"
@@ -134,11 +112,6 @@
 	                android:title="@string/EPr_hide_plus_button"
 	                android:defaultValue="false"/>
 	        
-	        <CheckBoxPreference
-	            android:key="@string/p_swipe_lists_enabled"
-	            android:title="@string/EPr_swipe_lists_performance_title" 
-	            android:defaultValue="false"/>
-	        
 	        <com.todoroo.astrid.ui.MultilineCheckboxPreference
 	            android:key="@string/p_voiceInputEnabled"
 	            android:title="@string/EPr_voiceInputEnabled_title"
@@ -155,12 +128,6 @@
 	        android:key="@string/p_force_phone_layout"
 	        android:defaultValue="false"/>
         
-        <PreferenceScreen android:key="@string/p_configurations"
-                          android:title="@string/EPr_configurations_title">
-            <PreferenceScreen android:title="@string/EPr_config_default" android:key="@string/p_config_default" />
-            <PreferenceScreen android:title="@string/EPr_config_lite" android:key="@string/p_config_lite"/>    
-        </PreferenceScreen>
-             
     </PreferenceScreen>
 
 </PreferenceScreen>

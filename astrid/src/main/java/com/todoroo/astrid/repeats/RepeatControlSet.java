@@ -5,13 +5,6 @@
  */
 package com.todoroo.astrid.repeats;
 
-import java.text.DateFormatSymbols;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -32,22 +25,28 @@ import com.google.ical.values.Frequency;
 import com.google.ical.values.RRule;
 import com.google.ical.values.Weekday;
 import com.google.ical.values.WeekdayNum;
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.service.ExceptionService;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.astrid.data.Task;
-import com.todoroo.astrid.service.StatisticsConstants;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.ui.DateAndTimeDialog;
 import com.todoroo.astrid.ui.DateAndTimeDialog.DateAndTimeDialogListener;
 import com.todoroo.astrid.ui.DateAndTimePicker;
-import com.todoroo.astrid.ui.NumberPicker;
 import com.todoroo.astrid.ui.NumberPickerDialog;
 import com.todoroo.astrid.ui.NumberPickerDialog.OnNumberPickedListener;
 import com.todoroo.astrid.ui.PopupControlSet;
+
+import org.tasks.R;
+
+import java.text.DateFormatSymbols;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Control Set for managing repeats
@@ -84,7 +83,7 @@ public class RepeatControlSet extends PopupControlSet {
     private long repeatUntilValue;
 
 
-    private final List<RepeatChangedListener> listeners = new LinkedList<RepeatChangedListener>();
+    private final List<RepeatChangedListener> listeners = new LinkedList<>();
 
     public interface RepeatChangedListener {
         public void repeatChanged(boolean repeat);
@@ -92,8 +91,6 @@ public class RepeatControlSet extends PopupControlSet {
 
     @Autowired
     ExceptionService exceptionService;
-
-    boolean setInterval = false;
 
     // --- implementation
 
@@ -126,8 +123,7 @@ public class RepeatControlSet extends PopupControlSet {
 
         new NumberPickerDialog(activity, new OnNumberPickedListener() {
             @Override
-            public void onNumberPicked(NumberPicker view,
-                    int number) {
+            public void onNumberPicked(int number) {
                 setRepeatValue(number);
             }
         }, activity.getResources().getString(R.string.repeat_interval_prompt),
@@ -154,12 +150,6 @@ public class RepeatControlSet extends PopupControlSet {
 
     public void addListener(RepeatChangedListener listener) {
         listeners.add(listener);
-    }
-
-    public void removeListener(RepeatChangedListener listener) {
-        if (listeners.contains(listener)) {
-            listeners.remove(listener);
-        }
     }
 
     @Override
@@ -244,9 +234,6 @@ public class RepeatControlSet extends PopupControlSet {
                         }
                     }
                 }
-
-                // suppress first call to interval.onItemSelected
-                setInterval = true;
             } catch (Exception e) {
                 // invalid RRULE
                 recurrence = ""; //$NON-NLS-1$
@@ -332,14 +319,11 @@ public class RepeatControlSet extends PopupControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         String result;
         if(!doRepeat) {
             result = ""; //$NON-NLS-1$
         } else {
-            if(TextUtils.isEmpty(task.getValue(Task.RECURRENCE))) {
-            }
-
             RRule rrule = new RRule();
             rrule.setInterval(repeatValue);
             switch(interval.getSelectedItemPosition()) {
@@ -349,10 +333,10 @@ public class RepeatControlSet extends PopupControlSet {
             case INTERVAL_WEEKS: {
                 rrule.setFreq(Frequency.WEEKLY);
 
-                ArrayList<WeekdayNum> days = new ArrayList<WeekdayNum>();
-                for(int i = 0; i < daysOfWeek.length; i++) {
-                    if (daysOfWeek[i].isChecked()) {
-                        days.add(new WeekdayNum(0, (Weekday) daysOfWeek[i].getTag()));
+                ArrayList<WeekdayNum> days = new ArrayList<>();
+                for (CompoundButton dayOfWeek : daysOfWeek) {
+                    if (dayOfWeek.isChecked()) {
+                        days.add(new WeekdayNum(0, (Weekday) dayOfWeek.getTag()));
                     }
                 }
                 rrule.setByDay(days);
@@ -389,8 +373,6 @@ public class RepeatControlSet extends PopupControlSet {
         if(task.repeatAfterCompletion()) {
             type.setSelection(1);
         }
-
-        return null;
     }
 
     public boolean isRecurrenceSet() {

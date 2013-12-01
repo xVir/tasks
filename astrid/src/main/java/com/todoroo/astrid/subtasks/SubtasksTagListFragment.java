@@ -8,12 +8,13 @@ package com.todoroo.astrid.subtasks;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.astrid.actfm.TagViewFragment;
 import com.todoroo.astrid.adapter.TaskAdapter;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.data.TaskListMetadata;
+
+import org.tasks.R;
 
 public class SubtasksTagListFragment extends TagViewFragment {
 
@@ -23,7 +24,7 @@ public class SubtasksTagListFragment extends TagViewFragment {
 
     public SubtasksTagListFragment() {
         super();
-        helper = new AstridOrderedListFragmentHelper<TaskListMetadata>(this, new SubtasksTagUpdater(isBeingFiltered));
+        helper = new AstridOrderedListFragmentHelper<>(this, new SubtasksTagUpdater(isBeingFiltered));
     }
 
     @Override
@@ -55,7 +56,6 @@ public class SubtasksTagListFragment extends TagViewFragment {
         helper.beforeSetUpTaskList(filter);
 
         super.setUpTaskList();
-        setUpMembersGallery();
 
         unregisterForContextMenu(getListView());
     }

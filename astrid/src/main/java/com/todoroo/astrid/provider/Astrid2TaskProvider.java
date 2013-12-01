@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.provider;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
@@ -29,10 +25,13 @@ import com.todoroo.astrid.core.SortHelper;
 import com.todoroo.astrid.dao.TaskDao.TaskCriteria;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.AstridDependencyInjector;
-import com.todoroo.astrid.service.StatisticsConstants;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.tags.TagService;
 import com.todoroo.astrid.tags.TagService.Tag;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * This is the legacy Astrid task provider. While it will continue to be
@@ -55,9 +54,9 @@ public class Astrid2TaskProvider extends ContentProvider {
 	private static final boolean LOGD = false;
 
 
-	public static final String AUTHORITY = "com.timsu.astrid.tasksprovider";
+	public static final String AUTHORITY = "org.tasks.tasksprovider";
 
-	public static final Uri CONTENT_URI = Uri.parse("content://com.timsu.astrid.tasksprovider");
+	public static final Uri CONTENT_URI = Uri.parse("content://org.tasks.tasksprovider");
 
 	private static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -145,13 +144,13 @@ public class Astrid2TaskProvider extends ContentProvider {
 
 		MatrixCursor ret = new MatrixCursor(TAGS_FIELD_LIST);
 
-		for (int i = 0; i < tags.length; i++) {
-			Object[] values = new Object[2];
-			values[0] = tagNameToLong(tags[i].tag);
-			values[1] = tags[i].tag;
+        for (Tag tag : tags) {
+            Object[] values = new Object[2];
+            values[0] = tagNameToLong(tag.tag);
+            values[1] = tag.tag;
 
-			ret.addRow(values);
-		}
+            ret.addRow(values);
+        }
 
 		return ret;
 	}
@@ -268,10 +267,7 @@ public class Astrid2TaskProvider extends ContentProvider {
                 task.setValue(Task.IMPORTANCE, values.getAsInteger(IMPORTANCE));
             }
             if(values.containsKey(COMPLETED)) {
-                task.setValue(Task.COMPLETION_DATE,
-                        values.getAsBoolean(COMPLETED) ? DateUtilities.now() : 0);
-                if(task.isCompleted()) {
-                }
+                task.setValue(Task.COMPLETION_DATE, values.getAsBoolean(COMPLETED) ? DateUtilities.now() : 0);
             }
 
             // map selection criteria

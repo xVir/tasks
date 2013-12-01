@@ -3,9 +3,6 @@
  */
 package com.todoroo.astrid.voice;
 
-import java.util.HashMap;
-import java.util.Locale;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +13,9 @@ import android.util.Log;
 
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.astrid.voice.VoiceOutputService.VoiceOutputAssistant;
+
+import java.util.HashMap;
+import java.util.Locale;
 
 /**
  * @author Arne Jans
@@ -30,7 +30,7 @@ public class Api6VoiceOutputAssistant implements OnInitListener, VoiceOutputAssi
     private boolean isTTSInitialized;
     private boolean retryLastSpeak;
     private String lastTextToSpeak;
-    private static final HashMap<String, String> ttsParams = new HashMap<String, String>();
+    private static final HashMap<String, String> ttsParams = new HashMap<>();
 
     static {
         ttsParams.put(TextToSpeech.Engine.KEY_PARAM_STREAM,
@@ -52,7 +52,7 @@ public class Api6VoiceOutputAssistant implements OnInitListener, VoiceOutputAssi
     }
 
     @Override
-    public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
+    public void handleActivityResult(int requestCode, int resultCode) {
         if (requestCode == MY_DATA_CHECK_CODE) {
             if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
                 // success, create the TTS instance
@@ -63,15 +63,11 @@ public class Api6VoiceOutputAssistant implements OnInitListener, VoiceOutputAssi
                 installIntent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
                 context.startActivity(installIntent);
             }
-
-            return true;
         }
-
-        return false;
     }
 
     private void initTTS() {
-        mTts = new TextToSpeech(context, (OnInitListener)this);
+        mTts = new TextToSpeech(context, this);
     }
 
     @Override

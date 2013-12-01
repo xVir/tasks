@@ -13,8 +13,9 @@ import android.view.Window;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Button;
 
-import org.tasks.R;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
 
 public class DateAndTimeDialog extends Dialog {
 
@@ -24,8 +25,6 @@ public class DateAndTimeDialog extends Dialog {
     }
 
     private final DateAndTimePicker dateAndTimePicker;
-    private final Button okButton;
-    private final Button cancelButton;
     private boolean cancelled = false;
 
     private DateAndTimeDialogListener listener;
@@ -48,13 +47,13 @@ public class DateAndTimeDialog extends Dialog {
         LayoutParams params = getWindow().getAttributes();
         params.height = LayoutParams.FILL_PARENT;
         params.width = LayoutParams.FILL_PARENT;
-        getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
+        getWindow().setAttributes(params);
 
         dateAndTimePicker = (DateAndTimePicker) findViewById(R.id.date_and_time);
         dateAndTimePicker.initializeWithDate(startDate);
 
-        okButton = (Button) findViewById(R.id.ok);
-        cancelButton = (Button) findViewById(R.id.cancel);
+        Button okButton = (Button) findViewById(R.id.ok);
+        Button cancelButton = (Button) findViewById(R.id.cancel);
 
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,10 +90,6 @@ public class DateAndTimeDialog extends Dialog {
         });
     }
 
-    public long getSelectedDate() {
-        return dateAndTimePicker.constructDueDate();
-    }
-
     public void setSelectedDateAndTime(long date) {
         dateAndTimePicker.initializeWithDate(date);
     }
@@ -105,9 +100,5 @@ public class DateAndTimeDialog extends Dialog {
 
     public void setDateAndTimeDialogListener(DateAndTimeDialogListener listener) {
         this.listener = listener;
-    }
-
-    public String getDisplayString(Context context) {
-        return dateAndTimePicker.getDisplayString(context, false, false);
     }
 }

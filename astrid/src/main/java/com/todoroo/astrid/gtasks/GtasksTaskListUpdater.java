@@ -5,11 +5,6 @@
  */
 package com.todoroo.astrid.gtasks;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -21,7 +16,6 @@ import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.sql.Functions;
 import com.todoroo.andlib.sql.Order;
 import com.todoroo.andlib.sql.Query;
-import com.todoroo.astrid.api.Filter;
 import com.todoroo.astrid.core.PluginServices;
 import com.todoroo.astrid.dao.MetadataDao;
 import com.todoroo.astrid.data.Metadata;
@@ -29,18 +23,22 @@ import com.todoroo.astrid.data.StoreObject;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.gtasks.sync.GtasksSyncService;
 import com.todoroo.astrid.subtasks.OrderedMetadataListUpdater;
-import com.todoroo.astrid.subtasks.OrderedMetadataListUpdater.OrderedListIterator;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class GtasksTaskListUpdater extends OrderedMetadataListUpdater<StoreObject> {
 
     /** map of task -> parent task */
-    final HashMap<Long, Long> parents = new HashMap<Long, Long>();
+    final HashMap<Long, Long> parents = new HashMap<>();
 
     /** map of task -> prior sibling */
-    final HashMap<Long, Long> siblings = new HashMap<Long, Long>();
+    final HashMap<Long, Long> siblings = new HashMap<>();
 
     final HashMap<Long, String> localToRemoteIdMap =
-        new HashMap<Long, String>();
+        new HashMap<>();
 
     @Autowired private GtasksListService gtasksListService;
     @Autowired private GtasksMetadataService gtasksMetadataService;
@@ -69,7 +67,7 @@ public class GtasksTaskListUpdater extends OrderedMetadataListUpdater<StoreObjec
     }
 
     @Override
-    protected Metadata getTaskMetadata(StoreObject list, long taskId) {
+    protected Metadata getTaskMetadata(long taskId) {
         return gtasksMetadataService.getTaskMetadata(taskId);
     }
     @Override
@@ -85,7 +83,7 @@ public class GtasksTaskListUpdater extends OrderedMetadataListUpdater<StoreObjec
     }
 
     @Override
-    protected void iterateThroughList(Filter filter, StoreObject list, OrderedListIterator iterator) {
+    protected void iterateThroughList(StoreObject list, OrderedListIterator iterator) {
         gtasksMetadataService.iterateThroughList(list, iterator);
     }
 
@@ -107,7 +105,6 @@ public class GtasksTaskListUpdater extends OrderedMetadataListUpdater<StoreObjec
 
     /**
      * Update order, parent, and indentation fields for all tasks in the given list
-     * @param listId
      */
     public void correctMetadataForList(String listId) {
         StoreObject list = gtasksListService.getList(listId);

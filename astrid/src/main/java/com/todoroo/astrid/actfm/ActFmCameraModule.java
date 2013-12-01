@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.actfm;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -22,9 +18,14 @@ import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.widget.ArrayAdapter;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
+
+import org.tasks.R;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 
 public class ActFmCameraModule {
 
@@ -37,57 +38,8 @@ public class ActFmCameraModule {
         public void clearImage();
     }
 
-    public static void showPictureLauncher(final Activity activity, final ClearImageCallback clearImageOption) {
-        ArrayList<String> options = new ArrayList<String>();
-
-        final Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        PackageManager pm = activity.getPackageManager();
-
-        final boolean cameraAvailable = pm.queryIntentActivities(cameraIntent, 0).size() > 0;
-        if(cameraAvailable) {
-            options.add(activity.getString(R.string.actfm_picture_camera));
-        }
-        options.add(activity.getString(R.string.actfm_picture_gallery));
-
-        if (clearImageOption != null) {
-            options.add(activity.getString(R.string.actfm_picture_clear));
-        }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(activity,
-                android.R.layout.simple_spinner_dropdown_item, options.toArray(new String[options.size()]));
-
-        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface d, int which) {
-                if(which == 0 && cameraAvailable) {
-                    lastTempFile = getTempFile(activity);
-                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    if (lastTempFile != null) {
-                        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(lastTempFile));
-                    }
-                    activity.startActivityForResult(intent, REQUEST_CODE_CAMERA);
-                } else if ((which == 1 && cameraAvailable) || (which == 0 && !cameraAvailable)) {
-                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                    intent.setType("image/*");
-                    activity.startActivityForResult(Intent.createChooser(intent,
-                            activity.getString(R.string.actfm_TVA_tag_picture)), REQUEST_CODE_PICTURE);
-                } else {
-                    if (clearImageOption != null) {
-                        clearImageOption.clearImage();
-                    }
-                }
-            }
-        };
-
-        // show a menu of available options
-        new AlertDialog.Builder(activity)
-        .setAdapter(adapter, listener)
-        .show().setOwnerActivity(activity);
-    }
-
-
     public static void showPictureLauncher(final Fragment fragment, final ClearImageCallback clearImageOption) {
-        ArrayList<String> options = new ArrayList<String>();
+        ArrayList<String> options = new ArrayList<>();
 
         final Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         PackageManager pm = fragment.getActivity().getPackageManager();
@@ -102,7 +54,7 @@ public class ActFmCameraModule {
             options.add(fragment.getString(R.string.actfm_picture_clear));
         }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(fragment.getActivity(),
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(fragment.getActivity(),
                 android.R.layout.simple_spinner_dropdown_item, options.toArray(new String[options.size()]));
 
         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
@@ -138,8 +90,7 @@ public class ActFmCameraModule {
             String storageState = Environment.getExternalStorageState();
             if(storageState.equals(Environment.MEDIA_MOUNTED)) {
                 String path = Environment.getExternalStorageDirectory().getName() + File.separatorChar + "Android/data/" + activity.getPackageName() + "/files/";
-                File photoFile = File.createTempFile("comment_pic_" + DateUtilities.now(), ".jpg", new File(path));
-                return photoFile;
+                return File.createTempFile("comment_pic_" + DateUtilities.now(), ".jpg", new File(path));
             }
         } catch (IOException e) {
             return null;

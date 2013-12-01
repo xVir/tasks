@@ -5,16 +5,8 @@
  */
 package com.todoroo.astrid.files;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,7 +23,6 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.tasks.R;
 import com.todoroo.aacenc.RecognizerApi;
 import com.todoroo.aacenc.RecognizerApi.PlaybackExceptionHandler;
 import com.todoroo.andlib.data.TodorooCursor;
@@ -42,7 +33,6 @@ import com.todoroo.andlib.sql.Query;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.dao.TaskAttachmentDao;
 import com.todoroo.astrid.data.RemoteModel;
 import com.todoroo.astrid.data.SyncFlags;
@@ -52,14 +42,18 @@ import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.ui.PopupControlSet;
 import com.todoroo.astrid.utility.Constants;
 
+import org.tasks.R;
+
+import java.io.File;
+import java.util.ArrayList;
+
 public class FilesControlSet extends PopupControlSet {
 
     @Autowired
     private TaskAttachmentDao taskAttachmentDao;
 
-    private final ArrayList<TaskAttachment> files = new ArrayList<TaskAttachment>();
+    private final ArrayList<TaskAttachment> files = new ArrayList<>();
     private final LinearLayout fileDisplayList;
-    private LinearLayout fileList;
     private final LayoutInflater inflater;
     private final ImageView image;
 
@@ -144,14 +138,13 @@ public class FilesControlSet extends PopupControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         // Nothing to write
-        return null;
     }
 
     @Override
     protected void afterInflate() {
-        fileList = (LinearLayout) getView().findViewById(R.id.files_list);
+        LinearLayout fileList = (LinearLayout) getView().findViewById(R.id.files_list);
         final LinearLayout finalList = fileList;
         fileList.removeAllViews();
         LayoutParams lp = new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
@@ -162,59 +155,37 @@ public class FilesControlSet extends PopupControlSet {
             View name = fileRow.findViewById(R.id.file_text);
             View clearFile = fileRow.findViewById(R.id.remove_file);
 
-            setupFileClickListener(name, m);
-
-            if (ActFmPreferenceService.isPremiumUser()) {
-                clearFile.setVisibility(View.VISIBLE);
-                clearFile.setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        DialogUtilities.okCancelDialog(activity, activity.getString(R.string.premium_remove_file_confirm),
-                                new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface d, int which) {
-                                if (RemoteModel.isValidUuid(m.getValue(TaskAttachment.UUID))) {
-                                    m.setValue(TaskAttachment.DELETED_AT, DateUtilities.now());
-                                    taskAttachmentDao.saveExisting(m);
-                                } else {
-                                    taskAttachmentDao.delete(m.getId());
-                                }
-
-                                if (m.containsNonNullValue(TaskAttachment.FILE_PATH)) {
-                                    File f = new File(m.getValue(TaskAttachment.FILE_PATH));
-                                    f.delete();
-                                }
-                                files.remove(m);
-                                refreshDisplayView();
-                                finalList.removeView(fileRow);
-                            }
-                        }, null);
-                    }
-                });
-            }
-        }
-    }
-
-    private void setupFileClickListener(View view, final TaskAttachment m) {
-        final String filePath = m.containsNonNullValue(TaskAttachment.FILE_PATH) ? m.getValue(TaskAttachment.FILE_PATH) : null;
-        if (TextUtils.isEmpty(filePath)) {
-            view.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    DialogUtilities.okCancelDialog(activity, activity.getString(R.string.file_download_title),
-                            activity.getString(R.string.file_download_body), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface d, int which) {
-                            downloadFile(m);
-                        }
-                    }, null);
-                }
-            });
-        } else {
-            view.setOnClickListener(new OnClickListener() {
+            name.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     showFile(m);
+                }
+            });
+
+            clearFile.setVisibility(View.VISIBLE);
+            clearFile.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    DialogUtilities.okCancelDialog(activity, activity.getString(R.string.premium_remove_file_confirm),
+                            new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface d, int which) {
+                            if (RemoteModel.isValidUuid(m.getValue(TaskAttachment.UUID))) {
+                                m.setValue(TaskAttachment.DELETED_AT, DateUtilities.now());
+                                taskAttachmentDao.saveExisting(m);
+                            } else {
+                                taskAttachmentDao.delete(m.getId());
+                            }
+
+                            if (m.containsNonNullValue(TaskAttachment.FILE_PATH)) {
+                                File f = new File(m.getValue(TaskAttachment.FILE_PATH));
+                                f.delete();
+                            }
+                            files.remove(m);
+                            refreshDisplayView();
+                            finalList.removeView(fileRow);
+                        }
+                    }, null);
                 }
             });
         }
@@ -248,7 +219,6 @@ public class FilesControlSet extends PopupControlSet {
             image.setButton(activity.getString(R.string.DLG_close), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface d, int which) {
-                    return;
                 }
             });
             image.show();
@@ -262,7 +232,7 @@ public class FilesControlSet extends PopupControlSet {
                 if (!TextUtils.isEmpty(guessedType)) {
                     useType = guessedType;
                 }
-                if (useType != guessedType) {
+                if (!useType.equals(guessedType)) {
                     m.setValue(TaskAttachment.CONTENT_TYPE, useType);
                     m.putTransitory(SyncFlags.ACTFM_SUPPRESS_OUTSTANDING_ENTRIES, true);
                     taskAttachmentDao.saveExisting(m);
@@ -291,7 +261,7 @@ public class FilesControlSet extends PopupControlSet {
             searchMarket("com.dataviz.docstogo", R.string.search_market_ms_title, R.string.search_market_ms); //$NON-NLS-1$
         } else {
             DialogUtilities.okDialog(activity, activity.getString(R.string.file_type_unhandled_title),
-                    0, activity.getString(R.string.file_type_unhandled), null);
+                    0, activity.getString(R.string.file_type_unhandled));
         }
     }
 
@@ -312,100 +282,7 @@ public class FilesControlSet extends PopupControlSet {
                             null);
                 }
             }
-        }, null);
-    }
-
-    private void downloadFile(final TaskAttachment m) {
-        final ProgressDialog pd = new ProgressDialog(activity);
-        pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        pd.setMessage(activity.getString(R.string.file_download_progress));
-        pd.setMax(100);
-
-        new Thread() {
-            @Override
-            public void run() {
-                String urlString = m.getValue(TaskAttachment.URL);
-                urlString = urlString.replace(" ", "%20");
-                String name = m.getValue(TaskAttachment.NAME);
-                StringBuilder filePathBuilder = new StringBuilder();
-
-                File directory = FileUtilities.getAttachmentsDirectory(activity);
-
-                if (directory == null) {
-                    Toast.makeText(activity, R.string.file_err_no_directory, Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                filePathBuilder.append(directory.toString())
-                    .append(File.separator)
-                    .append(name);
-
-                File file = new File(filePathBuilder.toString());
-                if (file.exists()) {
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(activity, R.string.file_err_download, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    return;
-                }
-
-                try {
-                    URL url = new URL(urlString);
-
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                    urlConnection.setRequestMethod("GET");
-
-                    urlConnection.connect();
-
-                    FileOutputStream fileOutput = new FileOutputStream(file);
-
-                    InputStream inputStream = urlConnection.getInputStream();
-
-                    int totalSize = urlConnection.getContentLength();
-
-                    int downloadedSize = 0;
-
-                    byte[] buffer = new byte[1024];
-
-                    int bufferLength = 0; //used to store a temporary size of the buffer
-
-                    while ((bufferLength = inputStream.read(buffer)) > 0) {
-                        fileOutput.write(buffer, 0, bufferLength);
-                        downloadedSize += bufferLength;
-
-                        int progress = (int) (downloadedSize*100/totalSize);
-                        pd.setProgress(progress);
-                    }
-
-                    fileOutput.flush();
-                    fileOutput.close();
-
-                    m.setValue(TaskAttachment.FILE_PATH, file.getAbsolutePath());
-                    taskAttachmentDao.saveExisting(m);
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            refreshMetadata();
-                            showFile(m);
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    file.delete();
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(activity, R.string.file_err_download, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                } finally {
-                    DialogUtilities.dismissDialog(activity, pd);
-                }
-            }
-        }.start();
-        pd.show();
+        });
     }
 
     private void setUpFileRow(TaskAttachment m, View row, LinearLayout parent, LayoutParams lp) {

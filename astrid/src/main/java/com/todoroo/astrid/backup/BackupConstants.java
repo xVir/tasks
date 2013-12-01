@@ -5,10 +5,9 @@
  */
 package com.todoroo.astrid.backup;
 
-import java.io.File;
-
 import android.os.Environment;
 
+import java.io.File;
 
 /**
  * Constants for backup XML attributes and nodes.
@@ -39,12 +38,13 @@ public class BackupConstants {
     /** Tag containing a metadata item */
     public static final String METADATA_TAG = "metadata";
 
+    /** Tag containing a tagdata item */
+    public static final String TAGDATA_TAG = "tagdata";
+
     // --- format 1
 
     public static final String TAG_TAG = "tag";
     public static final String TAG_ATTR_NAME = "name";
-    public static final String ALERT_TAG = "alert";
-    public static final String ALERT_ATTR_DATE = "date";
     public static final String SYNC_TAG = "sync";
     public static final String SYNC_ATTR_SERVICE = "service";
     public static final String SYNC_ATTR_REMOTE_ID = "remote_id";
@@ -75,6 +75,4 @@ public class BackupConstants {
         }
         return null;
     }
-
-
 }

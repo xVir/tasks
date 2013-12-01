@@ -26,8 +26,6 @@ import com.todoroo.astrid.service.AstridDependencyInjector;
  */
 public class GtasksDetailExposer extends BroadcastReceiver {
 
-    public static final String DETAIL_SEPARATOR = " | "; //$NON-NLS-1$
-
     @Autowired private GtasksMetadataService gtasksMetadataService;
     @Autowired private GtasksListService gtasksListService;
     @Autowired private GtasksPreferenceService gtasksPreferenceService;
@@ -79,7 +77,7 @@ public class GtasksDetailExposer extends BroadcastReceiver {
             return null;
         }
         String listName = gtasksListService.getListName(listId);
-        if(listName == GtasksListService.LIST_NOT_FOUND) {
+        if(listName.equals(GtasksListService.LIST_NOT_FOUND)) {
             return null;
         }
 

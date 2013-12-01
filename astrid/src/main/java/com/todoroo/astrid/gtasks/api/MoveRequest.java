@@ -5,9 +5,9 @@
  */
 package com.todoroo.astrid.gtasks.api;
 
-import java.io.IOException;
-
 import com.google.api.services.tasks.model.Task;
+
+import java.io.IOException;
 /**
  * Encapsulates a request to the api to change the ordering on the given task
  * @author Sam Bosley
@@ -26,14 +26,6 @@ public class MoveRequest extends PushRequest {
         this.priorSiblingId = priorSiblingId;
     }
 
-    public String getTaskId() {
-        return taskId;
-    }
-
-    public void setTaskId(String taskId) {
-        this.taskId = taskId;
-    }
-
     @Override
     public Task executePush() throws IOException {
         return service.moveGtask(super.listId, taskId, parentId, priorSiblingId);
@@ -43,21 +35,5 @@ public class MoveRequest extends PushRequest {
     protected void recover() {
         parentId = null;
         priorSiblingId = null;
-    }
-
-    public String getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(String parentId) {
-        this.parentId = parentId;
-    }
-
-    public String getPriorSiblingId() {
-        return priorSiblingId;
-    }
-
-    public void setPriorSiblingId(String priorSiblingId) {
-        this.priorSiblingId = priorSiblingId;
     }
 }

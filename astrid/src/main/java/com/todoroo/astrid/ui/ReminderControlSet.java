@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.ui;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.app.Activity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -20,10 +17,14 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.astrid.alarms.AlarmControlSet;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Control set dealing with reminder settings
@@ -45,7 +46,7 @@ public class ReminderControlSet extends PopupControlSet {
 
     public ReminderControlSet(Activity activity, int viewLayout, int displayViewLayout) {
         super(activity, viewLayout, displayViewLayout, R.string.TEA_reminders_group_label);
-        extraViews = new ArrayList<View>();
+        extraViews = new ArrayList<>();
         label = (TextView) getDisplayView().findViewById(R.id.display_row_edit);
 
         image = (ImageView) getDisplayView().findViewById(R.id.display_row_icon);
@@ -122,7 +123,7 @@ public class ReminderControlSet extends PopupControlSet {
                 activity.getString(R.string.TEA_reminder_mode_five),
                 activity.getString(R.string.TEA_reminder_mode_nonstop),
         };
-        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 activity, android.R.layout.simple_spinner_item, list);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mode.setOnItemSelectedListener(new OnItemSelectedListener() {
@@ -156,12 +157,11 @@ public class ReminderControlSet extends PopupControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         task.setValue(Task.REMINDER_FLAGS, getValue());
 
         randomControlSet.writeToModel(task);
         alarmControl.writeToModel(task);
-        return null;
     }
 
     @Override

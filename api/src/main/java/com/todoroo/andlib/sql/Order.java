@@ -5,10 +5,10 @@
  */
 package com.todoroo.andlib.sql;
 
-import static com.todoroo.andlib.sql.SqlConstants.SPACE;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.todoroo.andlib.sql.SqlConstants.SPACE;
 
 public class Order {
     private final Object expression;
@@ -22,7 +22,7 @@ public class Order {
     private Order(Object expression, OrderType orderType) {
         this.expression = expression;
         this.orderType = orderType;
-        this.secondaryExpressions = new ArrayList<Order>();
+        this.secondaryExpressions = new ArrayList<>();
     }
 
     public static Order asc(Object expression) {
@@ -35,10 +35,6 @@ public class Order {
 
     public void addSecondaryExpression(Order secondary) {
         secondaryExpressions.add(secondary);
-    }
-
-    public void removeSecondaryExpression(Order secondary) {
-        secondaryExpressions.remove(secondary);
     }
 
     @Override

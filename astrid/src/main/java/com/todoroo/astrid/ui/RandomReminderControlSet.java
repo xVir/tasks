@@ -13,11 +13,11 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.helper.TaskEditControlSet;
-import com.todoroo.astrid.service.StatisticsConstants;
+
+import org.tasks.R;
 
 /**
  * Control set dealing with random reminder settings
@@ -26,8 +26,6 @@ import com.todoroo.astrid.service.StatisticsConstants;
  *
  */
 public class RandomReminderControlSet extends TaskEditControlSet {
-    /** default interval for spinner if date is unselected */
-    private final long DEFAULT_INTERVAL = DateUtilities.ONE_WEEK * 2;
 
     private final CheckBox settingCheckbox;
     private final Spinner periodSpinner;
@@ -56,7 +54,7 @@ public class RandomReminderControlSet extends TaskEditControlSet {
         });
 
         // create adapter
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 activity, android.R.layout.simple_spinner_item,
                 activity.getResources().getStringArray(R.array.TEA_reminder_random));
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -81,7 +79,8 @@ public class RandomReminderControlSet extends TaskEditControlSet {
 
         boolean enabled = time > 0;
         if(time <= 0) {
-            time = DEFAULT_INTERVAL;
+            /* default interval for spinner if date is unselected */
+            time = DateUtilities.ONE_WEEK * 2;
         }
 
         int i;
@@ -95,16 +94,13 @@ public class RandomReminderControlSet extends TaskEditControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         if(settingCheckbox.isChecked()) {
             int hourValue = hours[periodSpinner.getSelectedItemPosition()];
             task.setValue(Task.REMINDER_PERIOD, hourValue * DateUtilities.ONE_HOUR);
-            if (task.getSetValues().containsKey(Task.REMINDER_PERIOD.name)) {
-            }
         } else {
             task.setValue(Task.REMINDER_PERIOD, 0L);
         }
-        return null;
     }
 
     public boolean hasRandomReminder() {

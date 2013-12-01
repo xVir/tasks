@@ -5,21 +5,15 @@
  */
 package com.todoroo.astrid.core;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.sql.Criterion;
-import com.todoroo.andlib.sql.Join;
 import com.todoroo.andlib.sql.Query;
 import com.todoroo.andlib.sql.QueryTemplate;
 import com.todoroo.andlib.utility.AndroidUtilities;
@@ -29,7 +23,6 @@ import com.todoroo.astrid.api.AstridApiConstants;
 import com.todoroo.astrid.api.AstridFilterExposer;
 import com.todoroo.astrid.api.Filter;
 import com.todoroo.astrid.api.FilterListItem;
-import com.todoroo.astrid.api.FilterWithCustomIntent;
 import com.todoroo.astrid.api.PermaSql;
 import com.todoroo.astrid.dao.MetadataDao.MetadataCriteria;
 import com.todoroo.astrid.dao.TaskDao.TaskCriteria;
@@ -37,6 +30,11 @@ import com.todoroo.astrid.data.Metadata;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.tags.TaskToTagMetadata;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Exposes Astrid's built in filters to the {@link FilterListFragment}
@@ -59,7 +57,7 @@ public final class CoreFilterExposer extends BroadcastReceiver implements Astrid
 
     private FilterListItem[] prepareFilters(Resources r) {
         // core filters
-        List<FilterListItem> filters = new ArrayList<FilterListItem>(3);
+        List<FilterListItem> filters = new ArrayList<>(3);
 
         filters.add(buildInboxFilter(r));
         if (Preferences.getBoolean(R.string.p_show_today_filter, true)) {
@@ -72,7 +70,6 @@ public final class CoreFilterExposer extends BroadcastReceiver implements Astrid
 
     /**
      * Build inbox filter
-     * @return
      */
     public static Filter buildInboxFilter(Resources r) {
         Filter inbox = new Filter(r.getString(R.string.BFE_Active), r.getString(R.string.BFE_Active),
@@ -107,8 +104,6 @@ public final class CoreFilterExposer extends BroadcastReceiver implements Astrid
 
     /**
      * Is this the inbox?
-     * @param filter
-     * @return
      */
     public static boolean isInbox(Filter filter) {
         return (filter != null && filter.equals(buildInboxFilter(ContextManager.getContext().getResources())));

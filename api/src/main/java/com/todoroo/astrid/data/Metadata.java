@@ -30,9 +30,6 @@ public class Metadata extends AbstractModel {
     /** table for this model */
     public static final Table TABLE = new Table("metadata", Metadata.class);
 
-    /** changes to metadata (specifically tags) are recorded in the task outstanding table */
-    public static final Class<? extends OutstandingEntry<Task>> OUTSTANDING_MODEL = TaskOutstanding.class;
-
     /** content uri for this model */
     public static final Uri CONTENT_URI = Uri.parse("content://" + AstridApiConstants.API_PACKAGE + "/" +
             TABLE.name);
@@ -120,15 +117,9 @@ public class Metadata extends AbstractModel {
     @Override
     public long getId() {
         return getIdHelper(ID);
-    };
+    }
 
     // --- parcelable helpers
 
-    private static final Creator<Metadata> CREATOR = new ModelCreator<Metadata>(Metadata.class);
-
-    @Override
-    protected Creator<? extends AbstractModel> getCreator() {
-        return CREATOR;
-    }
-
+    private static final Creator<Metadata> CREATOR = new ModelCreator<>(Metadata.class);
 }

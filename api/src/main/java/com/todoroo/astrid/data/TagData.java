@@ -7,16 +7,13 @@ package com.todoroo.astrid.data;
 
 
 import android.content.ContentValues;
-import android.net.Uri;
 
-import com.todoroo.andlib.data.AbstractModel;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.Property.IntegerProperty;
 import com.todoroo.andlib.data.Property.LongProperty;
 import com.todoroo.andlib.data.Property.StringProperty;
 import com.todoroo.andlib.data.Table;
 import com.todoroo.andlib.data.TodorooCursor;
-import com.todoroo.astrid.api.AstridApiConstants;
 
 /**
  * Data Model which represents a collaboration space for users / tasks.
@@ -30,13 +27,6 @@ public final class TagData extends RemoteModel {
 
     /** table for this model */
     public static final Table TABLE = new Table("tagdata", TagData.class);
-
-    /** model class for entries in the outstanding table */
-    public static final Class<? extends OutstandingEntry<TagData>> OUTSTANDING_MODEL = TagOutstanding.class;
-
-    /** content uri for this model */
-    public static final Uri CONTENT_URI = Uri.parse("content://" + AstridApiConstants.API_PACKAGE + "/" +
-            TABLE.name);
 
     // --- properties
 
@@ -79,10 +69,6 @@ public final class TagData extends RemoteModel {
     /** Unixtime Project was created */
     public static final LongProperty CREATION_DATE = new LongProperty(
             TABLE, "created", Property.PROP_FLAG_DATE);
-
-    /** Unixtime Project was last touched */
-    public static final LongProperty MODIFICATION_DATE = new LongProperty(
-            TABLE, "modified", Property.PROP_FLAG_DATE);
 
     /** Unixtime Project was completed. 0 means active */
     public static final LongProperty COMPLETION_DATE = new LongProperty(
@@ -141,32 +127,12 @@ public final class TagData extends RemoteModel {
     public static final StringProperty TAG_ORDERING = new StringProperty(
             TABLE, "tagOrdering");
 
-    /** History fetch date */
-    public static final LongProperty HISTORY_FETCH_DATE = new LongProperty(
-            TABLE, "historyFetch");
-
-    /** History has more*/
-    public static final IntegerProperty HISTORY_HAS_MORE = new IntegerProperty(
-            TABLE, "historyHasMore");
-
     /** Last autosync */
     public static final LongProperty LAST_AUTOSYNC = new LongProperty(
             TABLE, "lastAutosync");
 
     /** List of all properties for this model */
     public static final Property<?>[] PROPERTIES = generateProperties(TagData.class);
-
-    // --- flags
-
-    /** whether user should not be notified of tag activity */
-    public static final int FLAG_SILENT = 1 << 1;
-
-    /** whether tag is emergent */
-    @Deprecated
-    public static final int FLAG_EMERGENT = 1 << 2;
-
-    /** whether tag represents a featured list */
-    public static final int FLAG_FEATURED = 1 << 3;
 
     // --- defaults
 
@@ -185,8 +151,6 @@ public final class TagData extends RemoteModel {
         defaultValues.put(FLAGS.name, 0);
         defaultValues.put(COMPLETION_DATE.name, 0);
         defaultValues.put(DELETION_DATE.name, 0);
-        defaultValues.put(HISTORY_FETCH_DATE.name, 0);
-        defaultValues.put(HISTORY_HAS_MORE.name, 0);
         defaultValues.put(LAST_AUTOSYNC.name, 0);
 
         defaultValues.put(THUMB.name, "");
@@ -227,26 +191,15 @@ public final class TagData extends RemoteModel {
         return getIdHelper(ID);
     }
 
-    @Override
     public String getUuid() {
         return getUuidHelper(UUID);
     }
 
     // --- parcelable helpers
 
-    public static final Creator<TagData> CREATOR = new ModelCreator<TagData>(TagData.class);
-
-    @Override
-    protected Creator<? extends AbstractModel> getCreator() {
-        return CREATOR;
-    }
+    public static final Creator<TagData> CREATOR = new ModelCreator<>(TagData.class);
 
     // --- data access methods
-
-    /** Checks whether task is done. Requires COMPLETION_DATE */
-    public boolean isCompleted() {
-        return getValue(COMPLETION_DATE) > 0;
-    }
 
     /** Checks whether task is deleted. Will return false if DELETION_DATE not read */
     public boolean isDeleted() {

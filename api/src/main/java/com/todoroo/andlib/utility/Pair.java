@@ -31,10 +31,6 @@ public class Pair<L, R> {
         this.right = right;
     }
 
-    public static <A, B> Pair<A, B> create(A left, B right) {
-        return new Pair<A, B>(left, right);
-    }
-
     @Override
     public final boolean equals(Object o) {
         if (!(o instanceof Pair<?, ?>)) {
@@ -45,7 +41,7 @@ public class Pair<L, R> {
         return equal(getLeft(), other.getLeft()) && equal(getRight(), other.getRight());
     }
 
-    public static final boolean equal(Object o1, Object o2) {
+    public static boolean equal(Object o1, Object o2) {
         if (o1 == null) {
             return o2 == null;
         }

@@ -5,8 +5,6 @@
  */
 package com.todoroo.astrid.alarms;
 
-import java.util.LinkedHashSet;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +14,8 @@ import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.astrid.api.AstridApiConstants;
 import com.todoroo.astrid.data.Metadata;
+
+import java.util.LinkedHashSet;
 
 public class AlarmTaskRepeatListener extends BroadcastReceiver {
 
@@ -43,7 +43,7 @@ public class AlarmTaskRepeatListener extends BroadcastReceiver {
             }
 
             Metadata metadata = new Metadata();
-            LinkedHashSet<Long> alarms = new LinkedHashSet<Long>(cursor.getCount());
+            LinkedHashSet<Long> alarms = new LinkedHashSet<>(cursor.getCount());
             for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                 metadata.readFromCursor(cursor);
                 alarms.add(metadata.getValue(AlarmFields.TIME) + (newDueDate - oldDueDate));

@@ -8,10 +8,11 @@ package com.todoroo.astrid.reminders;
 import android.content.res.Resources;
 import android.preference.Preference;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.andlib.utility.TodorooPreferenceActivity;
+
+import org.tasks.R;
 
 /**
  * Displays the preference screen for users to edit their preferences
@@ -26,16 +27,12 @@ public class ReminderPreferences extends TodorooPreferenceActivity {
         return R.xml.preferences_reminders;
     }
 
-    /**
-     *
-     * @param resource if null, updates all resources
-     */
     @Override
     public void updatePreferences(Preference preference, Object value) {
         Resources r = getResources();
 
         if(r.getString(R.string.p_rmd_quietStart).equals(preference.getKey())) {
-            int index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_quiet_hours_start_values), (String)value);
+            int index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_quiet_hours_start_values), value);
             Preference endPreference = findPreference(getString(R.string.p_rmd_quietEnd));
             if(index <= 0) {
                 preference.setSummary(r.getString(R.string.rmd_EPr_quiet_hours_desc_none));
@@ -46,7 +43,7 @@ public class ReminderPreferences extends TodorooPreferenceActivity {
                 endPreference.setEnabled(true);
             }
         } else if(r.getString(R.string.p_rmd_quietEnd).equals(preference.getKey())) {
-            int index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_quiet_hours_end_values), (String)value);
+            int index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_quiet_hours_end_values), value);
             int quietHoursStart = Preferences.getIntegerFromString(R.string.p_rmd_quietStart, -1);
             if(index == -1 || quietHoursStart == -1) {
                 preference.setSummary(r.getString(R.string.rmd_EPr_quiet_hours_desc_none));
@@ -55,7 +52,7 @@ public class ReminderPreferences extends TodorooPreferenceActivity {
                 preference.setSummary(r.getString(R.string.rmd_EPr_quiet_hours_end_desc, setting));
             }
         } else if(r.getString(R.string.p_rmd_time).equals(preference.getKey())) {
-            int index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_rmd_time_values), (String)value);
+            int index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_rmd_time_values), value);
             if (index != -1 && index < r.getStringArray(R.array.EPr_rmd_time).length) {
                 // FIXME this does not fix the underlying cause of the ArrayIndexOutofBoundsException
                 String setting = r.getStringArray(R.array.EPr_rmd_time)[index];
@@ -89,14 +86,8 @@ public class ReminderPreferences extends TodorooPreferenceActivity {
             } else {
                 preference.setSummary(r.getString(R.string.rmd_EPr_vibrate_desc_false));
             }
-        } else if(r.getString(R.string.p_rmd_nagging).equals(preference.getKey())) {
-            if((Boolean)value) {
-                preference.setSummary(r.getString(R.string.rmd_EPr_nagging_desc_true));
-            } else {
-                preference.setSummary(r.getString(R.string.rmd_EPr_nagging_desc_false));
-            }
         } else if(r.getString(R.string.p_rmd_snooze_dialog).equals(preference.getKey())) {
-            if(value == null || ((Boolean)value) == true) {
+            if(value == null || ((Boolean) value)) {
                 preference.setSummary(r.getString(R.string.rmd_EPr_snooze_dialog_desc_true));
             } else {
                 preference.setSummary(r.getString(R.string.rmd_EPr_snooze_dialog_desc_false));

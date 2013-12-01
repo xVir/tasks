@@ -45,8 +45,6 @@ public final class TaskDecoration implements Parcelable {
 
     /**
      * Creates a TaskDetail object
-     * @param text
-     *            text to display
      * @param color
      *            color to use for text. Use <code>0</code> for default color
      */
@@ -96,7 +94,7 @@ public final class TaskDecoration implements Parcelable {
         @Override
         public TaskDecoration[] newArray(int size) {
             return new TaskDecoration[size];
-        };
+        }
     };
 
 }

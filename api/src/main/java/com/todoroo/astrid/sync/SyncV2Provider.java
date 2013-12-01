@@ -5,13 +5,11 @@
  */
 package com.todoroo.astrid.sync;
 
-import java.io.IOException;
-
-import android.app.Activity;
-
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.service.ExceptionService;
+
+import java.io.IOException;
 
 
 abstract public class SyncV2Provider {
@@ -73,11 +71,6 @@ abstract public class SyncV2Provider {
     abstract public void synchronizeList(Object list, boolean manual, SyncResultCallback callback);
 
     /**
-     * Sign out of service, deleting all synchronization metadata
-     */
-    abstract public void signOut(Activity activity);
-
-    /**
      * @return sync utility instance
      */
     abstract protected SyncProviderUtilities getUtilities();
@@ -85,7 +78,6 @@ abstract public class SyncV2Provider {
     protected void finishSync(SyncResultCallback callback) {
         SyncProviderUtilities utilities = getUtilities();
         utilities.recordSuccessfulSync();
-        utilities.reportLastError();
         utilities.stopOngoing();
         if (callback != null) {
             callback.finished();

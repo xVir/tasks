@@ -5,13 +5,8 @@
  */
 package com.todoroo.astrid.ui;
 
-import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicReference;
-
-import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.text.Editable;
@@ -23,14 +18,12 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -38,7 +31,6 @@ import com.todoroo.andlib.service.ExceptionService;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.andlib.utility.Preferences;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.activity.AstridActivity;
 import com.todoroo.astrid.activity.TaskEditFragment;
 import com.todoroo.astrid.activity.TaskListFragment;
@@ -49,16 +41,16 @@ import com.todoroo.astrid.dao.TaskDao;
 import com.todoroo.astrid.data.SyncFlags;
 import com.todoroo.astrid.data.TagData;
 import com.todoroo.astrid.data.Task;
-import com.todoroo.astrid.data.TaskAttachment;
-import com.todoroo.astrid.files.FileUtilities;
 import com.todoroo.astrid.gcal.GCalControlSet;
 import com.todoroo.astrid.gcal.GCalHelper;
 import com.todoroo.astrid.repeats.RepeatControlSet;
-import com.todoroo.astrid.service.AddOnService;
-import com.todoroo.astrid.service.MetadataService;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.utility.Flags;
 import com.todoroo.astrid.voice.VoiceRecognizer;
+
+import org.tasks.R;
+
+import java.util.HashSet;
 
 /**
  * Quick Add Bar lets you add tasks.
@@ -78,12 +70,7 @@ public class QuickAddBar extends LinearLayout {
     private RepeatControlSet repeatControl;
     private GCalControlSet gcalControl;
 
-    private String currentVoiceFile = null;
-
-    @Autowired AddOnService addOnService;
     @Autowired ExceptionService exceptionService;
-    @Autowired MetadataService metadataService;
-    @Autowired ActFmPreferenceService actFmPreferenceService;
     @Autowired
     private TaskAttachmentDao taskAttachmentDao;
 
@@ -170,7 +157,7 @@ public class QuickAddBar extends LinearLayout {
             public void onClick(View v) {
                 Task task = quickAddTask(quickAddBox.getText().toString(), true);
                 if (task != null && task.getValue(Task.TITLE).length() == 0) {
-                    mListener.onTaskListItemClicked(task.getId(), true);
+                    mListener.onTaskListItemClicked(task.getId());
                 }
             }
         });
@@ -196,7 +183,7 @@ public class QuickAddBar extends LinearLayout {
                     return true;
                 }
 
-                mListener.onTaskListItemClicked(task.getId(), true);
+                mListener.onTaskListItemClicked(task.getId());
                 return true;
             }
         });
@@ -225,7 +212,7 @@ public class QuickAddBar extends LinearLayout {
                 R.layout.control_set_deadline,
                 R.layout.control_set_default_display, null,
                 repeatControl.getDisplayView(), gcalControl.getDisplayView());
-        deadlineControl.setIsQuickadd(true);
+        deadlineControl.setIsQuickadd();
 
         resetControlSets();
 
@@ -241,7 +228,7 @@ public class QuickAddBar extends LinearLayout {
         Task empty = new Task();
         TagData tagData = fragment.getActiveTagData();
         if (tagData != null) {
-            HashSet<String> tagsTransitory = new HashSet<String>();
+            HashSet<String> tagsTransitory = new HashSet<>();
             tagsTransitory.add(tagData.getValue(TagData.NAME));
             empty.putTransitory(TaskService.TRANS_TAGS, tagsTransitory);
         }
@@ -251,14 +238,10 @@ public class QuickAddBar extends LinearLayout {
         deadlineControl.readFromTask(empty);
     }
 
-
     // --- quick add task logic
 
     /**
      * Quick-add a new task
-     *
-     * @param title
-     * @return
      */
     public Task quickAddTask(String title, boolean selectNewTask) {
         TagData tagData = fragment.getActiveTagData();
@@ -272,7 +255,6 @@ public class QuickAddBar extends LinearLayout {
             if (title != null) {
                 title = title.trim();
             }
-            boolean assignedToMe = true;
 
             Task task = new Task();
             if (title != null) {
@@ -291,15 +273,9 @@ public class QuickAddBar extends LinearLayout {
 
             TaskService.createWithValues(task, fragment.getFilter().valuesForNewTasks, title);
 
-            if (Task.userIdIsEmail(task.getValue(Task.USER_ID))) {
-            }
-
             resetControlSets();
 
             addToCalendar(task, title);
-
-            if(!TextUtils.isEmpty(title)) {
-            }
 
             TextView quickAdd = (TextView) findViewById(R.id.quickAddText);
             quickAdd.setText(""); //$NON-NLS-1$
@@ -308,22 +284,10 @@ public class QuickAddBar extends LinearLayout {
                 fragment.loadTaskListContent(true);
                 fragment.selectCustomId(task.getId());
                 if (task.getTransitory(TaskService.TRANS_QUICK_ADD_MARKUP) != null) {
-                    showAlertForMarkupTask((AstridActivity) activity, task, title);
+                    showAlertForMarkupTask(activity, task, title);
                 } else if (!TextUtils.isEmpty(task.getValue(Task.RECURRENCE))) {
-                    showAlertForRepeatingTask((AstridActivity) activity, task);
+                    showAlertForRepeatingTask(activity, task);
                 }
-            }
-
-            if (currentVoiceFile != null) {
-
-                AtomicReference<String> nameRef = new AtomicReference<String>();
-                String path = FileUtilities.getNewAudioAttachmentPath(activity, nameRef);
-
-                voiceRecognizer.convert(path);
-                currentVoiceFile = null;
-
-                TaskAttachment attachment = TaskAttachment.createNewAttachment(task.getUuid(), path, nameRef.get(), TaskAttachment.FILE_TYPE_AUDIO + "m4a");
-                taskAttachmentDao.createNew(attachment);
             }
 
             fragment.onTaskCreated(task);
@@ -352,8 +316,6 @@ public class QuickAddBar extends LinearLayout {
     /**
      * Static method to quickly add tasks without all the control set nonsense.
      * Used from the share link activity.
-     * @param title
-     * @return
      */
     public static Task basicQuickAddTask(String title) {
         if (TextUtils.isEmpty(title)) {
@@ -409,19 +371,14 @@ public class QuickAddBar extends LinearLayout {
             return true;
         }
 
-
         return false;
     }
-
 
     public VoiceRecognizer getVoiceRecognizer() {
         return voiceRecognizer;
     }
     public void startVoiceRecognition() {
-        if (VoiceRecognizer.speechRecordingAvailable(activity) && currentVoiceFile == null) {
-            currentVoiceFile = Long.toString(DateUtilities.now());
-        }
-        voiceRecognizer.startVoiceRecognition(activity, fragment, currentVoiceFile);
+        voiceRecognizer.startVoiceRecognition(activity, fragment, Long.toString(DateUtilities.now()));
     }
 
     public void setupRecognizerApi() {
@@ -431,13 +388,4 @@ public class QuickAddBar extends LinearLayout {
     public void destroyRecognizerApi() {
         voiceRecognizer.destroyRecognizerApi();
     }
-
-
-
-    public void hideKeyboard() {
-        InputMethodManager imm = (InputMethodManager) activity.getSystemService(
-                Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(quickAddBox.getWindowToken(), 0);
-    }
-
 }

@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.sync;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Set;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
@@ -27,7 +23,12 @@ import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.andlib.utility.TodorooPreferenceActivity;
+
 import org.tasks.api.R;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Set;
 
 /**
  * Utility class for common synchronization action: displaying synchronization
@@ -94,11 +95,6 @@ abstract public class SyncProviderPreferences extends TodorooPreferenceActivity 
         });
     }
 
-    /**
-     *
-     * @param resource
-     *            if null, updates all resources
-     */
     @Override
     public void updatePreferences(Preference preference, Object value) {
         final Resources r = getResources();
@@ -108,7 +104,7 @@ abstract public class SyncProviderPreferences extends TodorooPreferenceActivity 
                 preference.getKey())) {
             int index = AndroidUtilities.indexOf(
                     r.getStringArray(R.array.sync_SPr_interval_values),
-                    (String) value);
+                    value);
             if (index <= 0) {
                 preference.setSummary(R.string.sync_SPr_interval_desc_disabled);
             } else {
@@ -142,12 +138,6 @@ abstract public class SyncProviderPreferences extends TodorooPreferenceActivity 
                         DateUtilities.getDateStringWithTime(SyncProviderPreferences.this,
                         new Date(getUtilities().getLastAttemptedSyncDate())));
                     statusColor = Color.rgb(100, 0, 0);
-
-                    if(getUtilities().getLastSyncDate() > 0) {
-//                        subtitle = r.getString(R.string.sync_status_failed_subtitle,
-//                                DateUtilities.getDateStringWithTime(SyncProviderPreferences.this,
-//                                        new Date(getUtilities().getLastSyncDate())));
-                    }
                 } else {
                     long lastSyncDate = getUtilities().getLastSyncDate();
                     String dateString = lastSyncDate > 0 ?
@@ -257,15 +247,14 @@ abstract public class SyncProviderPreferences extends TodorooPreferenceActivity 
 
     private static HashMap<String, Integer> getExceptionMap() {
         if (exceptionsToDisplayMessages == null) {
-            exceptionsToDisplayMessages = new HashMap<String, Integer>();
+            exceptionsToDisplayMessages = new HashMap<>();
             exceptionsToDisplayMessages.put("java.net.ConnectionException", R.string.sync_error_offline);
             exceptionsToDisplayMessages.put("java.net.UnknownHostException", R.string.sync_error_offline);
-            exceptionsToDisplayMessages.put("org.apache.http.conn.HttpHostConnectionException", R.string.sync_error_offline);
         }
         return exceptionsToDisplayMessages;
     }
 
-    private static final String adjustErrorForDisplay(Resources r, String lastError, String service) {
+    private static String adjustErrorForDisplay(Resources r, String lastError, String service) {
         Set<String> exceptions = getExceptionMap().keySet();
         Integer resource = null;
         for (String key : exceptions) {
@@ -277,7 +266,7 @@ abstract public class SyncProviderPreferences extends TodorooPreferenceActivity 
         if (resource == null) {
             return lastError;
         }
-        return r.getString(resource.intValue(), service);
+        return r.getString(resource, service);
     }
 
     @Override

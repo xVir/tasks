@@ -25,11 +25,11 @@ import com.todoroo.andlib.utility.Preferences;
 import org.tasks.R;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class BeastModePreferences extends ListActivity {
 
-    private TouchListView touchList;
     private ArrayAdapter<String> adapter;
 
     private ArrayList<String> items;
@@ -45,7 +45,6 @@ public class BeastModePreferences extends ListActivity {
     /**
      * Migration for existing users to assert that the "hide always" section divider exists in the preferences.
      * Knowing that this section will always be in the constructed list of controls simplifies the logic a bit.
-     * @param c
      */
     public static void assertHideUntilSectionExists(Context c, long latestSetVersion) {
         if (latestSetVersion == 0) {
@@ -81,41 +80,11 @@ public class BeastModePreferences extends ListActivity {
         Preferences.setBoolean(BEAST_MODE_ASSERTED_HIDE_ALWAYS, true);
     }
 
-    public static void setDefaultLiteModeOrder(Context context, boolean force) {
-        if (Preferences.getStringValue(BEAST_MODE_ORDER_PREF) != null && !force) {
+    public static void setDefaultOrder(Context context) {
+        if (Preferences.getStringValue(BEAST_MODE_ORDER_PREF) != null) {
             return;
         }
 
-        if (force) {
-            Preferences.clear(BEAST_MODE_ORDER_PREF);
-        }
-        ArrayList<String> list = constructOrderedControlList(context);
-        String hideSeparator = context.getResources().getString(R.string.TEA_ctrl_hide_section_pref);
-        String importancePref = context.getResources().getString(R.string.TEA_ctrl_importance_pref);
-        String listsPref = context.getResources().getString(R.string.TEA_ctrl_lists_pref);
-
-        list.remove(importancePref);
-        list.remove(listsPref);
-
-        list.remove(hideSeparator);
-        list.add(hideSeparator);
-
-        StringBuilder newSetting = new StringBuilder(30);
-        for (String item : list) {
-            newSetting.append(item);
-            newSetting.append(BEAST_MODE_PREF_ITEM_SEPARATOR);
-        }
-        Preferences.setString(BEAST_MODE_ORDER_PREF, newSetting.toString());
-    }
-
-    public static void setDefaultOrder(Context context, boolean force) {
-        if (Preferences.getStringValue(BEAST_MODE_ORDER_PREF) != null && !force) {
-            return;
-        }
-
-        if (force) {
-            Preferences.clear(BEAST_MODE_ORDER_PREF);
-        }
         ArrayList<String> list = constructOrderedControlList(context);
         StringBuilder newSetting = new StringBuilder(30);
         for (String item : list) {
@@ -131,10 +100,10 @@ public class BeastModePreferences extends ListActivity {
         setContentView(R.layout.beast_mode_pref_activity);
         setTitle(R.string.EPr_beastMode_desc);
 
-        prefsToDescriptions = new HashMap<String, String>();
+        prefsToDescriptions = new HashMap<>();
         buildDescriptionMap(getResources());
 
-        touchList = (TouchListView) getListView();
+        TouchListView touchList = (TouchListView) getListView();
         items = constructOrderedControlList(this);
 
         adapter = new ArrayAdapter<String>(this, R.layout.preference_draggable_row, R.id.text, items) {
@@ -185,9 +154,7 @@ public class BeastModePreferences extends ListActivity {
         while (items.size() > 0) {
             items.remove(0);
         }
-        for (String s : prefsArray) {
-            items.add(s);
-        }
+        Collections.addAll(items, prefsArray);
         adapter.notifyDataSetChanged();
     }
 
@@ -204,7 +171,7 @@ public class BeastModePreferences extends ListActivity {
 
     public static ArrayList<String> constructOrderedControlList(Context context) {
         String order = Preferences.getStringValue(BEAST_MODE_ORDER_PREF);
-        ArrayList<String> list = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<>();
         String[] itemsArray;
         if (order == null) {
             itemsArray = context.getResources().getStringArray(R.array.TEA_control_sets_prefs);

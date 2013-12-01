@@ -21,10 +21,6 @@ public class DialogUtilities {
 
     /**
      * Displays a dialog box with a EditText and an ok / cancel
-     *
-     * @param activity
-     * @param text
-     * @param okListener
      */
     public static void viewDialog(final Activity activity, final String text,
             final View view, final DialogInterface.OnClickListener okListener,
@@ -50,10 +46,6 @@ public class DialogUtilities {
 
     /**
      * Display an OK dialog with HTML content
-     *
-     * @param context
-     * @param html
-     * @param title
      */
     public static void htmlDialog(Context context, String html, int title) {
         WebView webView = new WebView(context);
@@ -70,10 +62,6 @@ public class DialogUtilities {
 
     /**
      * Displays a dialog box with an OK button
-     *
-     * @param activity
-     * @param text
-     * @param okListener
      */
     public static void okDialog(final Activity activity, final String text,
             final DialogInterface.OnClickListener okListener) {
@@ -96,14 +84,9 @@ public class DialogUtilities {
 
     /**
      * Displays a dialog box with an OK button
-     *
-     * @param activity
-     * @param text
-     * @param okListener
      */
     public static void okDialog(final Activity activity, final String title,
-            final int icon, final CharSequence text,
-            final DialogInterface.OnClickListener okListener) {
+            final int icon, final CharSequence text) {
         if(activity.isFinishing()) {
             return;
         }
@@ -115,7 +98,7 @@ public class DialogUtilities {
                 .setTitle(title)
                 .setMessage(text)
                 .setIcon(icon)
-                .setPositiveButton(android.R.string.ok, okListener)
+                .setPositiveButton(android.R.string.ok, null)
                 .show().setOwnerActivity(activity);
             }
         });
@@ -123,27 +106,15 @@ public class DialogUtilities {
 
     /**
      * Displays a dialog box with OK and Cancel buttons and custom title
-     *
-     * @param activity
-     * @param title
-     * @param text
-     * @param okListener
-     * @param cancelListener
      */
     public static void okCancelDialog(final Activity activity, final String title,
-            final String text, final DialogInterface.OnClickListener okListener,
-            final DialogInterface.OnClickListener cancelListener) {
+            final String text, final DialogInterface.OnClickListener okListener) {
 
-        okCancelCustomDialog(activity, title, text, android.R.string.ok, android.R.string.cancel, android.R.drawable.ic_dialog_alert, okListener, cancelListener);
+        okCancelCustomDialog(activity, title, text, android.R.string.ok, android.R.string.cancel, android.R.drawable.ic_dialog_alert, okListener, null);
     }
 
     /**
      * Displays a dialog box with OK and Cancel buttons
-     *
-     * @param activity
-     * @param text
-     * @param okListener
-     * @param cancelListener
      */
     public static void okCancelDialog(final Activity activity, final String text,
             final DialogInterface.OnClickListener okListener,
@@ -203,9 +174,6 @@ public class DialogUtilities {
 
     /**
      * Displays a progress dialog. Must be run on the UI thread
-     * @param context
-     * @param text
-     * @return
      */
     public static ProgressDialog progressDialog(Activity context, String text) {
         ProgressDialog dialog = new ProgressDialog(context);
@@ -219,9 +187,6 @@ public class DialogUtilities {
 
     /**
      * Dismiss a dialog off the UI thread
-     *
-     * @param activity
-     * @param dialog
      */
     public static void dismissDialog(Activity activity, final Dialog dialog) {
         if(dialog == null) {

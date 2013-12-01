@@ -5,8 +5,6 @@
  */
 package com.todoroo.astrid.sync;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -22,6 +20,8 @@ import com.todoroo.andlib.service.ExceptionService;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.api.AstridApiConstants;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Performs synchronization service logic in background service to avoid
@@ -49,6 +49,7 @@ abstract public class SyncV2BackgroundService extends Service {
 
     // --- implementation
 
+    @SuppressWarnings("unused")
     public SyncV2BackgroundService() {
         DependencyInjectionService.getInstance().inject(this);
     }
@@ -94,11 +95,6 @@ abstract public class SyncV2BackgroundService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
-    }
-
-    public synchronized void stop() {
-        started.set(false);
-        stopSelf();
     }
 
     // --- alarm management
@@ -155,8 +151,7 @@ abstract public class SyncV2BackgroundService extends Service {
 
     /** Create the alarm intent */
     private Intent createAlarmIntent(Context context) {
-        Intent intent = new Intent(context, getClass());
-        return intent;
+        return new Intent(context, getClass());
     }
 
     // --- utility methods

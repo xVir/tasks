@@ -5,18 +5,8 @@
  */
 package com.todoroo.astrid.dao;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.content.ContentValues;
 import android.text.TextUtils;
 
-import com.todoroo.andlib.data.AbstractModel;
 import com.todoroo.andlib.data.DatabaseDao;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
@@ -24,18 +14,19 @@ import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.sql.Query;
 import com.todoroo.andlib.utility.DateUtilities;
-import com.todoroo.astrid.actfm.sync.ActFmSyncThread;
-import com.todoroo.astrid.actfm.sync.messages.ChangesHappened;
-import com.todoroo.astrid.actfm.sync.messages.NameMaps;
 import com.todoroo.astrid.core.PluginServices;
 import com.todoroo.astrid.data.Metadata;
-import com.todoroo.astrid.data.OutstandingEntry;
-import com.todoroo.astrid.data.RemoteModel;
-import com.todoroo.astrid.data.SyncFlags;
 import com.todoroo.astrid.data.TagData;
 import com.todoroo.astrid.data.TagMetadata;
-import com.todoroo.astrid.data.TagOutstanding;
 import com.todoroo.astrid.tags.TagMemberMetadata;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Data Access layer for {@link Metadata}-related operations.
@@ -71,101 +62,37 @@ public class TagMetadataDao extends DatabaseDao<TagMetadata> {
         }
     }
 
-    @Override
-    protected boolean shouldRecordOutstanding(TagMetadata item) {
-        ContentValues cv = item.getSetValues();
-        return super.shouldRecordOutstanding(item) && cv != null &&
-                ((cv.containsKey(TagMetadata.KEY.name) &&
-                        TagMemberMetadata.KEY.equals(item.getValue(TagMetadata.KEY))) ||
-                (cv.containsKey(TagMetadata.DELETION_DATE.name) &&
-                        item.getValue(TagMetadata.DELETION_DATE) > 0)) &&
-                RemoteModelDao.getOutstandingEntryFlag(RemoteModelDao.OUTSTANDING_ENTRY_FLAG_RECORD_OUTSTANDING);
+    public void createMemberLink(long tagId, String tagUuid, String memberId) {
+        createMemberLink(tagId, tagUuid, memberId, false);
     }
 
-    @Override
-    protected int createOutstandingEntries(long modelId, ContentValues modelSetValues) {
-        Long tagDataId = modelSetValues.getAsLong(TagMetadata.TAG_ID.name);
-        String memberId = modelSetValues.getAsString(TagMemberMetadata.USER_UUID.name);
-        Long deletionDate = modelSetValues.getAsLong(TagMetadata.DELETION_DATE.name);
-        if (tagDataId == null || tagDataId == AbstractModel.NO_ID || RemoteModel.isUuidEmpty(memberId)) {
-            return -1;
-        }
-
-        TagOutstanding to = new TagOutstanding();
-        to.setValue(OutstandingEntry.ENTITY_ID_PROPERTY, tagDataId);
-        to.setValue(OutstandingEntry.CREATED_AT_PROPERTY, DateUtilities.now());
-
-        String addedOrRemoved = NameMaps.MEMBER_ADDED_COLUMN;
-        if (deletionDate != null && deletionDate > 0) {
-            addedOrRemoved = NameMaps.MEMBER_REMOVED_COLUMN;
-        }
-
-        to.setValue(OutstandingEntry.COLUMN_STRING_PROPERTY, addedOrRemoved);
-        to.setValue(OutstandingEntry.VALUE_STRING_PROPERTY, memberId);
-        database.insert(outstandingTable.name, null, to.getSetValues());
-        ActFmSyncThread.getInstance().enqueueMessage(new ChangesHappened<TagData, TagOutstanding>(tagDataId, TagData.class,
-                PluginServices.getTagDataDao(), PluginServices.getTagOutstandingDao()), null);
-        return 1;
-    }
-
-    public void createMemberLink(long tagId, String tagUuid, String memberId, boolean suppressOutstanding) {
-        createMemberLink(tagId, tagUuid, memberId, false, suppressOutstanding);
-    }
-
-    public void createMemberLink(long tagId, String tagUuid, String memberId, boolean removedMember, boolean suppressOutstanding) {
+    public void createMemberLink(long tagId, String tagUuid, String memberId, boolean removedMember) {
         TagMetadata newMetadata = TagMemberMetadata.newMemberMetadata(tagId, tagUuid, memberId);
         if (removedMember) {
             newMetadata.setValue(TagMetadata.DELETION_DATE, DateUtilities.now());
         }
-        if (suppressOutstanding) {
-            newMetadata.putTransitory(SyncFlags.ACTFM_SUPPRESS_OUTSTANDING_ENTRIES, true);
-        }
         if (update(Criterion.and(TagMetadataCriteria.byTagAndWithKey(tagUuid, TagMemberMetadata.KEY),
                 TagMemberMetadata.USER_UUID.eq(memberId)), newMetadata) <= 0) {
-            if (suppressOutstanding) {
-                newMetadata.putTransitory(SyncFlags.ACTFM_SUPPRESS_OUTSTANDING_ENTRIES, true);
-            }
             createNew(newMetadata);
         }
     }
 
-    public void removeMemberLink(long tagId, String tagUuid, String memberId, boolean suppressOutstanding) {
+    public void removeMemberLink(long tagId, String tagUuid, String memberId) {
         TagMetadata deleteTemplate = new TagMetadata();
         deleteTemplate.setValue(TagMetadata.TAG_ID, tagId); // Need this for recording changes in outstanding table
         deleteTemplate.setValue(TagMetadata.DELETION_DATE, DateUtilities.now());
         deleteTemplate.setValue(TagMemberMetadata.USER_UUID, memberId); // Need this for recording changes in outstanding table
 
-        if (suppressOutstanding) {
-            deleteTemplate.putTransitory(SyncFlags.ACTFM_SUPPRESS_OUTSTANDING_ENTRIES, true);
-        }
         update(Criterion.and(TagMetadataCriteria.withKey(TagMemberMetadata.KEY), TagMetadata.DELETION_DATE.eq(0),
                 TagMetadata.TAG_UUID.eq(tagUuid), TagMemberMetadata.USER_UUID.eq(memberId)), deleteTemplate);
     }
 
-    public void removeMemberLinks(long tagId, String tagUuid, String[] memberIds, boolean suppressOutstanding) {
-        TagMetadata deleteTemplate = new TagMetadata();
-        deleteTemplate.setValue(TagMetadata.TAG_ID, tagId); // Need this for recording changes in outstanding table
-        deleteTemplate.setValue(TagMetadata.DELETION_DATE, DateUtilities.now());
-        if (memberIds != null) {
-            for (String uuid : memberIds) {
-                // TODO: Right now this is in a loop because each deleteTemplate needs the individual tagUuid in order to record
-                // the outstanding entry correctly. If possible, this should be improved to a single query
-                deleteTemplate.setValue(TagMemberMetadata.USER_UUID, uuid); // Need this for recording changes in outstanding table
-                if (suppressOutstanding) {
-                    deleteTemplate.putTransitory(SyncFlags.ACTFM_SUPPRESS_OUTSTANDING_ENTRIES, true);
-                }
-                update(Criterion.and(TagMetadataCriteria.withKey(TagMemberMetadata.KEY), TagMetadata.DELETION_DATE.eq(0),
-                        TagMetadata.TAG_UUID.eq(tagUuid), TagMemberMetadata.USER_UUID.eq(uuid)), deleteTemplate);
-            }
-        }
-    }
-
     public void synchronizeMembers(TagData tagData, String legacyMembersString, String tagUuid, JSONArray members) {
         long tagId = tagData.getId();
-        Set<String> emails = new HashSet<String>();
-        Set<String> ids = new HashSet<String>();
+        Set<String> emails = new HashSet<>();
+        Set<String> ids = new HashSet<>();
 
-        HashMap<String, String> idToEmail = new HashMap<String, String>();
+        HashMap<String, String> idToEmail = new HashMap<>();
 
         for (int i = 0; i < members.length(); i++) {
             JSONObject person = members.optJSONObject(i);
@@ -196,9 +123,9 @@ public class TagMetadataDao extends DatabaseDao<TagMetadata> {
                         String email = user.optString("email"); //$NON-NLS-1$
 
                         if (!TextUtils.isEmpty(id)) {
-                            createMemberLink(tagId, tagUuid, id, !ids.contains(id), false);
+                            createMemberLink(tagId, tagUuid, id, !ids.contains(id));
                         } else if (!TextUtils.isEmpty(email)) {
-                            createMemberLink(tagId, tagUuid, email, !emails.contains(email), false);
+                            createMemberLink(tagId, tagUuid, email, !emails.contains(email));
                         }
                     }
 
@@ -225,7 +152,7 @@ public class TagMetadataDao extends DatabaseDao<TagMetadata> {
                 }
 
                 if (!exists) { // Was in database, but not in new members list
-                    removeMemberLink(tagId, tagUuid, userId, false);
+                    removeMemberLink(tagId, tagUuid, userId);
                 }
             }
         } finally {
@@ -233,41 +160,11 @@ public class TagMetadataDao extends DatabaseDao<TagMetadata> {
         }
 
         for (String email : emails) {
-            createMemberLink(tagId, tagUuid, email, false);
+            createMemberLink(tagId, tagUuid, email);
         }
 
         for (String id : ids) {
-            createMemberLink(tagId, tagUuid, id, false);
-        }
-    }
-
-    public boolean tagHasMembers(String uuid) {
-        TodorooCursor<TagMetadata> metadata = query(Query.select(TagMetadata.ID).where(Criterion.and(TagMetadataCriteria.byTagAndWithKey(uuid, TagMemberMetadata.KEY), TagMetadata.DELETION_DATE.eq(0))));
-        try {
-            return metadata.getCount() > 0;
-        } finally {
-            metadata.close();
-        }
-    }
-
-    public boolean memberOfTagData(String email, String tagId, String memberId) {
-        Criterion criterion;
-        if (!RemoteModel.isUuidEmpty(memberId) && !TextUtils.isEmpty(email)) {
-            criterion = Criterion.or(TagMemberMetadata.USER_UUID.eq(email), TagMemberMetadata.USER_UUID.eq(memberId));
-        } else if (!RemoteModel.isUuidEmpty(memberId)) {
-            criterion = TagMemberMetadata.USER_UUID.eq(memberId);
-        } else if (!TextUtils.isEmpty(email)) {
-            criterion = TagMemberMetadata.USER_UUID.eq(email);
-        } else {
-            return false;
-        }
-
-        TodorooCursor<TagMetadata> count = query(Query.select(TagMetadata.ID).where(
-                Criterion.and(TagMetadataCriteria.withKey(TagMemberMetadata.KEY), TagMetadata.TAG_UUID.eq(tagId), criterion)));
-        try {
-            return count.getCount() > 0;
-        } finally {
-            //
+            createMemberLink(tagId, tagUuid, id);
         }
     }
 }

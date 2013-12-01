@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.gtasks;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +19,9 @@ import com.todoroo.astrid.core.PluginServices;
 import com.todoroo.astrid.data.Metadata;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.test.DatabaseTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GtasksDetailExposerTest extends DatabaseTestCase {
 
@@ -96,7 +96,7 @@ public class GtasksDetailExposerTest extends DatabaseTestCase {
 
     private void givenTwoListSetup() {
         TaskLists lists = new TaskLists();
-        List<TaskList> newLists = new ArrayList<TaskList>();
+        List<TaskList> newLists = new ArrayList<>();
         TaskList list = new TaskList();
         list.setId("listone-id");
         list.setTitle("List One"); //new GoogleTaskListInfo("listone-id", "List One");
@@ -109,14 +109,14 @@ public class GtasksDetailExposerTest extends DatabaseTestCase {
         gtasksListService.updateLists(lists);
     }
 
-    private Task givenTaskWithList(String list) {
+    private void givenTaskWithList(String list) {
         Task newTask = new Task();
         PluginServices.getTaskService().save(newTask);
         Metadata metadata = GtasksMetadata.createEmptyMetadata(newTask.getId());
         if(list != null)
             metadata.setValue(GtasksMetadata.LIST_ID, list);
         PluginServices.getMetadataService().save(metadata);
-        return task = newTask;
+        task = newTask;
     }
 
     @Override

@@ -5,9 +5,9 @@
  */
 package com.todoroo.astrid.gtasks.api;
 
-import java.io.IOException;
-
 import com.google.api.services.tasks.model.Task;
+
+import java.io.IOException;
 /**
  * Encapsulates a request to the api to create a task on the remote server
  * @author Sam Bosley
@@ -34,22 +34,4 @@ public class CreateRequest extends PushRequest {
         parent = null;
         priorSiblingId = null;
     }
-
-    public String getParent() {
-        return parent;
-    }
-
-    public void setParent(String parent) {
-        this.parent = parent;
-    }
-
-    public String getPriorSiblingId() {
-        return priorSiblingId;
-    }
-
-    public void setPriorSiblingId(String priorSiblingId) {
-        this.priorSiblingId = priorSiblingId;
-    }
-
-
 }

@@ -1,12 +1,5 @@
 package com.todoroo.astrid.gcal;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,41 +9,31 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
 
-import org.tasks.R;
-import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
-import com.todoroo.andlib.sql.Query;
 import com.todoroo.andlib.utility.AndroidUtilities;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.activity.EditPreferences;
 import com.todoroo.astrid.activity.TaskListActivity;
-import com.todoroo.astrid.dao.TagMetadataDao;
-import com.todoroo.astrid.dao.UserDao;
 import com.todoroo.astrid.data.TagData;
-import com.todoroo.astrid.data.User;
 import com.todoroo.astrid.service.TagDataService;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.tasks.R;
+
+import java.util.ArrayList;
 
 public class CalendarAlarmListCreator extends Activity {
 
     public static final String TOKEN_LIST_NAME = "listName"; //$NON-NLS-1$
 
     @Autowired
-    private UserDao userDao;
-
-    @Autowired
     private TagDataService tagDataService;
-
-    @Autowired
-    private ActFmPreferenceService actFmPreferenceService;
-
-    @Autowired
-    private TagMetadataDao tagMetadataDao;
 
     private ArrayList<String> names;
     private ArrayList<String> emails;
-    private HashMap<String, User> emailsToUsers;
 
     private String tagName;
     private TextView inviteAll;
@@ -91,24 +74,9 @@ public class CalendarAlarmListCreator extends Activity {
         emails = intent.getStringArrayListExtra(CalendarReminderActivity.TOKEN_EMAILS);
         names = intent.getStringArrayListExtra(CalendarReminderActivity.TOKEN_NAMES);
 
-        initializeUserMap();
-
         setupUi();
 
         addListeners();
-    }
-
-    private void initializeUserMap() {
-        emailsToUsers = new HashMap<String, User>();
-        TodorooCursor<User> users = userDao.query(Query.select(User.PROPERTIES).where(User.EMAIL.in(emails.toArray(new String[emails.size()]))));
-        try {
-            for (users.moveToFirst(); !users.isAfterLast(); users.moveToNext()) {
-                User u = new User(users);
-                emailsToUsers.put(u.getValue(User.EMAIL), u);
-            }
-        } finally {
-            users.close();
-        }
     }
 
     private void setupUi() {
@@ -156,19 +124,7 @@ public class CalendarAlarmListCreator extends Activity {
             @Override
             public void onClick(View v) {
                 // Set members json and save
-                if (!actFmPreferenceService.isLoggedIn()) {
-                    moreOptions.performClick();
-                    return;
-                } else {
-                    TagData tagData = new TagData();
-                    tagData.setValue(TagData.NAME, tagName);
-                    tagData.setValue(TagData.MEMBER_COUNT, emails.size());
-                    tagDataService.save(tagData);
-                    for (String email : emails) {
-                        tagMetadataDao.createMemberLink(tagData.getId(), tagData.getUuid(), email, false);
-                    }
-                    dismissWithAnimation();
-                }
+                moreOptions.performClick();
             }
         });
 
@@ -224,14 +180,6 @@ public class CalendarAlarmListCreator extends Activity {
         if (!TextUtils.isEmpty(name)) {
             return name;
         }
-        String email = emails.get(index);
-        if (emailsToUsers.containsKey(email)) {
-            User u = emailsToUsers.get(email);
-            String userName = u.getDisplayName();
-            if (!TextUtils.isEmpty(userName)) {
-                return userName;
-            }
-        }
-        return email;
+        return emails.get(index);
     }
 }

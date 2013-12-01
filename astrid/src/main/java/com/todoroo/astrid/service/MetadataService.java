@@ -5,13 +5,8 @@
  */
 package com.todoroo.astrid.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map.Entry;
-
 import android.content.ContentValues;
 
-import com.todoroo.andlib.data.Property.CountProperty;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -21,6 +16,10 @@ import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.astrid.dao.MetadataDao;
 import com.todoroo.astrid.dao.MetadataDao.MetadataCriteria;
 import com.todoroo.astrid.data.Metadata;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map.Entry;
 
 /**
  * Service layer for {@link Metadata}-centered activities.
@@ -64,8 +63,6 @@ public class MetadataService {
 
     /**
      * Query underlying database
-     * @param query
-     * @return
      */
     public TodorooCursor<Metadata> query(Query query) {
         return metadataDao.query(query);
@@ -73,10 +70,9 @@ public class MetadataService {
 
     /**
      * Delete from metadata table where rows match a certain condition
-     * @param where
      */
-    public int deleteWhere(Criterion where) {
-        return metadataDao.deleteWhere(where);
+    public void deleteWhere(Criterion where) {
+        metadataDao.deleteWhere(where);
     }
 
     /**
@@ -84,33 +80,29 @@ public class MetadataService {
      * @param where predicate for which rows to update
      * @param metadata values to set
      */
-    public int update(Criterion where, Metadata metadata) {
-        return metadataDao.update(where, metadata);
+    public void update(Criterion where, Metadata metadata) {
+        metadataDao.update(where, metadata);
     }
 
     /**
      * Save a single piece of metadata
-     * @param metadata
      */
-    public boolean save(Metadata metadata) {
+    public void save(Metadata metadata) {
         if(!metadata.containsNonNullValue(Metadata.TASK)) {
             throw new IllegalArgumentException("metadata needs to be attached to a task: " + metadata.getMergedValues()); //$NON-NLS-1$
         }
 
-        return metadataDao.persist(metadata);
+        metadataDao.persist(metadata);
     }
 
     /**
      * Synchronize metadata for given task id
-     * @param id
-     * @param metadata
-     * @param metadataKeys
      * @return true if there were changes
      */
     public boolean synchronizeMetadata(long taskId, ArrayList<Metadata> metadata,
-            Criterion metadataCriterion, SynchronizeMetadataCallback callback, boolean hardDelete) {
+            Criterion metadataCriterion, SynchronizeMetadataCallback callback) {
         boolean dirty = false;
-        HashSet<ContentValues> newMetadataValues = new HashSet<ContentValues>();
+        HashSet<ContentValues> newMetadataValues = new HashSet<>();
         for(Metadata metadatum : metadata) {
             metadatum.setValue(Metadata.TASK, taskId);
             metadatum.clearValue(Metadata.CREATION_DATE);
@@ -150,12 +142,7 @@ public class MetadataService {
                 if (callback != null) {
                     callback.beforeDeleteMetadata(item);
                 }
-                if (hardDelete) {
-                    metadataDao.delete(id);
-                } else {
-                    item.setValue(Metadata.DELETION_DATE, DateUtilities.now());
-                    metadataDao.persist(item);
-                }
+                metadataDao.delete(id);
                 dirty = true;
             }
         } finally {
@@ -172,33 +159,5 @@ public class MetadataService {
         }
 
         return dirty;
-    }
-
-    public boolean synchronizeMetadata(long taskId, ArrayList<Metadata> metadata,
-            Criterion metadataCriterion, boolean hardDelete) {
-        return synchronizeMetadata(taskId, metadata, metadataCriterion, null, hardDelete);
-    }
-
-    /**
-     * Does metadata with this key and task exist?
-     */
-    public boolean hasMetadata(long id, String key) {
-        CountProperty count = new CountProperty();
-        TodorooCursor<Metadata> cursor = metadataDao.query(Query.select(
-                count).where(MetadataCriteria.byTaskAndwithKey(id, key)));
-        try {
-            cursor.moveToFirst();
-            return cursor.get(count) > 0;
-        } finally {
-            cursor.close();
-        }
-    }
-
-    /**
-     * Deletes the given metadata
-     * @param metadata
-     */
-    public void delete(Metadata metadata) {
-        metadataDao.delete(metadata.getId());
     }
 }

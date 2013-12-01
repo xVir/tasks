@@ -14,22 +14,14 @@ import com.todoroo.andlib.data.AbstractModel;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.Table;
 import com.todoroo.andlib.service.ContextManager;
-import com.todoroo.astrid.data.History;
 import com.todoroo.astrid.data.Metadata;
 import com.todoroo.astrid.data.StoreObject;
 import com.todoroo.astrid.data.TagData;
 import com.todoroo.astrid.data.TagMetadata;
-import com.todoroo.astrid.data.TagOutstanding;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.data.TaskAttachment;
-import com.todoroo.astrid.data.TaskAttachmentOutstanding;
 import com.todoroo.astrid.data.TaskListMetadata;
-import com.todoroo.astrid.data.TaskListMetadataOutstanding;
-import com.todoroo.astrid.data.TaskOutstanding;
-import com.todoroo.astrid.data.Update;
-import com.todoroo.astrid.data.User;
 import com.todoroo.astrid.data.UserActivity;
-import com.todoroo.astrid.data.UserActivityOutstanding;
 import com.todoroo.astrid.provider.Astrid2TaskProvider;
 import com.todoroo.astrid.provider.Astrid3ContentProvider;
 import com.todoroo.astrid.widget.TasksWidget;
@@ -64,18 +56,10 @@ public class Database extends AbstractDatabase {
         Metadata.TABLE,
         StoreObject.TABLE,
         TagData.TABLE,
-        Update.TABLE,
-        User.TABLE,
         UserActivity.TABLE,
         TagMetadata.TABLE,
-        History.TABLE,
         TaskAttachment.TABLE,
         TaskListMetadata.TABLE,
-        TaskOutstanding.TABLE,
-        TagOutstanding.TABLE,
-        UserActivityOutstanding.TABLE,
-        TaskAttachmentOutstanding.TABLE,
-        TaskListMetadataOutstanding.TABLE
     };
 
     // --- listeners
@@ -144,13 +128,6 @@ public class Database extends AbstractDatabase {
         append(')');
         database.execSQL(sql.toString());
         sql.setLength(0);
-
-        sql.append("CREATE INDEX IF NOT EXISTS hist_tag_id ON ").
-        append(History.TABLE).append('(').
-        append(History.TAG_ID.name).
-        append(')');
-        database.execSQL(sql.toString());
-        sql.setLength(0);
     }
 
     @Override
@@ -193,38 +170,21 @@ public class Database extends AbstractDatabase {
             // not needed anymore
         }
         case 9: try {
-            database.execSQL(createTableSql(visitor, Update.TABLE.name, Update.PROPERTIES));
-            onCreateTables();
-
-            Property<?>[] properties = new Property<?>[] { Task.UUID,
-                    Task.USER_ID };
-
+            Property<?>[] properties = new Property<?>[] { Task.UUID, Task.USER_ID };
             for(Property<?> property : properties) {
                 database.execSQL("ALTER TABLE " + Task.TABLE.name + " ADD " +
                         property.accept(visitor, null) + " DEFAULT 0");
             }
-
-            database.execSQL("ALTER TABLE " + Task.TABLE.name + " ADD " +
-                    Task.USER.accept(visitor, null));
         } catch (SQLiteException e) {
             Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
         }
-        case 10: try {
-            //
-        } catch (SQLiteException e) {
-            Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
-        }
+        case 10:
         case 11: try {
             database.execSQL(createTableSql(visitor, TagData.TABLE.name, TagData.PROPERTIES));
         } catch (SQLiteException e) {
             Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
         }
-        case 12: try {
-            database.execSQL("ALTER TABLE " + Update.TABLE.name + " ADD " +
-                    Update.TAGS.accept(visitor, null));
-        } catch (SQLiteException e) {
-            Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
-        }
+        case 12:
         case 13: try {
             database.execSQL("ALTER TABLE " + TagData.TABLE.name + " ADD " +
                     TagData.MEMBERS.accept(visitor, null));
@@ -265,19 +225,7 @@ public class Database extends AbstractDatabase {
         } catch (SQLiteException e) {
             Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
         }
-        case 19: try {
-            for(Property<?> property : new Property<?>[] { Update.TASK_LOCAL, Update.TAGS_LOCAL }) {
-                database.execSQL("ALTER TABLE " + Update.TABLE.name + " ADD " +
-                        property.accept(visitor, null));
-            }
-            database.execSQL("CREATE INDEX IF NOT EXISTS up_tid ON " +
-                    Update.TABLE + "(" + Update.TASK_LOCAL.name + ")");
-            database.execSQL("CREATE INDEX IF NOT EXISTS up_tid ON " +
-                    Update.TABLE + "(" + Update.TAGS_LOCAL.name + ")");
-
-        } catch (SQLiteException e) {
-            Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
-        }
+        case 19:
         case 20: try {
             String tasks = Task.TABLE.name;
             String id = Task.ID.name;
@@ -297,23 +245,8 @@ public class Database extends AbstractDatabase {
         } catch (SQLiteException e) {
             Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
         }
-        case 21: try {
-            for(Property<?> property : new Property<?>[] { Update.OTHER_USER_ID, Update.OTHER_USER }) {
-                database.execSQL("ALTER TABLE " + Update.TABLE.name + " ADD " +
-                        property.accept(visitor, null));
-            }
-
-        }
-        catch (SQLiteException e) {
-            Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
-        }
-        case 22: try {
-            database.execSQL(createTableSql(visitor, User.TABLE.name, User.PROPERTIES));
-            onCreateTables();
-        } catch (SQLiteException e) {
-            Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
-        }
-
+        case 21:
+        case 22:
         case 23:
         case 24: try {
             database.execSQL("ALTER TABLE " + Task.TABLE.name + " ADD " +
@@ -322,15 +255,7 @@ public class Database extends AbstractDatabase {
             Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
         }
 
-        case 25: try {
-            database.execSQL("ALTER TABLE " + User.TABLE.name + " ADD " +
-                    User.STATUS.accept(visitor, null));
-
-            database.execSQL("ALTER TABLE " + User.TABLE.name + " ADD " +
-                    User.PENDING_STATUS.accept(visitor, null));
-        } catch (SQLiteException e) {
-            Log.e("astrid", "db-upgrade-" + oldVersion + "-" + newVersion, e);
-        }
+        case 25:
         case 26: try {
             database.execSQL("ALTER TABLE " + TagData.TABLE.name + " ADD " +
                     TagData.TAG_ORDERING.accept(visitor, null));
@@ -345,44 +270,26 @@ public class Database extends AbstractDatabase {
         }
         case 28:
         case 29:
-            tryExecSQL(createTableSql(visitor, TaskOutstanding.TABLE.name, TaskOutstanding.PROPERTIES));
-            tryExecSQL(createTableSql(visitor, TagOutstanding.TABLE.name, TagOutstanding.PROPERTIES));
-            tryExecSQL(createTableSql(visitor, TaskAttachmentOutstanding.TABLE.name, TagOutstanding.PROPERTIES));
             tryExecSQL(createTableSql(visitor, TagMetadata.TABLE.name, TagMetadata.PROPERTIES));
             tryExecSQL(createTableSql(visitor, UserActivity.TABLE.name, UserActivity.PROPERTIES));
-            tryExecSQL(createTableSql(visitor, UserActivityOutstanding.TABLE.name, UserActivityOutstanding.PROPERTIES));
             tryExecSQL(createTableSql(visitor, TaskAttachment.TABLE.name, TaskAttachment.PROPERTIES));
             tryExecSQL(createTableSql(visitor, TaskListMetadata.TABLE.name, TaskListMetadata.PROPERTIES));
-            tryExecSQL(createTableSql(visitor, TaskListMetadataOutstanding.TABLE.name, TaskListMetadataOutstanding.PROPERTIES));
 
             tryExecSQL(addColumnSql(Task.TABLE, Task.PUSHED_AT, visitor, null));
-            tryExecSQL(addColumnSql(Task.TABLE, Task.IS_PUBLIC, visitor, "0"));
-            tryExecSQL(addColumnSql(Task.TABLE, Task.IS_READONLY, visitor, "0"));
             tryExecSQL(addColumnSql(Task.TABLE, Task.CLASSIFICATION, visitor, null));
-            tryExecSQL(addColumnSql(Task.TABLE, Task.HISTORY_FETCH_DATE, visitor, null));
             tryExecSQL(addColumnSql(Task.TABLE, Task.ATTACHMENTS_PUSHED_AT, visitor, null));
             tryExecSQL(addColumnSql(Task.TABLE, Task.USER_ACTIVITIES_PUSHED_AT, visitor, null));
             tryExecSQL(addColumnSql(TagData.TABLE, TagData.PUSHED_AT, visitor, null));
-            tryExecSQL(addColumnSql(TagData.TABLE, TagData.HISTORY_FETCH_DATE, visitor, null));
             tryExecSQL(addColumnSql(TagData.TABLE, TagData.TASKS_PUSHED_AT, visitor, null));
             tryExecSQL(addColumnSql(TagData.TABLE, TagData.METADATA_PUSHED_AT, visitor, null));
             tryExecSQL(addColumnSql(TagData.TABLE, TagData.USER_ACTIVITIES_PUSHED_AT, visitor, null));
             tryExecSQL(addColumnSql(Metadata.TABLE, Metadata.DELETION_DATE, visitor, "0"));
-            tryExecSQL(addColumnSql(User.TABLE, User.PUSHED_AT, visitor, null));
-            tryExecSQL(addColumnSql(User.TABLE, User.FIRST_NAME, visitor, null));
-            tryExecSQL(addColumnSql(User.TABLE, User.LAST_NAME, visitor, null));
 
         case 30:
         case 31:
-            tryExecSQL(addColumnSql(Task.TABLE, Task.HISTORY_HAS_MORE, visitor, null));
-            tryExecSQL(addColumnSql(TagData.TABLE, TagData.HISTORY_HAS_MORE, visitor, null));
         case 32:
-            tryExecSQL("DROP TABLE " + History.TABLE.name);
-            tryExecSQL(createTableSql(visitor, History.TABLE.name, History.PROPERTIES));
-            tryExecSQL(addColumnSql(User.TABLE, User.TASKS_PUSHED_AT, visitor, null));
         case 33:
             tryExecSQL(addColumnSql(TagData.TABLE, TagData.LAST_AUTOSYNC, visitor, null));
-            tryExecSQL(addColumnSql(User.TABLE, User.LAST_AUTOSYNC, visitor, null));
 
         case 34:
             tryExecSQL(addColumnSql(TagData.TABLE, TagData.IS_FOLDER, visitor, null));
@@ -429,10 +336,6 @@ public class Database extends AbstractDatabase {
 
     /**
      * Create table generation SQL
-     * @param sql
-     * @param tableName
-     * @param properties
-     * @return
      */
     public String createTableSql(SqlConstructorVisitor visitor,
             String tableName, Property<?>[] properties) {

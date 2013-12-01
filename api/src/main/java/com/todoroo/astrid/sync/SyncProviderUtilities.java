@@ -8,7 +8,6 @@ package com.todoroo.astrid.sync;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.utility.DateUtilities;
@@ -48,13 +47,6 @@ abstract public class SyncProviderUtilities {
     }
 
     /**
-     * @return true if we should show sync toast when synchronizing
-     */
-    public boolean shouldShowToast() {
-        return true;
-    }
-
-    /**
      * @return true if we have a token for this user, false otherwise
      */
     public boolean isLoggedIn() {
@@ -65,9 +57,6 @@ abstract public class SyncProviderUtilities {
     public String getToken() {
         return getPrefs().getString(getIdentifier() + PREF_TOKEN, null);
     }
-
-    /** Returns something like "Logged in as: user@gmail.com" */
-    abstract public String getLoggedInUserName();
 
     /** Sets the authentication token. Set to null to clear. */
     public void setToken(String setting) {
@@ -89,11 +78,6 @@ abstract public class SyncProviderUtilities {
     /** @return Last Error, or null if no last error */
     public String getLastError() {
         return getPrefs().getString(getIdentifier() + PREF_LAST_ERROR, null);
-    }
-
-    /** @return Last Error type, or null if no last error */
-    public String getLastErrorType() {
-        return getPrefs().getString(getIdentifier() + PREF_LAST_ERROR_TYPE, null);
     }
 
     /** @return Last Error, or null if no last error */
@@ -131,19 +115,6 @@ abstract public class SyncProviderUtilities {
         editor.commit();
     }
 
-    /** Report last error if one exists */
-    public void reportLastError() {
-        String lastError = getLastError();
-        if (!TextUtils.isEmpty(lastError)) {
-            String type = getLastErrorType();
-            reportLastErrorImpl(lastError, type);
-        }
-    }
-
-    protected void reportLastErrorImpl(String lastError, String type) {
-        // Subclasses can override if necessary
-    }
-
     /** Set Last Attempted Sync Date */
     public void recordSyncStart() {
         Editor editor = getPrefs().edit();
@@ -153,24 +124,5 @@ abstract public class SyncProviderUtilities {
         editor.remove(getIdentifier() + PREF_LAST_ERROR_TYPE);
         editor.putBoolean(getIdentifier() + PREF_ONGOING, true);
         editor.commit();
-    }
-
-    /**
-     * Reads the frequency, in seconds, auto-sync should occur.
-     *
-     * @return seconds duration, or 0 if not desired
-     */
-    public int getSyncAutoSyncFrequency() {
-        String value = getPrefs().getString(
-                ContextManager.getContext().getString(
-                        getSyncIntervalKey()), null);
-        if (value == null) {
-            return 0;
-        }
-        try {
-            return Integer.parseInt(value);
-        } catch (Exception e) {
-            return 0;
-        }
     }
 }

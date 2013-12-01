@@ -13,10 +13,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 
-import org.tasks.R;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.ui.EditDialogOkBackground;
+
+import org.tasks.R;
 
 // --- interface
 
@@ -81,20 +82,17 @@ public abstract class TaskEditControlSet {
 
     /**
      * Write data from control set to model
-     * @return text appended to the toast
      */
-    public String writeToModel(Task task) {
+    public void writeToModel(Task task) {
         if (initialized) {
-            return writeToModelAfterInitialized(task);
+            writeToModelAfterInitialized(task);
         }
-        return null;
     }
 
     /**
      * Write to model, if initialization logic has been called
-     * @return toast text
      */
-    protected abstract String writeToModelAfterInitialized(Task task);
+    protected abstract void writeToModelAfterInitialized(Task task);
 
     /**
      * Called when views need to be inflated

@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.actfm;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
@@ -27,9 +23,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.api.client.googleapis.extensions.android2.auth.GoogleAccountManager;
-import org.tasks.R;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.utility.DialogUtilities;
+
+import org.tasks.R;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This activity allows users to sign in or log in to Google Tasks
@@ -71,13 +72,13 @@ public class ActFmGoogleAuthActivity extends ListActivity {
 
         accountManager = new GoogleAccountManager(this);
         Account[] accounts = accountManager.getAccounts();
-        ArrayList<String> accountNames = new ArrayList<String>();
+        ArrayList<String> accountNames = new ArrayList<>();
         for (Account a : accounts) {
             accountNames.add(a.name);
         }
 
         nameArray = accountNames.toArray(new String[accountNames.size()]);
-        setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, nameArray));
+        setListAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, nameArray));
         findViewById(R.id.empty_button).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -156,22 +157,6 @@ public class ActFmGoogleAuthActivity extends ListActivity {
         data.putExtra(RESULT_TOKEN, authToken);
         setResult(RESULT_OK, data);
         finish();
-    }
-
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
     }
 
     private static final int REQUEST_AUTHENTICATE = 0;

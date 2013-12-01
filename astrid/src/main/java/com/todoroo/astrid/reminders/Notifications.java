@@ -5,11 +5,6 @@
  */
 package com.todoroo.astrid.reminders;
 
-import java.util.Date;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -25,7 +20,6 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -47,6 +41,13 @@ import com.todoroo.astrid.service.AstridDependencyInjector;
 import com.todoroo.astrid.utility.Constants;
 import com.todoroo.astrid.utility.Flags;
 import com.todoroo.astrid.voice.VoiceOutputService;
+
+import org.tasks.R;
+
+import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Notifications extends BroadcastReceiver {
 
@@ -108,14 +109,6 @@ public class Notifications extends BroadcastReceiver {
 
         if(type == ReminderService.TYPE_ALARM) {
             reminder = getRandomReminder(r.getStringArray(R.array.reminders_alarm));
-        } else if(Preferences.getBoolean(R.string.p_rmd_nagging, true)) {
-            if(type == ReminderService.TYPE_DUE || type == ReminderService.TYPE_OVERDUE) {
-                reminder = getRandomReminder(r.getStringArray(R.array.reminders_due));
-            } else if(type == ReminderService.TYPE_SNOOZE) {
-                reminder = getRandomReminder(r.getStringArray(R.array.reminders_snooze));
-            } else {
-                reminder = getRandomReminder(r.getStringArray(R.array.reminders));
-            }
         } else {
             reminder = ""; //$NON-NLS-1$
         }
@@ -142,8 +135,7 @@ public class Notifications extends BroadcastReceiver {
     /** @return a random reminder string */
     public static String getRandomReminder(String[] reminders) {
         int next = ReminderService.random.nextInt(reminders.length);
-        String reminder = reminders[next];
-        return reminder;
+        return reminders[next];
     }
 
     /**
@@ -267,7 +259,7 @@ public class Notifications extends BroadcastReceiver {
     private static long lastNotificationSound = 0L;
 
     /**
-     * @returns true if notification should sound
+     * @return true if notification should sound
      */
     private static boolean checkLastNotificationSound() {
         long now = DateUtilities.now();
@@ -380,8 +372,7 @@ public class Notifications extends BroadcastReceiver {
                 voiceReminder = false;
             } else if(notificationPreference != null) {
                 if(notificationPreference.length() > 0 && soundIntervalOk) {
-                    Uri notificationSound = Uri.parse(notificationPreference);
-                    notification.sound = notificationSound;
+                    notification.sound = Uri.parse(notificationPreference);
                 } else {
                     notification.sound = null;
                 }
@@ -496,9 +487,6 @@ public class Notifications extends BroadcastReceiver {
 
     /**
      * Schedules alarms for a single task
-     *
-     * @param shouldPerformPropertyCheck
-     *            whether to check if task has requisite properties
      */
     public static void cancelNotifications(long taskId) {
         if(notificationManager == null) {
@@ -520,8 +508,8 @@ public class Notifications extends BroadcastReceiver {
         Notifications.notificationManager = notificationManager;
     }
 
-    public static void forceNotificationManager(boolean status) {
-        forceNotificationManager = status;
+    public static void forceNotificationManager() {
+        forceNotificationManager = true;
     }
 
 }

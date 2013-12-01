@@ -11,11 +11,12 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.andlib.utility.TodorooPreferenceActivity;
 import com.todoroo.astrid.gcal.Calendars;
+
+import org.tasks.R;
 
 /**
  * Displays the preference screen for users to edit their preferences
@@ -38,10 +39,6 @@ public class DefaultsPreferences extends TodorooPreferenceActivity {
         Calendars.initCalendarsPreference(this, defaultCalendarPreference);
     }
 
-    /**
-     *
-     * @param resource if null, updates all resources
-     */
     @Override
     public void updatePreferences(Preference preference, Object value) {
         Resources r = getResources();
@@ -63,7 +60,7 @@ public class DefaultsPreferences extends TodorooPreferenceActivity {
             updateTaskListPreference(preference, value, r, R.array.EPr_default_reminders_mode,
                     R.array.EPr_default_reminders_mode_values, R.string.EPr_default_reminders_mode_desc);
         } else if(r.getString(R.string.p_rmd_default_random_hours).equals(preference.getKey())) {
-            int index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_reminder_random_hours), (String)value);
+            int index = AndroidUtilities.indexOf(r.getStringArray(R.array.EPr_reminder_random_hours), value);
             if(index <= 0) {
                 preference.setSummary(r.getString(R.string.rmd_EPr_defaultRemind_desc_disabled));
             } else {
@@ -72,7 +69,7 @@ public class DefaultsPreferences extends TodorooPreferenceActivity {
             }
         } else if(r.getString(R.string.gcal_p_default).equals(preference.getKey())) {
             ListPreference listPreference = (ListPreference) preference;
-            int index = AndroidUtilities.indexOf(listPreference.getEntryValues(), (String)value);
+            int index = AndroidUtilities.indexOf(listPreference.getEntryValues(), value);
             if(index <= 0) {
                 preference.setSummary(r.getString(R.string.EPr_default_addtocalendar_desc_disabled));
             } else {
@@ -91,7 +88,7 @@ public class DefaultsPreferences extends TodorooPreferenceActivity {
 
     private void updateTaskListPreference(Preference preference, Object value,
             Resources r, int keyArray, int valueArray, int summaryResource) {
-        int index = AndroidUtilities.indexOf(r.getStringArray(valueArray), (String)value);
+        int index = AndroidUtilities.indexOf(r.getStringArray(valueArray), value);
         if(index == -1) {
             // force the zeroth index
             index = 0;

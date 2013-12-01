@@ -5,11 +5,7 @@
  */
 package com.mdimension.jchronic;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import com.mdimension.jchronic.handlers.Handler;
-import com.mdimension.jchronic.numerizer.Numerizer;
 import com.mdimension.jchronic.repeaters.Repeater;
 import com.mdimension.jchronic.tags.Grabber;
 import com.mdimension.jchronic.tags.Ordinal;
@@ -20,8 +16,10 @@ import com.mdimension.jchronic.tags.TimeZone;
 import com.mdimension.jchronic.utils.Span;
 import com.mdimension.jchronic.utils.Token;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class AstridChronic {
-  public static final String VERSION = "0.2.3";
 
   private AstridChronic() {
     // DO NOTHING
@@ -93,7 +91,7 @@ public class AstridChronic {
     tokens = Separator.scan(tokens, options);
     tokens = TimeZone.scan(tokens, options);
 
-    List<Token> taggedTokens = new LinkedList<Token>();
+    List<Token> taggedTokens = new LinkedList<>();
     for (Token token : tokens) {
       if (token.isTagged()) {
         taggedTokens.add(token);
@@ -146,13 +144,6 @@ public class AstridChronic {
   }
 
   /**
-   * Convert number words to numbers (three => 3)
-   */
-  protected static String numericizeNumbers(String text) {
-    return Numerizer.numerize(text);
-  }
-
-  /**
    * Convert ordinal words to numeric ordinals (third => 3rd)
    */
   protected static String numericizeOrdinals(String text) {
@@ -165,7 +156,7 @@ public class AstridChronic {
    */
   protected static List<Token> baseTokenize(String text) {
     String[] words = text.split(" ");
-    List<Token> tokens = new LinkedList<Token>();
+    List<Token> tokens = new LinkedList<>();
     for (String word : words) {
       tokens.add(new Token(word));
     }
@@ -187,7 +178,6 @@ public class AstridChronic {
     else {
       guessValue = span.getBegin();
     }
-    Span guess = new Span(guessValue, guessValue);
-    return guess;
+      return new Span(guessValue, guessValue);
   }
 }

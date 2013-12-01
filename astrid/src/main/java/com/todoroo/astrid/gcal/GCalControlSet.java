@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.gcal;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -27,16 +24,19 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.service.ExceptionService;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.gcal.Calendars.CalendarResult;
-import com.todoroo.astrid.service.StatisticsConstants;
 import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.ui.PopupControlSet;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Control Set for managing repeats
@@ -73,11 +73,11 @@ public class GCalControlSet extends PopupControlSet {
         ((LinearLayout) getDisplayView()).addView(getView()); //hack for spinner
 
         this.calendarSelector = (Spinner) getView().findViewById(R.id.calendars);
-        ArrayList<String> items = new ArrayList<String>();
+        ArrayList<String> items = new ArrayList<>();
         Collections.addAll(items, calendars.calendars);
         items.add(0, activity.getString(R.string.gcal_TEA_nocal));
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(activity,
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity,
                 android.R.layout.simple_spinner_item, items.toArray(new String[items.size()]));
 
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -138,9 +138,9 @@ public class GCalControlSet extends PopupControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         if (!task.hasDueDate()) {
-            return null;
+            return;
         }
 
         boolean gcalCreateEventEnabled = Preferences.getStringValue(R.string.gcal_p_default) != null &&
@@ -189,16 +189,12 @@ public class GCalControlSet extends PopupControlSet {
                 }
 
                 ContentResolver cr = activity.getContentResolver();
-                if(cr.update(calendarUri, updateValues, null, null) > 0) {
-                    return activity.getString(R.string.gcal_TEA_calendar_updated);
-                }
+                cr.update(calendarUri, updateValues, null, null);
             } catch (Exception e) {
                 exceptionService.reportError("unable-to-update-calendar: " +  //$NON-NLS-1$
                         task.getValue(Task.CALENDAR_URI), e);
             }
         }
-
-        return null;
     }
 
     private void viewCalendarEvent() {

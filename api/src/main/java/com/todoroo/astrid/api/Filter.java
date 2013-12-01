@@ -9,7 +9,6 @@ import android.content.ContentValues;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.sql.QueryTemplate;
 
 /**
@@ -81,8 +80,6 @@ public class Filter extends FilterListItem {
      *            filter, e.g. Inbox (20 tasks)
      * @param sqlQuery
      *            SQL query for this list (see {@link #sqlQuery} for examples).
-     * @param valuesForNewTasks
-     *            see {@link #sqlForNewTasks}
      */
     public Filter(String listingTitle, String title,
             QueryTemplate sqlQuery, ContentValues valuesForNewTasks) {
@@ -99,8 +96,6 @@ public class Filter extends FilterListItem {
      *            filter, e.g. Inbox (20 tasks)
      * @param sqlQuery
      *            SQL query for this list (see {@link #sqlQuery} for examples).
-     * @param valuesForNewTasks
-     *            see {@link #sqlForNewTasks}
      */
     public Filter(String listingTitle, String title,
             String sqlQuery, ContentValues valuesForNewTasks) {
@@ -128,9 +123,6 @@ public class Filter extends FilterListItem {
 
     /**
      * Utility constructor
-     *
-     * @param plugin
-     *            {@link Addon} identifier that encompasses object
      */
     protected Filter() {
         // do nothing
@@ -226,15 +218,5 @@ public class Filter extends FilterListItem {
         public Filter[] newArray(int size) {
             return new Filter[size];
         }
-
     };
-
-    /**
-     * @param title
-     * @return a filter that matches nothing
-     */
-    public static Filter emptyFilter(String title) {
-        return new Filter(title, title,
-                new QueryTemplate().where(Criterion.none), null);
-    }
 }

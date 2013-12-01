@@ -5,25 +5,25 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.activity.BeastModePreferences;
 import com.todoroo.astrid.core.SortHelper;
 import com.todoroo.astrid.data.Task;
-import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
 
 public class AstridDefaultPreferenceSpec extends AstridPreferenceSpec {
 
     public static interface PreferenceExtras {
-        public void setExtras(Context context, SharedPreferences prefs, Editor editor, Resources r, boolean ifUnset);
+        public void setExtras(Context context);
     }
 
     @Override
     public void setIfUnset() {
         PreferenceExtras extras = new PreferenceExtras() {
             @Override
-            public void setExtras(Context context, SharedPreferences prefs, Editor editor, Resources r, boolean ifUnset) {
+            public void setExtras(Context context) {
                 String dragDropTestInitialized = "android_drag_drop_initialized"; //$NON-NLS-1$
                 if (!Preferences.getBoolean(dragDropTestInitialized, false)) {
                     SharedPreferences publicPrefs = AstridPreferences.getPublicPrefs(context);
@@ -38,95 +38,56 @@ public class AstridDefaultPreferenceSpec extends AstridPreferenceSpec {
                     }
                     Preferences.setBoolean(dragDropTestInitialized, true);
                 }
-                BeastModePreferences.setDefaultOrder(context, false);
-
-                if ("white-blue".equals(Preferences.getStringValue(R.string.p_theme))) { //$NON-NLS-1$ migrate from when white-blue wasn't the default
-                    Preferences.setString(R.string.p_theme, ThemeService.THEME_WHITE);
-                }
-
-                if (Constants.MARKET_STRATEGY.defaultPhoneLayout()) {
-                    setPreference(prefs, editor, r, R.string.p_force_phone_layout, true, ifUnset);
-                }
+                BeastModePreferences.setDefaultOrder(context);
             }
         };
 
-        setPrefs(extras, true);
+        setPrefs(extras);
     }
 
-    @Override
-    public void resetDefaults() {
-        PreferenceExtras extras = new PreferenceExtras() {
-            @Override
-            public void setExtras(Context context, SharedPreferences prefs, Editor editor, Resources r, boolean ifUnset) {
-                SharedPreferences publicPrefs = AstridPreferences.getPublicPrefs(context);
-                if (publicPrefs != null) {
-                    Editor edit = publicPrefs.edit();
-                    if (edit != null) {
-                        edit.putInt(SortHelper.PREF_SORT_FLAGS, SortHelper.FLAG_DRAG_DROP);
-                        edit.putInt(SortHelper.PREF_SORT_SORT, SortHelper.SORT_AUTO);
-                        edit.commit();
-                        Preferences.setInt(AstridPreferences.P_SUBTASKS_HELP, 1);
-                    }
-                }
-                Preferences.setString(R.string.p_theme, ThemeService.THEME_WHITE);
-                setPreference(prefs, editor, r, R.string.p_force_phone_layout, Constants.MARKET_STRATEGY.defaultPhoneLayout(), ifUnset);
-
-                BeastModePreferences.setDefaultOrder(context, true);
-            }
-        };
-
-        setPrefs(extras, false);
-    }
-
-    private static void setPrefs(PreferenceExtras extras, boolean ifUnset) {
+    private static void setPrefs(PreferenceExtras extras) {
         Context context = ContextManager.getContext();
         SharedPreferences prefs = Preferences.getPrefs(context);
         Editor editor = prefs.edit();
         Resources r = context.getResources();
 
-        setPreference(prefs, editor, r, R.string.p_default_urgency_key, 0, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_default_importance_key, 2, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_default_hideUntil_key, 0, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_default_reminders_key, Task.NOTIFY_AT_DEADLINE | Task.NOTIFY_AFTER_DEADLINE, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_rmd_default_random_hours, 0, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_fontSize, 16, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_showNotes, false, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_default_urgency_key, 0);
+        setPreference(prefs, editor, r, R.string.p_default_importance_key, 2);
+        setPreference(prefs, editor, r, R.string.p_default_hideUntil_key, 0);
+        setPreference(prefs, editor, r, R.string.p_default_reminders_key, Task.NOTIFY_AT_DEADLINE | Task.NOTIFY_AFTER_DEADLINE);
+        setPreference(prefs, editor, r, R.string.p_rmd_default_random_hours, 0);
+        setPreference(prefs, editor, r, R.string.p_fontSize, 16);
+        setPreference(prefs, editor, r, R.string.p_showNotes, false);
 
-        setPreference(prefs, editor, r, R.string.p_field_missed_calls, true, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_field_missed_calls, true);
 
-        setPreference(prefs, editor, r, R.string.p_end_at_deadline, true, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_end_at_deadline, true);
 
-        setPreference(prefs, editor, r, R.string.p_rmd_persistent, true, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_rmd_persistent, true);
 
-        setPreference(prefs, editor, r, R.string.p_show_today_filter, true, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_show_recently_modified_filter, true, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_show_not_in_list_filter, true, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_show_today_filter, true);
+        setPreference(prefs, editor, r, R.string.p_show_recently_modified_filter, true);
+        setPreference(prefs, editor, r, R.string.p_show_not_in_list_filter, true);
 
-        setPreference(prefs, editor, r, R.string.p_show_menu_search, true, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_show_menu_sync, true, ifUnset);
-        setPreference(prefs, editor, r, R.string.p_show_menu_sort, true, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_calendar_reminders, true);
 
-        setPreference(prefs, editor, r, R.string.p_calendar_reminders, true, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_use_dark_theme, false);
 
-        setPreference(prefs, editor, r, R.string.p_use_filters, false, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_force_phone_layout, false);
 
-        setPreference(prefs, editor, r, R.string.p_theme, ThemeService.THEME_WHITE, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_show_quickadd_controls, true);
 
-        setPreference(prefs, editor, r, R.string.p_force_phone_layout, false, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_show_task_edit_comments, true);
 
-        setPreference(prefs, editor, r, R.string.p_show_quickadd_controls, true, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_taskRowStyle_v2, "1"); //$NON-NLS-1$
 
-        setPreference(prefs, editor, r, R.string.p_show_task_edit_comments, true, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_use_date_shortcuts, false);
 
-        setPreference(prefs, editor, r, R.string.p_taskRowStyle_v2, "1", ifUnset); //$NON-NLS-1$
+        setPreference(prefs, editor, r, R.string.p_save_and_cancel, false);
 
-        setPreference(prefs, editor, r, R.string.p_use_date_shortcuts, false, ifUnset);
+        setPreference(prefs, editor, r, R.string.p_hide_plus_button, true);
 
-        setPreference(prefs, editor, r, R.string.p_save_and_cancel, false, ifUnset);
-
-        setPreference(prefs, editor, r, R.string.p_hide_plus_button, true, ifUnset);
-
-        extras.setExtras(context, prefs, editor, r, ifUnset);
+        extras.setExtras(context);
 
         editor.commit();
     }

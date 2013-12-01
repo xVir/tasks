@@ -5,11 +5,10 @@
 ** See the file "LICENSE" for the full license governing this code. 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:astrid="http://schemas.android.com/apk/res/org.tasks"
     style="@style/Content"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical">
 
     <com.todoroo.astrid.ui.ErrorCatchingListView
         android:id="@android:id/list"
@@ -52,7 +51,7 @@
             android:background="@android:color/transparent"
             android:paddingBottom="2dip"
             android:scaleType="centerInside"
-            android:src="@drawable/camera_button" />
+            android:src="?attr/ic_action_camera" />
 
         <!-- Quick Add Task -->
 
@@ -81,7 +80,7 @@
             android:layout_height="39dip"
             android:layout_marginRight="5dip"
             android:layout_weight="1"
-            android:background="?attr/asAddButtonImg"
+            android:background="?attr/ic_action_new"
             android:scaleType="center" />
     </LinearLayout>
 

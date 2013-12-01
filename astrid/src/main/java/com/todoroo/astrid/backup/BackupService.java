@@ -5,11 +5,6 @@
  */
 package com.todoroo.astrid.backup;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.Arrays;
-import java.util.Comparator;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -18,11 +13,17 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.core.PluginServices;
+
+import org.tasks.R;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Inspired heavily by SynchronizationService
@@ -61,7 +62,6 @@ public class BackupService extends Service {
 
     /**
      * Test hook for backup
-     * @param context
      */
     public void testBackup(Context context) {
         startBackup(context);
@@ -82,8 +82,8 @@ public class BackupService extends Service {
                 Log.e("error-deleting", "Error deleting old backups", e); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
-            TasksXmlExporter.exportTasks(context, TasksXmlExporter.ExportType.EXPORT_TYPE_SERVICE, null,
-                    backupDirectorySetting.getBackupDirectory(), null);
+            TasksXmlExporter.exportTasks(context, TasksXmlExporter.ExportType.EXPORT_TYPE_SERVICE,
+                    backupDirectorySetting.getBackupDirectory());
 
         } catch (Exception e) {
             Log.e("error-backup", "Error starting backups", e); //$NON-NLS-1$ //$NON-NLS-2$
@@ -101,13 +101,6 @@ public class BackupService extends Service {
         }
         am.setInexactRepeating(AlarmManager.RTC, DateUtilities.now() + BACKUP_OFFSET,
                 BACKUP_INTERVAL, pendingIntent);
-    }
-
-    public static void unscheduleService(Context context) {
-        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pendingIntent = PendingIntent.getService(context, 0,
-                createAlarmIntent(context), PendingIntent.FLAG_UPDATE_CURRENT);
-        am.cancel(pendingIntent);
     }
 
     private static Intent createAlarmIntent(Context context) {
@@ -140,7 +133,7 @@ public class BackupService extends Service {
         Arrays.sort(files, new Comparator<File>() {
             @Override
             public int compare(File file1, File file2) {
-                return -Long.valueOf(file1.lastModified()).compareTo(Long.valueOf(file2.lastModified()));
+                return -Long.valueOf(file1.lastModified()).compareTo(file2.lastModified());
             }
         });
         for(int i = DAYS_TO_KEEP_BACKUP; i < files.length; i++) {

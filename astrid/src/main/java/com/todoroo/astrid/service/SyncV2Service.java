@@ -5,14 +5,14 @@
  */
 package com.todoroo.astrid.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import com.todoroo.astrid.gtasks.sync.GtasksSyncV2Provider;
 import com.todoroo.astrid.service.SyncResultCallbackWrapper.WidgetUpdatingCallbackWrapper;
 import com.todoroo.astrid.sync.SyncResultCallback;
 import com.todoroo.astrid.sync.SyncV2Provider;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * SyncV2Service is a simplified synchronization interface for supporting
@@ -34,26 +34,15 @@ public class SyncV2Service {
 
     /**
      * Returns active sync providers
-     *
-     * @param callback
      */
     public List<SyncV2Provider> activeProviders() {
-        ArrayList<SyncV2Provider> actives = new ArrayList<SyncV2Provider>();
+        ArrayList<SyncV2Provider> actives = new ArrayList<>();
         for(SyncV2Provider provider : providers) {
             if(provider.isActive()) {
                 actives.add(provider);
             }
         }
         return Collections.unmodifiableList(actives);
-    }
-
-    public boolean hasActiveProvider() {
-        for (SyncV2Provider provider : providers) {
-            if (provider.isActive()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

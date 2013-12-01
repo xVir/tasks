@@ -5,11 +5,11 @@
  */
 package com.todoroo.andlib.service;
 
-import java.lang.reflect.Field;
-import java.util.LinkedList;
-
 import com.todoroo.andlib.service.ExceptionService.AndroidLogReporter;
 import com.todoroo.andlib.service.ExceptionService.ErrorReporter;
+
+import java.lang.reflect.Field;
+import java.util.LinkedList;
 
 
 
@@ -30,7 +30,7 @@ public class DependencyInjectionService {
     /**
      * Dependency injectors. Use getters and setters to modify this list
      */
-    private final LinkedList<AbstractDependencyInjector> injectors = new LinkedList<AbstractDependencyInjector>();
+    private final LinkedList<AbstractDependencyInjector> injectors = new LinkedList<>();
 
     /**
      * Perform dependency injection in the caller object
@@ -55,13 +55,7 @@ public class DependencyInjectionService {
                     field.setAccessible(true);
                     try {
                         handleField(caller, field);
-                    } catch (IllegalStateException e) {
-                        throw new RuntimeException(String.format("Unable to set field '%s' of type '%s'",
-                                field.getName(), field.getType()), e);
-                    } catch (IllegalArgumentException e) {
-                        throw new RuntimeException(String.format("Unable to set field '%s' of type '%s'",
-                                        field.getName(), field.getType()), e);
-                    } catch (IllegalAccessException e) {
+                    } catch (IllegalStateException | IllegalAccessException | IllegalArgumentException e) {
                         throw new RuntimeException(String.format("Unable to set field '%s' of type '%s'",
                                 field.getName(), field.getType()), e);
                     }
@@ -76,13 +70,10 @@ public class DependencyInjectionService {
         if(packageName.startsWith("com.todoroo")) {
             return true;
         }
-        if(packageName.startsWith("com.timsu")) {
-            return true;
-        }
-        if(packageName.startsWith("org.astrid")) {
-            return true;
-        }
         if(packageName.startsWith("org.weloveastrid")) {
+            return true;
+        }
+        if(packageName.startsWith("org.tasks")) {
             return true;
         }
         return false;
@@ -113,7 +104,7 @@ public class DependencyInjectionService {
         }
 
         for (AbstractDependencyInjector injector : injectors) {
-            Object injection = injector.getInjection(caller, field);
+            Object injection = injector.getInjection(field);
             if (injection != null) {
                 field.set(caller, injection);
                 return;
@@ -151,7 +142,6 @@ public class DependencyInjectionService {
 
     /**
      * Gets the singleton instance of the dependency injection service.
-     * @return
      */
     public synchronized static DependencyInjectionService getInstance() {
         if(instance == null) {
@@ -162,7 +152,6 @@ public class DependencyInjectionService {
 
     /**
      * Removes the supplied injector
-     * @return
      */
     public synchronized void removeInjector(AbstractDependencyInjector injector) {
         injectors.remove(injector);
@@ -170,7 +159,6 @@ public class DependencyInjectionService {
 
     /**
      * Adds a Dependency Injector to the front of the list
-     * @param injectors
      */
     public synchronized void addInjector(AbstractDependencyInjector injector) {
         removeInjector(injector);

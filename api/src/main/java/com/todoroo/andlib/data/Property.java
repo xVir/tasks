@@ -5,16 +5,17 @@
  */
 package com.todoroo.andlib.data;
 
-import static com.todoroo.andlib.sql.SqlConstants.COMMA;
-import static com.todoroo.andlib.sql.SqlConstants.LEFT_PARENTHESIS;
-import static com.todoroo.andlib.sql.SqlConstants.RIGHT_PARENTHESIS;
-import static com.todoroo.andlib.sql.SqlConstants.SPACE;
 import android.text.TextUtils;
 
 import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.sql.Field;
 import com.todoroo.andlib.sql.Operator;
 import com.todoroo.andlib.sql.UnaryCriterion;
+
+import static com.todoroo.andlib.sql.SqlConstants.COMMA;
+import static com.todoroo.andlib.sql.SqlConstants.LEFT_PARENTHESIS;
+import static com.todoroo.andlib.sql.SqlConstants.RIGHT_PARENTHESIS;
+import static com.todoroo.andlib.sql.SqlConstants.SPACE;
 
 /**
  * Property represents a typed column in a database.
@@ -39,7 +40,7 @@ public abstract class Property<TYPE> extends Field implements Cloneable {
     public final String name;
 
     /** Can this field be null? */
-    public static final int PROP_FLAG_NULLABLE = 1 << 0;
+    public static final int PROP_FLAG_NULLABLE = 1;
     /** Is this field a date? */
     public static final int PROP_FLAG_DATE = 1 << 1;
     /** Is this field a user id? */
@@ -131,8 +132,6 @@ public abstract class Property<TYPE> extends Field implements Cloneable {
 
         public RETURN visitLong(Property<Long> property, PARAMETER data);
 
-        public RETURN visitDouble(Property<Double> property, PARAMETER data);
-
         public RETURN visitString(Property<String> property, PARAMETER data);
     }
 
@@ -154,8 +153,8 @@ public abstract class Property<TYPE> extends Field implements Cloneable {
             super(table, name, flags);
         }
 
-        protected IntegerProperty(Table table, String name, String expression) {
-            super(table, name, expression);
+        protected IntegerProperty(String name, String expression) {
+            super(null, name, expression);
         }
 
         @Override
@@ -171,7 +170,7 @@ public abstract class Property<TYPE> extends Field implements Cloneable {
 
         @Override
         public IntegerProperty cloneAs(String tableAlias, String columnAlias) {
-            return (IntegerProperty) this.cloneAs(tableAlias, columnAlias);
+            return this.cloneAs(tableAlias, columnAlias);
         }
     }
 
@@ -189,10 +188,6 @@ public abstract class Property<TYPE> extends Field implements Cloneable {
 
         public StringProperty(Table table, String name, int flags) {
             super(table, name, flags);
-        }
-
-        protected StringProperty(Table table, String name, String expression) {
-            super(table, name, expression);
         }
 
         @Override
@@ -228,39 +223,6 @@ public abstract class Property<TYPE> extends Field implements Cloneable {
     }
 
     /**
-     * Double property type. See {@link Property}
-     *
-     * @author Tim Su <tim@todoroo.com>
-     *
-     */
-    public static class DoubleProperty extends Property<Double> {
-
-        public DoubleProperty(Table table, String name) {
-            super(table, name);
-        }
-
-        public DoubleProperty(Table table, String name, int flags) {
-            super(table, name, flags);
-        }
-
-        protected DoubleProperty(Table table, String name, String expression) {
-            super(table, name, expression);
-        }
-
-
-        @Override
-        public <RETURN, PARAMETER> RETURN accept(
-                PropertyVisitor<RETURN, PARAMETER> visitor, PARAMETER data) {
-            return visitor.visitDouble(this, data);
-        }
-
-        @Override
-        public DoubleProperty cloneAs(String tableAlias, String columnAlias) {
-            return (DoubleProperty) super.cloneAs(tableAlias, columnAlias);
-        }
-    }
-
-    /**
      * Long property type. See {@link Property}
      *
      * @author Tim Su <tim@todoroo.com>
@@ -274,10 +236,6 @@ public abstract class Property<TYPE> extends Field implements Cloneable {
 
         public LongProperty(Table table, String name, int flags) {
             super(table, name, flags);
-        }
-
-        protected LongProperty(Table table, String name, String expression) {
-            super(table, name, expression);
         }
 
         @Override
@@ -311,17 +269,9 @@ public abstract class Property<TYPE> extends Field implements Cloneable {
     // --- pseudo-properties
 
     /** Runs a SQL function and returns the result as a string */
-    public static class StringFunctionProperty extends StringProperty {
-        public StringFunctionProperty(String function, String columnName) {
-            super(null, columnName, function);
-            alias = columnName;
-        }
-    }
-
-    /** Runs a SQL function and returns the result as a string */
     public static class IntegerFunctionProperty extends IntegerProperty {
         public IntegerFunctionProperty(String function, String columnName) {
-            super(null, columnName, function);
+            super(columnName, function);
             alias = columnName;
         }
     }

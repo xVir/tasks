@@ -16,12 +16,13 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.widget.Button;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.helper.TaskEditControlSet;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
 
 public abstract class PopupControlSet extends TaskEditControlSet {
 
@@ -146,11 +147,11 @@ public abstract class PopupControlSet extends TaskEditControlSet {
     }
 
     @Override
-    public String writeToModel(Task task) {
+    public void writeToModel(Task task) {
         if (initialized && dialog != null) {
             dialog.dismiss();
         }
-        return super.writeToModel(task);
+        super.writeToModel(task);
     }
 
     @Override

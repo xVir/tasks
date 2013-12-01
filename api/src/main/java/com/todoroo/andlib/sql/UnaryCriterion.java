@@ -39,7 +39,9 @@ public class UnaryCriterion extends Criterion {
     protected void afterPopulateOperator(StringBuilder sb) {
         if(value == null) {
             return;
-        } else if(value instanceof String) {
+        }
+
+        if(value instanceof String) {
             sb.append("'").append(sanitize((String) value)).append("'");
         } else {
             sb.append(value);
@@ -48,8 +50,6 @@ public class UnaryCriterion extends Criterion {
 
     /**
      * Sanitize the given input for SQL
-     * @param input
-     * @return
      */
     public static String sanitize(String input) {
         return input.replace("'", "''");
@@ -61,10 +61,6 @@ public class UnaryCriterion extends Criterion {
 
     public static Criterion gt(Field field, Object value) {
         return new UnaryCriterion(field, Operator.gt, value);
-    }
-
-    public static Criterion gte(Field field, Object value) {
-        return new UnaryCriterion(field, Operator.gte, value);
     }
 
     public static Criterion lt(Field field, Object value) {

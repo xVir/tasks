@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.provider;
 
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -36,9 +32,12 @@ import com.todoroo.astrid.dao.UserActivityDao;
 import com.todoroo.astrid.data.Metadata;
 import com.todoroo.astrid.data.StoreObject;
 import com.todoroo.astrid.data.Task;
-import com.todoroo.astrid.data.TaskApiDao;
 import com.todoroo.astrid.data.UserActivity;
 import com.todoroo.astrid.service.AstridDependencyInjector;
+
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Astrid 3 Content Provider. There are two ways to use this content provider:
@@ -62,7 +61,7 @@ import com.todoroo.astrid.service.AstridDependencyInjector;
  * </ul>
  * <p>
  * If you are writing a third-party application to access this data, you may
- * also consider using one of the Api DAO objects like {@link TaskApiDao}.
+ * also consider using one of the Api DAO objects like TaskApiDao.
  *
  * @author Tim Su <tim@todoroo.com>
  *
@@ -180,25 +179,25 @@ public class Astrid3ContentProvider extends ContentProvider {
 
     private UriHelper<?> generateHelper(Uri uri, boolean populateModel) {
         if(uri.toString().startsWith(Task.CONTENT_URI.toString())) {
-            UriHelper<Task> helper = new UriHelper<Task>();
+            UriHelper<Task> helper = new UriHelper<>();
             helper.model = populateModel ? new Task() : null;
             helper.dao = taskDao;
             helper.dao.setDatabase(getDatabase());
             return helper;
         } else if(uri.toString().startsWith(Metadata.CONTENT_URI.toString())) {
-            UriHelper<Metadata> helper = new UriHelper<Metadata>();
+            UriHelper<Metadata> helper = new UriHelper<>();
             helper.model = populateModel ? new Metadata() : null;
             helper.dao = metadataDao;
             helper.dao.setDatabase(getDatabase());
             return helper;
         } else if(uri.toString().startsWith(StoreObject.CONTENT_URI.toString())) {
-            UriHelper<StoreObject> helper = new UriHelper<StoreObject>();
+            UriHelper<StoreObject> helper = new UriHelper<>();
             helper.model = populateModel ? new StoreObject() : null;
             helper.dao = storeObjectDao;
             helper.dao.setDatabase(getDatabase());
             return helper;
         } else if(uri.toString().startsWith(UserActivity.CONTENT_URI.toString())) {
-            UriHelper<UserActivity> helper = new UriHelper<UserActivity>();
+            UriHelper<UserActivity> helper = new UriHelper<>();
             helper.model = populateModel ? new UserActivity() : null;
             helper.dao = userActivityDao;
             helper.dao.setDatabase(getDatabase());
@@ -359,7 +358,7 @@ public class Astrid3ContentProvider extends ContentProvider {
         ContentValues setValues = model.getSetValues();
         if (setValues != null) {
             Set<Entry<String, Object>> entries = setValues.valueSet();
-            Set<String> keysToRemove = new HashSet<String>();
+            Set<String> keysToRemove = new HashSet<>();
             for (Entry<String, Object> entry: entries) {
                 String key = entry.getKey();
                 if (key.startsWith(AbstractModel.RETAIN_TRANSITORY_PREFIX)) {

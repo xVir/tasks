@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.gtasks.sync;
 
-import java.io.IOException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
-
 import android.content.ContentValues;
 import android.text.TextUtils;
 import android.util.Log;
@@ -20,7 +16,6 @@ import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.dao.MetadataDao;
 import com.todoroo.astrid.dao.TaskDao;
 import com.todoroo.astrid.data.Metadata;
@@ -36,6 +31,10 @@ import com.todoroo.astrid.gtasks.api.MoveRequest;
 import com.todoroo.astrid.service.MetadataService;
 import com.todoroo.astrid.service.TaskService;
 
+import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
+
 public final class GtasksSyncService {
 
     private static final String DEFAULT_LIST = "@default"; //$NON-NLS-1$
@@ -44,13 +43,12 @@ public final class GtasksSyncService {
     @Autowired GtasksMetadataService gtasksMetadataService;
     @Autowired TaskDao taskDao;
     @Autowired GtasksPreferenceService gtasksPreferenceService;
-    @Autowired ActFmPreferenceService actFmPreferenceService;
 
     public GtasksSyncService() {
         DependencyInjectionService.getInstance().inject(this);
     }
 
-    private final LinkedBlockingQueue<SyncOnSaveOperation> operationQueue = new LinkedBlockingQueue<SyncOnSaveOperation>();
+    private final LinkedBlockingQueue<SyncOnSaveOperation> operationQueue = new LinkedBlockingQueue<>();
 
     private abstract class SyncOnSaveOperation {
         abstract public void op(GtasksInvoker invoker) throws IOException;
@@ -69,7 +67,7 @@ public final class GtasksSyncService {
             if(DateUtilities.now() - creationDate < 1000) {
                 AndroidUtilities.sleepDeep(1000 - (DateUtilities.now() - creationDate));
             }
-            pushTaskOnSave(model, model.getMergedValues(), invoker, false);
+            pushTaskOnSave(model, model.getMergedValues(), invoker);
         }
     }
 
@@ -105,11 +103,8 @@ public final class GtasksSyncService {
 
         taskDao.addListener(new ModelUpdateListener<Task>() {
             @Override
-            public void onModelUpdated(final Task model, boolean outstandingEntries) {
+            public void onModelUpdated(final Task model) {
                 if(model.checkAndClearTransitory(SyncFlags.GTASKS_SUPPRESS_SYNC)) {
-                    return;
-                }
-                if (actFmPreferenceService.isLoggedIn()) {
                     return;
                 }
                 if (gtasksPreferenceService.isOngoing() && !model.checkTransitory(TaskService.TRANS_REPEAT_COMPLETE)) //Don't try and sync changes that occur during a normal sync
@@ -172,8 +167,6 @@ public final class GtasksSyncService {
 
     /**
      * Checks to see if any of the values changed are among the properties we sync
-     * @param values
-     * @param properties
      * @return false if none of the properties we sync were changed, true otherwise
      */
     private boolean checkValuesForProperties(ContentValues values, Property<?>[] properties) {
@@ -191,9 +184,6 @@ public final class GtasksSyncService {
             return;
         }
         if (metadata.checkAndClearTransitory(SyncFlags.GTASKS_SUPPRESS_SYNC)) {
-            return;
-        }
-        if (actFmPreferenceService.isLoggedIn()) {
             return;
         }
         if (!metadata.getValue(Metadata.KEY).equals(GtasksMetadata.METADATA_KEY)) //Don't care about non-gtasks metadata
@@ -214,17 +204,9 @@ public final class GtasksSyncService {
     /**
      * Synchronize with server when data changes
      */
-    public void pushTaskOnSave(Task task, ContentValues values, GtasksInvoker invoker, boolean sleep) throws IOException {
-        if (actFmPreferenceService.isLoggedIn()) {
-            return;
-        }
-
-        if (sleep) {
-            AndroidUtilities.sleepDeep(1000L); //Wait for metadata to be saved
-        }
-
+    public void pushTaskOnSave(Task task, ContentValues values, GtasksInvoker invoker) throws IOException {
         Metadata gtasksMetadata = gtasksMetadataService.getTaskMetadata(task.getId());
-        com.google.api.services.tasks.model.Task remoteModel = null;
+        com.google.api.services.tasks.model.Task remoteModel;
         boolean newlyCreated = false;
 
         if (values.containsKey(Task.USER_ID.name) && !Task.USER_ID_SELF.equals(values.getAsString(Task.USER_ID.name))) {
@@ -239,7 +221,7 @@ public final class GtasksSyncService {
             return;
         }
 
-        String remoteId = null;
+        String remoteId;
         String listId = Preferences.getStringValue(GtasksPreferenceService.PREF_DEFAULT_LIST);
         if (listId == null) {
             com.google.api.services.tasks.model.TaskList defaultList = invoker.getGtaskList(DEFAULT_LIST);
@@ -327,9 +309,6 @@ public final class GtasksSyncService {
     }
 
     public void pushMetadataOnSave(Metadata model, GtasksInvoker invoker) throws IOException {
-        if (actFmPreferenceService.isLoggedIn()) {
-            return;
-        }
         AndroidUtilities.sleepDeep(1000L);
 
         String taskId = model.getValue(GtasksMetadata.ID);

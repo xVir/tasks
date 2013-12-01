@@ -5,8 +5,6 @@
  */
 package com.todoroo.astrid.core;
 
-import java.util.List;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,14 +20,16 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.astrid.api.MultipleSelectCriterion;
 import com.todoroo.astrid.api.TextInputCriterion;
 import com.todoroo.astrid.core.CustomFilterActivity.CriterionInstance;
-import com.todoroo.astrid.data.AddOn;
+
+import org.tasks.R;
+
+import java.util.List;
 
 /**
- * Adapter for {@link AddOn}s
+ * Adapter for AddOns
  *
  * @author Tim Su <tim@todoroo.com>
  *
@@ -105,7 +105,6 @@ public class CustomFilterAdapter extends ArrayAdapter<CriterionInstance> {
 
     /**
      * Show options menu for the given criterioninstance
-     * @param item
      */
     public void showOptionsFor(final CriterionInstance item, final Runnable onComplete) {
         AlertDialog.Builder dialog = new AlertDialog.Builder(activity).
@@ -114,7 +113,7 @@ public class CustomFilterAdapter extends ArrayAdapter<CriterionInstance> {
         if(item.criterion instanceof MultipleSelectCriterion) {
             MultipleSelectCriterion multiSelectCriterion = (MultipleSelectCriterion) item.criterion;
             final String[] titles = multiSelectCriterion.entryTitles;
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(activity,
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(activity,
                     android.R.layout.simple_spinner_dropdown_item, titles);
             DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                 @Override

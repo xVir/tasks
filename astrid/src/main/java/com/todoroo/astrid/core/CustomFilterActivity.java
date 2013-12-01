@@ -5,13 +5,6 @@
  */
 package com.todoroo.astrid.core;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -22,21 +15,20 @@ import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import org.tasks.R;
 import com.todoroo.andlib.data.Property.CountProperty;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
@@ -59,13 +51,22 @@ import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.utility.AstridPreferences;
 
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 /**
  * Activity that allows users to build custom filters
  *
  * @author Tim Su <tim@todoroo.com>
  *
  */
-public class CustomFilterActivity extends SherlockFragmentActivity {
+public class CustomFilterActivity extends ActionBarActivity {
 
     private static final String IDENTIFIER_TITLE = "title"; //$NON-NLS-1$
     private static final String IDENTIFIER_IMPORTANCE = "importance"; //$NON-NLS-1$
@@ -135,7 +136,6 @@ public class CustomFilterActivity extends SherlockFragmentActivity {
 
     private ListView listView;
     private TextView filterName;
-    private boolean isDialog;
 
     private CustomFilterAdapter adapter;
     private final Map<String,CustomFilterCriterion> criteria = Collections.synchronizedMap(new LinkedHashMap<String,CustomFilterCriterion>());
@@ -168,7 +168,7 @@ public class CustomFilterActivity extends SherlockFragmentActivity {
         populateCriteria();
 
         filterName = (TextView)findViewById(R.id.filterName);
-        List<CriterionInstance> startingCriteria = new ArrayList<CriterionInstance>();
+        List<CriterionInstance> startingCriteria = new ArrayList<>();
         startingCriteria.add(getStartingUniverse());
         adapter = new CustomFilterAdapter(this, startingCriteria);
         listView.setAdapter(adapter);
@@ -178,8 +178,7 @@ public class CustomFilterActivity extends SherlockFragmentActivity {
     }
 
     private void setupForDialogOrFullscreen() {
-        isDialog = AstridPreferences.useTabletLayout(this);
-        if (isDialog) {
+        if (AstridPreferences.useTabletLayout(this)) {
             setTheme(ThemeService.getDialogTheme());
         } else {
             ThemeService.applyTheme(this);
@@ -260,21 +259,11 @@ public class CustomFilterActivity extends SherlockFragmentActivity {
                     Query.select(Task.ID).from(Task.TABLE).where(
                             Criterion.and(TaskCriteria.activeVisibleMine(),
                                     Task.TITLE.like("%?%"))).toString(),
-                        null, getString(R.string.CFC_title_contains_name), "",
+                        getString(R.string.CFC_title_contains_name), "",
                         ((BitmapDrawable)r.getDrawable(R.drawable.tango_alpha)).getBitmap(),
                         getString(R.string.CFC_title_contains_name));
             criteria.put(IDENTIFIER_TITLE, criterion);
         }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
     }
 
     @Override
@@ -300,7 +289,7 @@ public class CustomFilterActivity extends SherlockFragmentActivity {
     }
 
     private void setUpListeners() {
-        ((Button)findViewById(R.id.add)).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.add).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 listView.showContextMenu();

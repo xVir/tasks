@@ -5,12 +5,9 @@
  */
 package com.todoroo.astrid.reminders;
 
-import java.util.Date;
-
 import android.app.Notification;
 import android.content.Intent;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.NotificationManager;
 import com.todoroo.andlib.utility.DateUtilities;
@@ -18,6 +15,10 @@ import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.dao.TaskDao;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.test.DatabaseTestCase;
+
+import org.tasks.R;
+
+import java.util.Date;
 
 public class NotificationTests extends DatabaseTestCase {
 
@@ -31,7 +32,7 @@ public class NotificationTests extends DatabaseTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Notifications.forceNotificationManager(true);
+        Notifications.forceNotificationManager();
     }
 
     @Override
@@ -76,10 +77,6 @@ public class NotificationTests extends DatabaseTestCase {
                 // allowed
             }
 
-            public void cancelAll() {
-                fail("wtf cancel all?");
-            }
-
             public void notify(int id, Notification notification) {
                 fail("sent a notification, you shouldn't have...");
             }
@@ -103,10 +100,6 @@ public class NotificationTests extends DatabaseTestCase {
 
             public void cancel(int id) {
                 // allowed
-            }
-
-            public void cancelAll() {
-                fail("wtf cancel all?");
             }
 
             public void notify(int id, Notification notification) {
@@ -187,9 +180,6 @@ public class NotificationTests extends DatabaseTestCase {
     abstract public class TestNotificationManager implements NotificationManager {
         public void cancel(int id) {
             fail("wtf cance?");
-        }
-        public void cancelAll() {
-            fail("wtf cancel all?");
         }
     }
 

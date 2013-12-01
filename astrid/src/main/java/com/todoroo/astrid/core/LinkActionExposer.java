@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.core;
 
-import java.util.HashMap;
-import java.util.List;
-
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -21,13 +18,17 @@ import android.text.Spannable;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.api.TaskAction;
 import com.todoroo.astrid.api.TaskDecoration;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.files.FilesAction;
 import com.todoroo.astrid.notes.NotesAction;
+
+import org.tasks.R;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Exposes {@link TaskDecoration} for phone numbers, emails, urls, etc
@@ -67,14 +68,12 @@ public class LinkActionExposer {
         Resources r = context.getResources();
         if (hasAttachments) {
             BitmapDrawable icon = getBitmapDrawable(R.drawable.action_attachments, r);
-            FilesAction filesAction = new FilesAction("", null, icon); //$NON-NLS-1$
-            return filesAction;
+            return new FilesAction(icon);
         }
 
         if (hasNotes && !Preferences.getBoolean(R.string.p_showNotes, false)) {
             BitmapDrawable icon = getBitmapDrawable(R.drawable.action_notes, r);
-            NotesAction notesAction = new NotesAction("", null, icon); //$NON-NLS-1$
-            return notesAction;
+            return new NotesAction(icon);
         }
 
         return null;
@@ -112,16 +111,10 @@ public class LinkActionExposer {
             icon = getBitmapDrawable(R.drawable.action_web, r);
         }
 
-        if(text.length() > 15) {
-            text = text.substring(0, 12) + "..."; //$NON-NLS-1$
-        }
-
-        TaskAction action = new TaskAction(text,
-                PendingIntent.getActivity(context, (int)id, actionIntent, 0), (BitmapDrawable)icon);
-        return action;
+        return new TaskAction(PendingIntent.getActivity(context, (int)id, actionIntent, 0), (BitmapDrawable)icon);
     }
 
-    private static final HashMap<Integer, BitmapDrawable> IMAGE_CACHE = new HashMap<Integer, BitmapDrawable>();
+    private static final HashMap<Integer, BitmapDrawable> IMAGE_CACHE = new HashMap<>();
 
     private static BitmapDrawable getBitmapDrawable(int resId, Resources resources) {
         if (IMAGE_CACHE.containsKey(resId)) {

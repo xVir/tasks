@@ -1,9 +1,5 @@
 package com.todoroo.astrid.gcal;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.BroadcastReceiver;
@@ -15,12 +11,17 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.utility.Constants;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CalendarAlarmReceiver extends BroadcastReceiver {
 
@@ -112,11 +113,11 @@ public class CalendarAlarmReceiver extends BroadcastReceiver {
                         int emailIndex = attendees.getColumnIndexOrThrow(Calendars.ATTENDEES_EMAIL_COL);
                         int nameIndex = attendees.getColumnIndexOrThrow(Calendars.ATTENDEES_NAME_COL);
 
-                        ArrayList<String> names = new ArrayList<String>();
-                        ArrayList<String> emails = new ArrayList<String>();
+                        ArrayList<String> names = new ArrayList<>();
+                        ArrayList<String> emails = new ArrayList<>();
 
                         Account[] accountArray = AccountManager.get(context).getAccounts();
-                        Set<String> phoneAccounts = new HashSet<String>();
+                        Set<String> phoneAccounts = new HashSet<>();
                         for (Account a : accountArray) {
                             phoneAccounts.add(a.name);
                         }

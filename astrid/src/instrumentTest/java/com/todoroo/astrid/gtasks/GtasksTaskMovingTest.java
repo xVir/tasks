@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.gtasks;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.api.services.tasks.model.TaskList;
 import com.google.api.services.tasks.model.TaskLists;
 import com.todoroo.andlib.service.Autowired;
@@ -16,6 +13,9 @@ import com.todoroo.astrid.data.Metadata;
 import com.todoroo.astrid.data.StoreObject;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.test.DatabaseTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("nls")
 public class GtasksTaskMovingTest extends DatabaseTestCase {
@@ -226,8 +226,7 @@ public class GtasksTaskMovingTest extends DatabaseTestCase {
 
     /** moveTo = null => move to end */
     private void whenTriggerMove(Task target, Task moveTo) {
-        gtasksTaskListUpdater.moveTo(null, list, target.getId(), moveTo == null ? -1 : moveTo.getId());
-        gtasksTaskListUpdater.debugPrint(null, list);
+        gtasksTaskListUpdater.moveTo(list, target.getId(), moveTo == null ? -1 : moveTo.getId());
     }
 
     private void thenExpectMetadataOrderAndIndent(Task task, long order, int indent) {
@@ -242,7 +241,7 @@ public class GtasksTaskMovingTest extends DatabaseTestCase {
         super.setUp();
 
         TaskLists lists = new TaskLists();
-        List<TaskList> items = new ArrayList<TaskList>();
+        List<TaskList> items = new ArrayList<>();
         TaskList taskList = new TaskList();
         taskList.setId("1");
         taskList.setTitle("Tim's Tasks");
@@ -261,17 +260,14 @@ public class GtasksTaskMovingTest extends DatabaseTestCase {
      * E
      * F
      */
-    private Task[] givenTasksABCDEF() {
-        Task[] tasks = new Task[] {
-            A = createTask("A", 0, 0),
-            B = createTask("B", 1, 1),
-            C = createTask("C", 2, 1),
-            D = createTask("D", 3, 2),
-            E = createTask("E", 4, 0),
-            F = createTask("F", 5, 0),
-        };
+    private void givenTasksABCDEF() {
+        A = createTask("A", 0, 0);
+        B = createTask("B", 1, 1);
+        C = createTask("C", 2, 1);
+        D = createTask("D", 3, 2);
+        E = createTask("E", 4, 0);
+        F = createTask("F", 5, 0);
         gtasksTaskListUpdater.correctMetadataForList("1");
-        return tasks;
     }
 
     private Task createTask(String title, long order, int indent) {

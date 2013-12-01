@@ -9,26 +9,28 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources.Theme;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.RecognizerIntent;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.MeasureSpec;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewParent;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -37,34 +39,21 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.service.ExceptionService;
-import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.actfm.ActFmCameraModule;
 import com.todoroo.astrid.actfm.ActFmCameraModule.CameraResultCallback;
-import com.todoroo.astrid.actfm.CommentsActivity;
-import com.todoroo.astrid.actfm.TaskCommentsFragment;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
-import com.todoroo.astrid.api.AstridApiConstants;
 import com.todoroo.astrid.dao.TaskAttachmentDao;
-import com.todoroo.astrid.dao.TaskOutstandingDao;
-import com.todoroo.astrid.dao.UserDao;
 import com.todoroo.astrid.data.RemoteModel;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.data.TaskAttachment;
-import com.todoroo.astrid.data.TaskOutstanding;
 import com.todoroo.astrid.files.AACRecordingActivity;
 import com.todoroo.astrid.files.FileExplore;
 import com.todoroo.astrid.files.FileUtilities;
@@ -72,8 +61,6 @@ import com.todoroo.astrid.files.FilesControlSet;
 import com.todoroo.astrid.gcal.GCalControlSet;
 import com.todoroo.astrid.helper.TaskEditControlSet;
 import com.todoroo.astrid.notes.EditNoteActivity;
-import com.todoroo.astrid.opencrx.OpencrxControlSet;
-import com.todoroo.astrid.opencrx.OpencrxCoreUtils;
 import com.todoroo.astrid.reminders.Notifications;
 import com.todoroo.astrid.repeats.RepeatControlSet;
 import com.todoroo.astrid.service.TaskService;
@@ -88,8 +75,6 @@ import com.todoroo.astrid.ui.EditNotesControlSet;
 import com.todoroo.astrid.ui.EditTitleControlSet;
 import com.todoroo.astrid.ui.HideUntilControlSet;
 import com.todoroo.astrid.ui.ImportanceControlSet;
-import com.todoroo.astrid.ui.NestableScrollView;
-import com.todoroo.astrid.ui.NestableViewPager;
 import com.todoroo.astrid.ui.PopupControlSet;
 import com.todoroo.astrid.ui.ReminderControlSet;
 import com.todoroo.astrid.utility.AstridPreferences;
@@ -107,6 +92,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static android.support.v4.view.MenuItemCompat.setShowAsAction;
+
 /**
  * This activity is responsible for creating new tasks and editing existing
  * ones. It saves a task when it is paused (screen rotated, back button pressed)
@@ -115,7 +102,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author timsu
  *
  */
-public final class TaskEditFragment extends SherlockFragment implements
+public final class TaskEditFragment extends Fragment implements
 ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     public static final String TAG_TASKEDIT_FRAGMENT = "taskedit_fragment"; //$NON-NLS-1$
@@ -149,14 +136,8 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
      */
     public static final String TOKEN_PICTURE_IN_PROGRESS = "picture_in_progress"; //$NON-NLS-1$
 
-    /**
-     * Tab to start on
-     */
-    public static final String TOKEN_TAB = "tab"; //$NON-NLS-1$
-
     // --- request codes
 
-    public static final int REQUEST_LOG_IN = 0;
     private static final int REQUEST_VOICE_RECOG = 10;
     public static final int REQUEST_CODE_CONTACT = 20;
     public static final int REQUEST_CODE_RECORD = 30;
@@ -167,24 +148,14 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     private static final int MENU_SAVE_ID = R.string.TEA_menu_save;
     private static final int MENU_DISCARD_ID = R.string.TEA_menu_discard;
-    private static final int MENU_COMMENTS_REFRESH_ID = R.string.TEA_menu_refresh_comments;
-    private static final int MENU_SHOW_COMMENTS_ID = R.string.TEA_menu_comments;
     private static final int MENU_ATTACH_ID = R.string.premium_attach_file;
     private static final int MENU_RECORD_ID = R.string.premium_record_audio;
+    private static final int MENU_DELETE_TASK_ID = R.string.delete_task;
 
     // --- result codes
 
-    public static final int RESULT_CODE_SAVED = Activity.RESULT_FIRST_USER;
-    public static final int RESULT_CODE_DISCARDED = Activity.RESULT_FIRST_USER + 1;
-    public static final int RESULT_CODE_DELETED = Activity.RESULT_FIRST_USER + 2;
-
     public static final String OVERRIDE_FINISH_ANIM = "finishAnim"; //$NON-NLS-1$
 
-    public static final String TOKEN_TASK_WAS_ASSIGNED = "task_assigned"; //$NON-NLS-1$
-
-    public static final String TOKEN_ASSIGNED_TO_DISPLAY = "task_assigned_to_display"; //$NON-NLS-1$
-    public static final String TOKEN_ASSIGNED_TO_EMAIL = "task_assigned_to_email"; //$NON-NLS-1$
-    public static final String TOKEN_ASSIGNED_TO_ID = "task_assigned_to_id"; //$NON-NLS-1$
     public static final String TOKEN_TAGS_CHANGED = "tags_changed";  //$NON-NLS-1$
     public static final String TOKEN_NEW_REPEATING_TASK = "new_repeating"; //$NON-NLS-1$
 
@@ -199,30 +170,17 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
     private TaskService taskService;
 
     @Autowired
-    private TaskOutstandingDao taskOutstandingDao;
-
-    @Autowired
     private TaskAttachmentDao taskAttachmentDao;
-
-    @Autowired
-    private ActFmPreferenceService actFmPreferenceService;
-
-    @Autowired
-    private UserDao userDao;
 
     // --- UI components
 
-    private ImageButton voiceAddNoteButton;
-
     private EditNotesControlSet notesControlSet = null;
-    private HideUntilControlSet hideUntilControls = null;
-    private TagsControlSet tagsControlSet = null;
     private FilesControlSet filesControlSet = null;
     private TimerActionControlSet timerAction;
     private EditText title;
     private EditNoteActivity editNotes;
-    private NestableViewPager mPager;
-    private HashMap<String, TaskEditControlSet> controlSetMap = new HashMap<String, TaskEditControlSet>();
+    private ViewPager mPager;
+    private HashMap<String, TaskEditControlSet> controlSetMap = new HashMap<>();
 
     private final List<TaskEditControlSet> controls = Collections.synchronizedList(new ArrayList<TaskEditControlSet>());
 
@@ -250,26 +208,11 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     private boolean showEditComments;
 
-    private int tabStyle = 0;
-
     /*
      * ======================================================================
      * ======================================================= initialization
      * ======================================================================
      */
-
-    /**
-     * Container Activity must implement this interface and we ensure that it
-     * does during the onAttach() callback
-     */
-    public interface OnTaskEditDetailsClickedListener {
-        public void onTaskEditDetailsClicked(int category, int position);
-    }
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-    }
 
     public TaskEditFragment() {
         DependencyInjectionService.getInstance().inject(this);
@@ -307,9 +250,7 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
             Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
-        View v = inflater.inflate(R.layout.task_edit_activity, container, false);
-
-        return v;
+        return inflater.inflate(R.layout.task_edit_activity, container, false);
     }
 
     @Override
@@ -345,12 +286,11 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
     }
 
     private void loadMoreContainer() {
-        View moreTab = (View) getView().findViewById(R.id.more_container);
-        View commentsBar = (View) getView().findViewById(R.id.updatesFooter);
+        View commentsBar = getView().findViewById(R.id.updatesFooter);
 
         long idParam = getActivity().getIntent().getLongExtra(TOKEN_ID, -1L);
 
-        tabStyle = TaskEditViewPager.TAB_SHOW_ACTIVITY;
+        int tabStyle = TaskEditViewPager.TAB_SHOW_ACTIVITY;
 
         if (!showEditComments) {
             tabStyle &= ~TaskEditViewPager.TAB_SHOW_ACTIVITY;
@@ -378,15 +318,14 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         TaskEditViewPager adapter = new TaskEditViewPager(getActivity(), tabStyle);
         adapter.parent = this;
 
-        mPager = (NestableViewPager) getView().findViewById(R.id.pager);
+        mPager = (ViewPager) getView().findViewById(R.id.pager);
         mPager.setAdapter(adapter);
 
         if (showEditComments) {
             commentsBar.setVisibility(View.VISIBLE);
         }
-        moreTab.setVisibility(View.VISIBLE);
         setCurrentTab(TAB_VIEW_UPDATES);
-        setPagerHeightForPosition(TAB_VIEW_UPDATES);
+        setPagerHeightForPosition();
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
@@ -403,8 +342,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
     /** Initialize UI components */
     private void setUpUIComponents() {
 
-        LinearLayout basicControls = (LinearLayout) getView().findViewById(
-                R.id.basic_controls);
         LinearLayout titleControls = (LinearLayout) getView().findViewById(
                 R.id.title_controls);
         LinearLayout whenDialogView = (LinearLayout) LayoutInflater.from(
@@ -412,7 +349,7 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
         constructWhenDialog(whenDialogView);
 
-        controlSetMap = new HashMap<String, TaskEditControlSet>();
+        controlSetMap = new HashMap<>();
 
         // populate control set
         EditTitleControlSet editTitle = new EditTitleControlSet(getActivity(),
@@ -425,7 +362,7 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
                 getActivity(), getView());
         controls.add(timerAction);
 
-        tagsControlSet = new TagsControlSet(getActivity(),
+        TagsControlSet tagsControlSet = new TagsControlSet(getActivity(),
                 R.layout.control_set_tags,
                 R.layout.control_set_default_display, R.string.TEA_tags_label_long);
         controls.add(tagsControlSet);
@@ -479,7 +416,7 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         controlSetMap.put(getString(R.string.TEA_ctrl_reminders_pref),
                 reminderControl);
 
-        hideUntilControls = new HideUntilControlSet(getActivity(),
+        HideUntilControlSet hideUntilControls = new HideUntilControlSet(getActivity(),
                 R.layout.control_set_hide,
                 R.layout.control_set_default_display,
                 R.string.hide_until_prompt);
@@ -504,53 +441,10 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         controls.add(filesControlSet);
         controlSetMap.put(getString(R.string.TEA_ctrl_files_pref), filesControlSet);
 
-        try {
-            if (OpencrxCoreUtils.INSTANCE.isLoggedIn()) {
-                OpencrxControlSet ocrxControl = new OpencrxControlSet(
-                        getActivity(), R.layout.control_set_opencrx,
-                        R.layout.control_set_opencrx_display,
-                        R.string.opencrx_TEA_opencrx_title);
-                controls.add(ocrxControl);
-                basicControls.addView(ocrxControl.getDisplayView());
-                notesEditText.setHint(R.string.opencrx_TEA_notes);
-            }
-        } catch (Exception e) {
-            Log.e("astrid-error", "loading-control-set", e); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-
-        setupBeastModeButton();
-
-        getView().findViewById(R.id.delete_task).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteButtonClick();
-            }
-        });
-
         loadEditPageOrder(false);
 
         // Load task data in background
         new TaskEditBackgroundLoader().start();
-    }
-
-    private void setupBeastModeButton() {
-        TextView beastMode = (TextView) getView().findViewById(R.id.edit_beast_mode);
-        TypedValue tv = new TypedValue();
-        Theme theme = getActivity().getTheme();
-        theme.resolveAttribute(R.attr.asTextColor, tv, false);
-
-        int color = tv.data & 0x00ffffff;
-        color = color + 0x7f000000;
-        beastMode.setTextColor(color);
-
-        beastMode.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), BeastModePreferences.class);
-                intent.setAction(AstridApiConstants.ACTION_SETTINGS);
-                startActivityForResult(intent, REQUEST_CODE_BEAST_MODE);
-            }
-        });
     }
 
     private void loadEditPageOrder(boolean removeViews) {
@@ -564,7 +458,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         String[] itemOrder = controlOrder.toArray(new String[controlOrder.size()]);
 
         String hideAlwaysTrigger = getString(R.string.TEA_ctrl_hide_section_pref);
-        LinearLayout section = basicControls;
 
         Class<?> openControl = (Class<?>) getActivity().getIntent().getSerializableExtra(TOKEN_OPEN_CONTROL);
 
@@ -577,18 +470,18 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
                 TaskEditControlSet curr = controlSetMap.get(item);
 
                 if (curr != null) {
-                    controlSet = (LinearLayout) curr.getDisplayView();
+                    controlSet = curr.getDisplayView();
                 }
 
                 if (controlSet != null) {
                     if ((i + 1 >= itemOrder.length)) {
                         removeTeaSeparator(controlSet);
                     }
-                    section.addView(controlSet);
+                    basicControls.addView(controlSet);
                 }
 
                 if (curr != null && curr.getClass().equals(openControl) && curr instanceof PopupControlSet) {
-                    ((PopupControlSet) curr).getDisplayView().performClick();
+                    curr.getDisplayView().performClick();
                 }
             }
         }
@@ -637,12 +530,12 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
             // prepare and set listener for voice-button
             if (getActivity() != null) {
                 if (VoiceRecognizer.voiceInputAvailable(getActivity())) {
-                    voiceAddNoteButton = (ImageButton) notesControlSet.getView().findViewById(
+                    ImageButton voiceAddNoteButton = (ImageButton) notesControlSet.getView().findViewById(
                             R.id.voiceAddNoteButton);
                     voiceAddNoteButton.setVisibility(View.VISIBLE);
                     int prompt = R.string.voice_edit_note_prompt;
                     voiceNoteAssistant = new VoiceInputAssistant(voiceAddNoteButton, REQUEST_VOICE_RECOG);
-                    voiceNoteAssistant.setAppend(true);
+                    voiceNoteAssistant.setAppend();
                     voiceNoteAssistant.setLanguageModel(RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                     voiceNoteAssistant.configureMicrophoneButton(TaskEditFragment.this, prompt);
                 }
@@ -677,8 +570,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     /**
      * Loads action item from the given intent
-     *
-     * @param intent
      */
     protected void loadItem(Intent intent) {
         if (model != null) {
@@ -731,13 +622,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     }
 
-    public long getTaskIdInProgress() {
-        if (model != null && model.getId() > 0) {
-            return model.getId();
-        }
-        return getActivity().getIntent().getLongExtra(TOKEN_ID, -1);
-    }
-
     private void setIsNewTask(boolean isNewTask) {
         this.isNewTask = isNewTask;
         Activity activity = getActivity();
@@ -769,12 +653,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     }
 
-    public void refreshFilesDisplay() {
-        boolean hasAttachments = taskAttachmentDao.taskHasAttachments(model.getUuid());
-        filesControlSet.getDisplayView().setVisibility(hasAttachments ? View.VISIBLE : View.GONE);
-        filesControlSet.readFromTask(model);
-    }
-
     /** Populate UI component values from the model */
     private void populateFields() {
         populateFields(getActivity().getIntent());
@@ -794,13 +672,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
             return;
         }
 
-        if (isNewTask) {
-            taskOutstandingDao.deleteWhere(Criterion.and(TaskOutstanding.TASK_ID.eq(model.getId()),
-                    TaskOutstanding.COLUMN_STRING.eq(Task.TITLE.name),
-                    Criterion.or(TaskOutstanding.VALUE_STRING.isNull(), TaskOutstanding.VALUE_STRING.eq("")))); //$NON-NLS-1$
-        }
-
-        StringBuilder toast = new StringBuilder();
         synchronized (controls) {
             for (TaskEditControlSet controlSet : controls) {
                 if (controlSet instanceof PopupControlSet) { // Save open control set
@@ -810,14 +681,9 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
                         getActivity().getIntent().putExtra(TOKEN_OPEN_CONTROL, popup.getClass());
                     }
                 }
-                String toastText = controlSet.writeToModel(model);
-                if (toastText != null) {
-                    toast.append('\n').append(toastText);
-                }
+                controlSet.writeToModel(model);
             }
         }
-
-        addDueTimeToToast(toast.toString());
 
         boolean tagsChanged = Flags.check(Flags.TAGS_CHANGED);
         model.putTransitory(TaskService.TRANS_EDIT_SAVE, true);
@@ -827,8 +693,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
             boolean taskEditActivity = (getActivity() instanceof TaskEditActivity);
             boolean showRepeatAlert = model.getTransitory(TaskService.TRANS_REPEAT_CHANGED) != null
                     && !TextUtils.isEmpty(model.getValue(Task.RECURRENCE));
-            if (Task.userIdIsEmail(model.getValue(Task.USER_ID))) {
-            }
 
             if (taskEditActivity) {
                 Intent data = new Intent();
@@ -861,7 +725,11 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     public boolean onKeyDown(int keyCode) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            discardButtonClick();
+            if(title.getText().length() == 0) {
+                discardButtonClick();
+            } else {
+                saveButtonClick();
+            }
             return true;
         }
         return false;
@@ -880,8 +748,11 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         }
 
         if (activity instanceof TaskListActivity) {
-            if (title.getText().length() == 0 && isNewTask
-                    && model != null && model.isSaved()) {
+            if (title.getText().length() == 0 && isNewTask && model != null && model.isSaved()) {
+                taskService.delete(model);
+            }
+        } else if (activity instanceof TaskEditActivity) {
+            if (title.getText().length() == 0 && isNewTask && model != null && model.isSaved()) {
                 taskService.delete(model);
             }
         }
@@ -889,7 +760,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     /**
      * Helper to remove task edit specific info from activity intent
-     * @param intent
      */
     public static void removeExtrasFromIntent(Intent intent) {
         if (intent != null) {
@@ -908,36 +778,11 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         save(false);
     }
 
-    /**
-     * Displays a Toast reporting that the selected task has been saved and, if
-     * it has a due date, that is due in 'x' amount of time, to 1 time-unit of
-     * precision
-     *
-     * @param additionalMessage
-     */
-    private String addDueTimeToToast(String additionalMessage) {
-        int stringResource;
-
-        long due = model.getValue(Task.DUE_DATE);
-        String toastMessage;
-        if (due != 0) {
-            stringResource = R.string.TEA_onTaskSave_due;
-            CharSequence formattedDate = DateUtilities.getRelativeDay(
-                    getActivity(), due);
-            toastMessage = getString(stringResource, formattedDate);
-        } else {
-            toastMessage = getString(R.string.TEA_onTaskSave_notDue);
-        }
-
-        return toastMessage + additionalMessage;
-    }
-
     protected void discardButtonClick() {
         shouldSaveState = false;
 
         // abandon editing in this case
-        if (title.getText().length() == 0
-                || TextUtils.isEmpty(model.getValue(Task.TITLE))) {
+        if (title.getText().length() == 0 || TextUtils.isEmpty(model.getValue(Task.TITLE))) {
             if (isNewTask) {
                 TimerPlugin.updateTimer(getActivity(), model, false);
                 taskService.delete(model);
@@ -980,11 +825,11 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
     }
 
     private void startAttachFile() {
-        ArrayList<String> options = new ArrayList<String>();
+        ArrayList<String> options = new ArrayList<>();
         options.add(getString(R.string.file_add_picture));
         options.add(getString(R.string.file_add_sdcard));
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_dropdown_item, options.toArray(new String[options.size()]));
 
         DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
@@ -1044,7 +889,7 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
     private void attachImage(Bitmap bitmap) {
 
-        AtomicReference<String> nameRef = new AtomicReference<String>();
+        AtomicReference<String> nameRef = new AtomicReference<>();
         String path = FileUtilities.getNewImageAttachmentPath(getActivity(), nameRef);
 
         try {
@@ -1060,10 +905,6 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
     }
 
     private void createNewFileAttachment(String path, String fileName, String fileType) {
-        if (!ActFmPreferenceService.isPremiumUser()) {
-            return;
-        }
-
         TaskAttachment attachment = TaskAttachment.createNewAttachment(model.getUuid(), path, fileName, fileType);
         taskAttachmentDao.createNew(attachment);
         filesControlSet.refreshMetadata();
@@ -1085,25 +926,16 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         case MENU_RECORD_ID:
             startRecordingAudio();
             return true;
-        case MENU_COMMENTS_REFRESH_ID: {
-            if (editNotes != null) {
-                editNotes.refreshData();
-            }
+        case MENU_DELETE_TASK_ID:
+            deleteButtonClick();
             return true;
-        }
-        case MENU_SHOW_COMMENTS_ID: {
-            Intent intent = new Intent(getActivity(), CommentsActivity.class);
-            intent.putExtra(TaskCommentsFragment.EXTRA_TASK, model.getId());
-            startActivity(intent);
-            AndroidUtilities.callOverridePendingTransition(getActivity(), R.anim.slide_left_in, R.anim.slide_left_out);
-            return true;
-        }
         case android.R.id.home:
             if (title.getText().length() == 0) {
                 discardButtonClick();
             } else {
                 saveButtonClick();
             }
+            hideKeyboard();
             return true;
         }
 
@@ -1115,40 +947,33 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         super.onCreateOptionsMenu(menu, inflater);
         MenuItem item;
 
-        if (ActFmPreferenceService.isPremiumUser()) {
-            item = menu.add(Menu.NONE, MENU_ATTACH_ID, 0, R.string.premium_attach_file);
-            item.setIcon(ThemeService.getDrawable(R.drawable.ic_menu_attach));
-            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        item = menu.add(Menu.NONE, MENU_ATTACH_ID, 0, R.string.premium_attach_file);
+        item.setIcon(ThemeService.getDrawable(R.drawable.ic_action_new_attachment));
 
-            item = menu.add(Menu.NONE, MENU_RECORD_ID, 0, R.string.premium_record_audio);
-            item.setIcon(ThemeService.getDrawable(R.drawable.ic_menu_mic));
-            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        }
+        setShowAsAction(item, MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        item = menu.add(Menu.NONE, MENU_RECORD_ID, 0, R.string.premium_record_audio);
+        item.setIcon(ThemeService.getDrawable(R.drawable.ic_action_mic));
+        setShowAsAction(item, MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        item = menu.add(Menu.NONE, MENU_DELETE_TASK_ID, 0, R.string.delete_task);
+        item.setIcon(ThemeService.getDrawable(R.drawable.ic_action_discard));
+        setShowAsAction(item, MenuItem.SHOW_AS_ACTION_ALWAYS);
 
         boolean useSaveAndCancel = Preferences.getBoolean(R.string.p_save_and_cancel, false);
 
         if (useSaveAndCancel || AstridPreferences.useTabletLayout(getActivity())) {
             if (useSaveAndCancel) {
                 item = menu.add(Menu.NONE, MENU_DISCARD_ID, 0, R.string.TEA_menu_discard);
-                item.setIcon(ThemeService.getDrawable(R.drawable.ic_menu_close));
-                item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                item.setIcon(ThemeService.getDrawable(R.drawable.ic_action_cancel));
+                setShowAsAction(item, MenuItem.SHOW_AS_ACTION_ALWAYS);
             }
 
             if (!(getActivity() instanceof TaskEditActivity)) {
                 item = menu.add(Menu.NONE, MENU_SAVE_ID, 0, R.string.TEA_menu_save);
-                item.setIcon(ThemeService.getDrawable(R.drawable.ic_menu_save));
-                item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                item.setIcon(ThemeService.getDrawable(R.drawable.ic_action_save));
+                setShowAsAction(item, MenuItem.SHOW_AS_ACTION_ALWAYS);
             }
-        }
-
-        boolean wouldShowComments = actFmPreferenceService.isLoggedIn() && menu.findItem(MENU_COMMENTS_REFRESH_ID) == null;
-        if(wouldShowComments && showEditComments) {
-            item = menu.add(Menu.NONE, MENU_COMMENTS_REFRESH_ID, Menu.NONE,
-                    R.string.ENA_refresh_comments);
-            item.setIcon(R.drawable.icn_menu_refresh_dark);
-        } else if (wouldShowComments && !showEditComments) {
-            item = menu.add(Menu.NONE, MENU_SHOW_COMMENTS_ID, Menu.NONE, R.string.TEA_menu_comments);
-            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
     }
 
@@ -1213,17 +1038,7 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
 
         // stick our task into the outState
         outState.putParcelable(TASK_IN_PROGRESS, model);
-        outState.putString(TASK_UUID, uuid.toString());
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
+        outState.putString(TASK_UUID, uuid);
     }
 
     /*
@@ -1232,50 +1047,22 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
      * ======================================================================
      */
 
-    public int getTabForPosition(int position) {
-        int tab = TaskEditViewPager.getPageForPosition(position, tabStyle);
-        switch(tab) {
-        case TaskEditViewPager.TAB_SHOW_ACTIVITY:
-            return TAB_VIEW_UPDATES;
-        }
-
-        // error experienced
-        return TAB_VIEW_UPDATES;
+    public View getPageView() {
+        return editNotes;
     }
 
-    /**
-     * Returns the correct view for TaskEditViewPager
-     *
-     * @param position
-     *            in the horizontal scroll view
-     */
-
-    public View getPageView(int position) {
-        switch(getTabForPosition(position)) {
-        case TAB_VIEW_UPDATES:
-            return editNotes;
-        }
-        return null;
-    }
-
-    private void setPagerHeightForPosition(int position) {
+    private void setPagerHeightForPosition() {
         int height = 0;
 
-        View view = null;
-        switch(getTabForPosition(position)) {
-        case TAB_VIEW_UPDATES:
-            view = editNotes;
-            break;
-        }
-
-        if (view == null || mPager == null) {
+        View view = editNotes;
+        if (mPager == null) {
             return;
         }
 
         int desiredWidth = MeasureSpec.makeMeasureSpec(view.getWidth(),
                 MeasureSpec.AT_MOST);
         view.measure(desiredWidth, MeasureSpec.UNSPECIFIED);
-        height = Math.max(view.getMeasuredHeight(), height);;
+        height = Math.max(view.getMeasuredHeight(), height);
         LayoutParams pagerParams = mPager.getLayoutParams();
         if (height > 0 && height != pagerParams.height) {
             pagerParams.height = height;
@@ -1283,51 +1070,26 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
         }
     }
 
-    public static void setViewHeightBasedOnChildren(LinearLayout view) {
-
-        int totalHeight = 0;
-        int desiredWidth = MeasureSpec.makeMeasureSpec(view.getWidth(),
-                MeasureSpec.AT_MOST);
-        for (int i = 0; i < view.getChildCount(); i++) {
-            View listItem = view.getChildAt(i);
-            listItem.measure(desiredWidth, MeasureSpec.UNSPECIFIED);
-            totalHeight += listItem.getMeasuredHeight();
-        }
-
-        ViewGroup.LayoutParams params = view.getLayoutParams();
-        if(params == null) {
-            return;
-        }
-
-        params.height = totalHeight;
-        view.setLayoutParams(params);
-        view.requestLayout();
-    }
-
     // Tab Page listener when page/tab changes
     @Override
     public void onPageScrolled(int position, float positionOffset,
             int positionOffsetPixels) {
-        return;
     }
 
     @Override
     public void onPageSelected(final int position) {
-        setPagerHeightForPosition(position);
-        NestableScrollView scrollView = (NestableScrollView)getView().findViewById(R.id.edit_scroll);
-        scrollView.setScrollabelViews(null);
+        setPagerHeightForPosition();
     }
 
     @Override
     public void onPageScrollStateChanged(int state) {
-        return;
     }
 
     // EditNoteActivity Listener when there are new updates/comments
     @Override
     public void updatesChanged()  {
         if (mPager != null && mPager.getCurrentItem() == TAB_VIEW_UPDATES) {
-            setPagerHeightForPosition(TAB_VIEW_UPDATES);
+            setPagerHeightForPosition();
         }
     }
 
@@ -1335,7 +1097,7 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
     @Override
     public void commentAdded() {
         setCurrentTab(TAB_VIEW_UPDATES);
-        setPagerHeightForPosition(TAB_VIEW_UPDATES);
+        setPagerHeightForPosition();
         scrollToView(editNotes);
     }
 
@@ -1355,5 +1117,11 @@ ViewPager.OnPageChangeListener, EditNoteActivity.UpdatesChangedListener {
             }
         }
         scrollView.smoothScrollTo(0, top);
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(title.getWindowToken(), 0);
     }
 }

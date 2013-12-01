@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.voice;
 
-import java.security.InvalidParameterException;
-import java.util.ArrayList;
-
-import junit.framework.Assert;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
@@ -21,12 +17,18 @@ import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.utility.Constants;
+
+import junit.framework.Assert;
+
+import org.tasks.R;
+
+import java.security.InvalidParameterException;
+import java.util.ArrayList;
 
 /**
  * This class handles taking voice-input and appends the text to the registered EditText-instance.
@@ -63,25 +65,9 @@ public class VoiceInputAssistant {
         this.languageModel = languageModel;
     }
 
-    /**
-     * @return the languageModel
-     */
-    public String getLanguageModel() {
-        return languageModel;
-    }
-
     /** Sets whether voice input will append into field */
-    public void setAppend(boolean append) {
-        this.append = append;
-    }
-
-    /**
-     * Creates a new VoiceInputAssistant-instance simply for checking the availability of the
-     * RecognizerService. This is used for Preferences-Screens that dont want to provide
-     * a microphone-button themselves.
-     */
-    public VoiceInputAssistant() {
-        this.voiceButton = null;
+    public void setAppend() {
+        this.append = true;
     }
 
     /**
@@ -98,9 +84,7 @@ public class VoiceInputAssistant {
      * Creates a new VoiceInputAssistance-instance for use with a specified button and textfield.
      * If you need more than one microphone-button on a given fragment, use the other constructor.
      *
-     * @param fragment the fragment which holds the microphone-buttone and the textField to insert recognized test
      * @param voiceButton the microphone-Button
-     * @param textField the textfield that should get the resulttext
      */
     public VoiceInputAssistant(ImageButton voiceButton) {
         Assert.assertNotNull("A VoiceInputAssistant without a voiceButton makes no sense!", voiceButton);
@@ -116,52 +100,11 @@ public class VoiceInputAssistant {
      * you can leave it to its default, VOICE_RECOGNITION_REQUEST_CODE.
      *
      *
-     * @param fragment
-     * @param voiceButton
-     * @param textField
      * @param requestCode has to be unique in a single fragment-context,
      *   dont use VOICE_RECOGNITION_REQUEST_CODE, this is reserved for the other constructor
      */
     public VoiceInputAssistant(ImageButton voiceButton, int requestCode) {
         this(voiceButton);
-        if (requestCode == VOICE_RECOGNITION_REQUEST_CODE) {
-            throw new InvalidParameterException("You have to specify a unique requestCode for this VoiceInputAssistant!");
-        }
-        this.requestCode = requestCode;
-    }
-
-    /**
-     * Creates a new VoiceInputAssistance-instance for use with a specified button and textfield.
-     * If you need more than one microphone-button on a given fragment, use the other constructor.
-     *
-     * @param activity the activity which holds the microphone-buttone and the textField to insert recognized test
-     * @param voiceButton the microphone-Button
-     * @param textField the textfield that should get the resulttext
-     */
-    public VoiceInputAssistant(Activity activity, ImageButton voiceButton) {
-        Assert.assertNotNull("Each VoiceInputAssistant must be bound to a activity!", activity);
-        Assert.assertNotNull("A VoiceInputAssistant without a voiceButton makes no sense!", voiceButton);
-        this.activity = activity;
-        this.voiceButton = voiceButton;
-    }
-
-    /**
-     * The param requestCode is used to differentiate between multiple
-     * microphone-buttons on a single fragment.
-     * Use the this constructor to specify your own requestCode in
-     * this case for every additional use on a activity.
-     * If you only use one microphone-button on a activity,
-     * you can leave it to its default, VOICE_RECOGNITION_REQUEST_CODE.
-     *
-     *
-     * @param activity
-     * @param voiceButton
-     * @param textField
-     * @param requestCode has to be unique in a single fragment-context,
-     *   dont use VOICE_RECOGNITION_REQUEST_CODE, this is reserved for the other constructor
-     */
-    public VoiceInputAssistant(Activity activity, ImageButton voiceButton, int requestCode) {
-        this(activity, voiceButton);
         if (requestCode == VOICE_RECOGNITION_REQUEST_CODE) {
             throw new InvalidParameterException("You have to specify a unique requestCode for this VoiceInputAssistant!");
         }
@@ -200,9 +143,6 @@ public class VoiceInputAssistant {
      * these other requests as you need.
      *
      * @param activityRequestCode if this equals the requestCode specified by constructor, then results of voice-recognition
-     * @param resultCode
-     * @param data
-     * @return
      */
     public boolean handleActivityResult(int activityRequestCode, int resultCode, Intent data, EditText textField) {
         boolean result = false;
@@ -232,34 +172,6 @@ public class VoiceInputAssistant {
         }
 
         return result;
-    }
-
-    /**
-     * Can also be called from Fragment.onActivityResult to simply get the string result
-     * of the speech to text, or null if it couldn't be processed. Convenient when you
-     * don't have a bunch of UI elements to hook into.
-     * @param activityRequestCode
-     * @param resultCode
-     * @param data
-     * @return
-     */
-    public String getActivityResult(int activityRequestCode, int resultCode, Intent data) {
-        if (activityRequestCode == this.requestCode) {
-            if (resultCode == Activity.RESULT_OK) {
-                // Fill the quickAddBox-view with the string the recognizer thought it could have heard
-                ArrayList<String> match = data.getStringArrayListExtra(
-                        RecognizerIntent.EXTRA_RESULTS);
-                // make sure we only do this if there is SomeThing (tm) returned
-                if (match != null && match.size() > 0 && match.get(0).length() > 0) {
-                    String recognizedSpeech = match.get(0);
-                    recognizedSpeech = recognizedSpeech.substring(0, 1).toUpperCase() +
-                        recognizedSpeech.substring(1).toLowerCase();
-                    return recognizedSpeech;
-                }
-            }
-        }
-
-        return null;
     }
 
     public void configureMicrophoneButton(final Fragment fragment, final int prompt) {

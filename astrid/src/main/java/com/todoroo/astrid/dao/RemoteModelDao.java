@@ -5,7 +5,6 @@ import com.todoroo.andlib.data.DatabaseDao;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.sql.Query;
-import com.todoroo.astrid.core.PluginServices;
 import com.todoroo.astrid.data.RemoteModel;
 import com.todoroo.astrid.helper.UUIDHelper;
 
@@ -32,44 +31,8 @@ public class RemoteModelDao<RTYPE extends RemoteModel> extends DatabaseDao<RTYPE
         return super.createNew(item);
     }
 
-    private static int outstandingEntryFlag = -1;
-
-    public static final int OUTSTANDING_FLAG_UNINITIALIZED = -1;
-    public static final int OUTSTANDING_ENTRY_FLAG_RECORD_OUTSTANDING = 1 << 0;
-    public static final int OUTSTANDING_ENTRY_FLAG_ENQUEUE_MESSAGES = 1 << 1;
-
-    public static void setOutstandingEntryFlags(int newValue) {
-        synchronized (RemoteModelDao.class) {
-            outstandingEntryFlag = newValue;
-        }
-    }
-
-    public static boolean getOutstandingEntryFlag(int flag) {
-        if (outstandingEntryFlag == -1) {
-            synchronized (RemoteModelDao.class) {
-                int newValue = 0;
-                if (PluginServices.getActFmPreferenceService().isLoggedIn()) {
-                    newValue = OUTSTANDING_ENTRY_FLAG_ENQUEUE_MESSAGES | OUTSTANDING_ENTRY_FLAG_RECORD_OUTSTANDING;
-                } else if (PluginServices.getActFmPreferenceService().wasLoggedIn()) {
-                    newValue = OUTSTANDING_ENTRY_FLAG_RECORD_OUTSTANDING;
-                }
-                outstandingEntryFlag = newValue;
-            }
-        }
-
-        return (outstandingEntryFlag & flag) > 0;
-    }
-
-    @Override
-    protected boolean shouldRecordOutstanding(RTYPE item) {
-        return super.shouldRecordOutstanding(item) && getOutstandingEntryFlag(OUTSTANDING_ENTRY_FLAG_RECORD_OUTSTANDING);
-    }
-
     /**
      * Fetch a model object by UUID
-     * @param uuid
-     * @param properties
-     * @return
      */
     public RTYPE fetch(String uuid, Property<?>... properties) {
         TodorooCursor<RTYPE> cursor = fetchItem(uuid, properties);
@@ -79,38 +42,14 @@ public class RemoteModelDao<RTYPE extends RemoteModel> extends DatabaseDao<RTYPE
     /**
      * Returns cursor to object corresponding to the given identifier
      *
-     * @param database
-     * @param table
-     *            name of table
      * @param properties
      *            properties to read
-     * @param id
-     *            id of item
-     * @return
      */
     protected TodorooCursor<RTYPE> fetchItem(String uuid, Property<?>... properties) {
         TodorooCursor<RTYPE> cursor = query(
                 Query.select(properties).where(RemoteModel.UUID_PROPERTY.eq(uuid)));
         cursor.moveToFirst();
-        return new TodorooCursor<RTYPE>(cursor, properties);
-    }
-
-    /**
-     * Get the local id
-     * @param uuid
-     * @return
-     */
-    public long localIdFromUuid(String uuid) {
-        TodorooCursor<RTYPE> cursor = query(Query.select(AbstractModel.ID_PROPERTY).where(RemoteModel.UUID_PROPERTY.eq(uuid)));
-        try {
-            if (cursor.getCount() == 0) {
-                return AbstractModel.NO_ID;
-            }
-            cursor.moveToFirst();
-            return cursor.get(AbstractModel.ID_PROPERTY);
-        } finally {
-            cursor.close();
-        }
+        return new TodorooCursor<>(cursor, properties);
     }
 
     public String uuidFromLocalId(long localId) {

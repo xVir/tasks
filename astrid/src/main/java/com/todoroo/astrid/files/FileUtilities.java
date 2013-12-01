@@ -5,18 +5,19 @@
  */
 package com.todoroo.astrid.files;
 
+import android.content.Context;
+import android.text.TextUtils;
+
+import com.todoroo.andlib.utility.DateUtilities;
+import com.todoroo.andlib.utility.Preferences;
+import com.todoroo.astrid.data.TaskAttachment;
+
+import org.tasks.R;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicReference;
-
-import android.content.Context;
-import android.text.TextUtils;
-
-import org.tasks.R;
-import com.todoroo.andlib.utility.DateUtilities;
-import com.todoroo.andlib.utility.Preferences;
-import com.todoroo.astrid.data.TaskAttachment;
 
 public class FileUtilities {
 
@@ -24,7 +25,7 @@ public class FileUtilities {
      * @return Date string for use with file attachment names
      */
     public static String getDateStringForFilename(Context context, Date date) {
-        return DateUtilities.getDateStringHideYear(context, date) + ", " + getTimeStringForFilename(context, date); //$NON-NLS-1$
+        return DateUtilities.getDateStringHideYear(date) + ", " + getTimeStringForFilename(context, date); //$NON-NLS-1$
     }
 
     private static String getTimeStringForFilename(Context context, Date date) {
@@ -47,24 +48,16 @@ public class FileUtilities {
     }
 
     private static String getNewAttachmentPath(Context context, int prefixId, String extension, AtomicReference<String> nameReference) {
-        StringBuilder fileNameBuilder = new StringBuilder();
-        fileNameBuilder.append(context.getString(prefixId))
-                .append(" ") //$NON-NLS-1$
-                .append(getDateStringForFilename(context, new Date()));
 
         String dir = getAttachmentsDirectory(context).getAbsolutePath();
 
-        String name = getNonCollidingFileName(dir, fileNameBuilder.toString(), extension);
+        String name = getNonCollidingFileName(dir, context.getString(prefixId) + " " + getDateStringForFilename(context, new Date()), extension);
 
-        StringBuilder filePathBuilder = new StringBuilder();
-        filePathBuilder.append(dir)
-                .append(File.separator)
-                .append(name);
         if (nameReference != null) {
             nameReference.set(name);
         }
 
-        return filePathBuilder.toString();
+        return dir + File.separator + name;
     }
 
     public static File getAttachmentsDirectory(Context context) {

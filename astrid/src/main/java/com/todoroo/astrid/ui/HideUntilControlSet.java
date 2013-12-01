@@ -5,8 +5,6 @@
  */
 package com.todoroo.astrid.ui;
 
-import java.util.Date;
-
 import android.app.Activity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -18,12 +16,14 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.DateUtilities;
-import com.todoroo.andlib.utility.Preferences;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.ui.DateAndTimeDialog.DateAndTimeDialogListener;
+
+import org.tasks.R;
+
+import java.util.Date;
 
 /**
  * Control set for specifying when a task should be hidden
@@ -93,12 +93,10 @@ public class HideUntilControlSet extends PopupControlSet implements OnItemSelect
 
         if(specificDate > 0) {
             HideUntilValue[] updated = new HideUntilValue[values.length + 1];
-            for(int i = 0; i < values.length; i++) {
-                updated[i + 1] = values[i];
-            }
+            System.arraycopy(values, 0, updated, 1, values.length);
             Date hideUntilAsDate = new Date(specificDate);
             if(hideUntilAsDate.getHours() == 0 && hideUntilAsDate.getMinutes() == 0 && hideUntilAsDate.getSeconds() == 0) {
-                updated[0] = new HideUntilValue(DateUtilities.getDateString(activity, new Date(specificDate)),
+                updated[0] = new HideUntilValue(DateUtilities.getDateString(new Date(specificDate)),
                         Task.HIDE_UNTIL_SPECIFIC_DAY, specificDate);
                 existingDate = specificDate;
             } else {
@@ -164,7 +162,7 @@ public class HideUntilControlSet extends PopupControlSet implements OnItemSelect
 
     private void customDateFinished() {
         HideUntilValue[] list = createHideUntilList(customDate.getTime());
-        adapter = new ArrayAdapter<HideUntilValue>(
+        adapter = new ArrayAdapter<>(
                 activity, android.R.layout.simple_spinner_item,
                 list);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -174,16 +172,6 @@ public class HideUntilControlSet extends PopupControlSet implements OnItemSelect
     }
 
     // --- setting up values
-
-    public void setDefaults() {
-        int setting = Preferences.getIntegerFromString(R.string.p_default_hideUntil_key,
-                Task.HIDE_UNTIL_NONE);
-        selection = setting;
-        if (spinner != null) {
-            spinner.setSelection(selection);
-        }
-        refreshDisplayView();
-    }
 
     @Override
     protected OnClickListener getDisplayClickListener() {
@@ -258,7 +246,7 @@ public class HideUntilControlSet extends PopupControlSet implements OnItemSelect
         }
 
         HideUntilValue[] list = createHideUntilList(date);
-        adapter = new ArrayAdapter<HideUntilValue>(
+        adapter = new ArrayAdapter<>(
                 activity, android.R.layout.simple_spinner_item, list);
 
         super.readFromTask(task);
@@ -274,21 +262,16 @@ public class HideUntilControlSet extends PopupControlSet implements OnItemSelect
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         if(adapter == null || spinner == null) {
-            return null;
+            return;
         }
         HideUntilValue item = adapter.getItem(spinner.getSelectedItemPosition());
         if(item == null) {
-            return null;
+            return;
         }
         long value = task.createHideUntil(item.setting, item.date);
         task.setValue(Task.HIDE_UNTIL, value);
-
-        if (value != 0) {
-            return activity.getString(R.string.TEA_hideUntil_message, DateAndTimePicker.getDisplayString(activity, value, false, false, false));
-        }
-        return null;
     }
 
 }

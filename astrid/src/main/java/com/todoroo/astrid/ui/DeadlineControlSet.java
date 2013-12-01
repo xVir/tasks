@@ -18,12 +18,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.repeats.RepeatControlSet;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
 
 public class DeadlineControlSet extends PopupControlSet {
 
@@ -116,14 +117,13 @@ public class DeadlineControlSet extends PopupControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         long dueDate = dateAndTimePicker.constructDueDate();
         if (dueDate != task.getValue(Task.DUE_DATE)) // Clear snooze if due date has changed
         {
             task.setValue(Task.REMINDER_SNOOZE, 0L);
         }
         task.setValue(Task.DUE_DATE, dueDate);
-        return null;
     }
 
     private void initializeWithDate(long dueDate) {
@@ -138,7 +138,7 @@ public class DeadlineControlSet extends PopupControlSet {
      * Set whether date and time should be separated by a newline or a comma
      * in the display view
      */
-    public void setIsQuickadd(boolean isQuickadd) {
-        this.isQuickadd = isQuickadd;
+    public void setIsQuickadd() {
+        this.isQuickadd = true;
     }
 }

@@ -5,13 +5,9 @@
  */
 package com.todoroo.astrid.dao;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
 import android.content.ContentValues;
 import android.database.Cursor;
 
-import com.todoroo.andlib.data.AbstractModel;
 import com.todoroo.andlib.data.DatabaseDao;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.TodorooCursor;
@@ -22,19 +18,14 @@ import com.todoroo.andlib.sql.Join;
 import com.todoroo.andlib.sql.Query;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
-import com.todoroo.astrid.actfm.sync.ActFmSyncThread;
-import com.todoroo.astrid.actfm.sync.messages.ChangesHappened;
-import com.todoroo.astrid.actfm.sync.messages.NameMaps;
-import com.todoroo.astrid.core.PluginServices;
 import com.todoroo.astrid.data.Metadata;
-import com.todoroo.astrid.data.OutstandingEntry;
-import com.todoroo.astrid.data.RemoteModel;
 import com.todoroo.astrid.data.Task;
-import com.todoroo.astrid.data.TaskOutstanding;
 import com.todoroo.astrid.provider.Astrid2TaskProvider;
-import com.todoroo.astrid.service.StatisticsConstants;
 import com.todoroo.astrid.tags.TaskToTagMetadata;
 import com.todoroo.astrid.utility.AstridPreferences;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Data Access layer for {@link Metadata}-related operations.
@@ -77,43 +68,6 @@ public class MetadataDao extends DatabaseDao<Metadata> {
 
     }
 
-    @Override
-    protected boolean shouldRecordOutstanding(Metadata item) {
-        ContentValues cv = item.getSetValues();
-        return super.shouldRecordOutstanding(item) && cv != null &&
-                ((cv.containsKey(Metadata.KEY.name) &&
-                        TaskToTagMetadata.KEY.equals(item.getValue(Metadata.KEY))) ||
-                (cv.containsKey(Metadata.DELETION_DATE.name) &&
-                        item.getValue(Metadata.DELETION_DATE) > 0)) &&
-                RemoteModelDao.getOutstandingEntryFlag(RemoteModelDao.OUTSTANDING_ENTRY_FLAG_RECORD_OUTSTANDING);
-    }
-
-    @Override
-    protected int createOutstandingEntries(long modelId, ContentValues modelSetValues) {
-        Long taskId = modelSetValues.getAsLong(Metadata.TASK.name);
-        String tagUuid = modelSetValues.getAsString(TaskToTagMetadata.TAG_UUID.name);
-        Long deletionDate = modelSetValues.getAsLong(Metadata.DELETION_DATE.name);
-        if (taskId == null || taskId == AbstractModel.NO_ID || RemoteModel.isUuidEmpty(tagUuid)) {
-            return -1;
-        }
-
-        TaskOutstanding to = new TaskOutstanding();
-        to.setValue(OutstandingEntry.ENTITY_ID_PROPERTY, taskId);
-        to.setValue(OutstandingEntry.CREATED_AT_PROPERTY, DateUtilities.now());
-
-        String addedOrRemoved = NameMaps.TAG_ADDED_COLUMN;
-        if (deletionDate != null && deletionDate > 0) {
-            addedOrRemoved = NameMaps.TAG_REMOVED_COLUMN;
-        }
-
-        to.setValue(OutstandingEntry.COLUMN_STRING_PROPERTY, addedOrRemoved);
-        to.setValue(OutstandingEntry.VALUE_STRING_PROPERTY, tagUuid);
-        database.insert(outstandingTable.name, null, to.getSetValues());
-        ActFmSyncThread.getInstance().enqueueMessage(new ChangesHappened<Task, TaskOutstanding>(taskId, Task.class,
-                PluginServices.getTaskDao(), PluginServices.getTaskOutstandingDao()), null);
-        return 1;
-    }
-
     /**
      * Synchronize metadata for given task id. Deletes rows in database that
      * are not identical to those in the metadata list, creates rows that
@@ -125,7 +79,7 @@ public class MetadataDao extends DatabaseDao<Metadata> {
      */
     public void synchronizeMetadata(long taskId, ArrayList<Metadata> metadata,
             Criterion metadataCriteria) {
-        HashSet<ContentValues> newMetadataValues = new HashSet<ContentValues>();
+        HashSet<ContentValues> newMetadataValues = new HashSet<>();
         for(Metadata metadatum : metadata) {
             metadatum.setValue(Metadata.TASK, taskId);
             metadatum.clearValue(Metadata.ID);
@@ -183,26 +137,12 @@ public class MetadataDao extends DatabaseDao<Metadata> {
 
     /**
      * Fetch all metadata that are unattached to the task
-     * @param database
-     * @param properties
-     * @return
      */
     public TodorooCursor<Metadata> fetchDangling(Property<?>... properties) {
         Query sql = Query.select(properties).from(Metadata.TABLE).join(Join.left(Task.TABLE,
                 Metadata.TASK.eq(Task.ID))).where(Task.TITLE.isNull());
-        Cursor cursor = database.rawQuery(sql.toString(), null);
-        return new TodorooCursor<Metadata>(cursor, properties);
+        Cursor cursor = database.rawQuery(sql.toString());
+        return new TodorooCursor<>(cursor, properties);
     }
-
-    public boolean taskIsInTag(String taskUuid, String tagUuid) {
-        TodorooCursor<Metadata> cursor = query(Query.select(Metadata.ID).where(Criterion.and(MetadataCriteria.withKey(TaskToTagMetadata.KEY),
-                TaskToTagMetadata.TASK_UUID.eq(taskUuid), TaskToTagMetadata.TAG_UUID.eq(tagUuid), Metadata.DELETION_DATE.eq(0))));
-        try {
-            return cursor.getCount() > 0;
-        } finally {
-            cursor.close();
-        }
-    }
-
 }
 

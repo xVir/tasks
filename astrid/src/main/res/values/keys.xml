@@ -3,8 +3,10 @@
   This file contains preference keys and preference list values.
   These should not be translated 
 -->
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
- 
+<resources>
+
+    <string name="gapi_key">AIzaSyBXGYNWNQcfse4JS5gI9teTSKMzinWzL2M</string>
+
   <!-- ======================================================== REMINDERS == -->
 
   <!-- whether reminders should appear at all -->
@@ -31,14 +33,8 @@
   <!-- ringtone to use for notifications -->
   <string name="p_rmd_ringtone">notification_ringtone</string>
   
-  <!-- if tts is used for notifications -->
-  <string name="p_rmd_voice">notification_voice</string>
-  
   <!-- icon theme for notifications -->
   <string name="p_rmd_icon">notif_theme</string>
-  
-  <!-- whether astrid nag messages are used -->
-  <string name="p_rmd_nagging">nagging</string>
   
   <!-- if true / unset, hh:mm dialog. otherwise, days / hours -->
   <string name="p_rmd_snooze_dialog">snooze_dialog</string>
@@ -70,15 +66,9 @@
 
   <!-- show comments in task edit -->
   <string name="p_show_task_edit_comments">p_show_task_edit_comments</string>
-  
+
   <!-- show save and cancel buttons in task edit -->
   <string name="p_save_and_cancel">p_save_and_cancel</string>
-  
-  <!-- menu items to show -->
-  <string name="p_menu_items">p_menu_items</string>
-  <string name="p_show_menu_search">p_show_menu_search</string>
-  <string name="p_show_menu_sync">p_show_menu_sync</string>
-  <string name="p_show_menu_sort">p_show_menu_sort</string>
   
   <string-array name="TEA_reminder_random_hours">
     <!-- values (in hours) associated with items above. -->
@@ -89,14 +79,7 @@
     <item>730</item>
     <item>1460</item>
   </string-array>
-  
-  <string-array name="notif_icon_values">
-    <!-- Corresponding to the constants in Preferences.java (do not edit) -->
-    <item>0</item>
-    <item>1</item>
-    <item>2</item>
-  </string-array>
-  
+
   <string-array name="EPr_reminder_random_hours">
     <!-- values (in hours) associated with random reminders above. -->
     <item>0</item>
@@ -196,7 +179,6 @@
   <!-- ======================================================= APPEARANCE == -->
 
   <string name="p_fontSize">font_size</string>
-  <string name="p_taskRowStyle">p_taskRowStyle</string> <!-- DEPRECATED -->
   <string name="p_taskRowStyle_v2">p_taskRowStyle_v2</string>
   <string-array name="EPr_task_row_style_values">
       <item>0</item>
@@ -205,37 +187,12 @@
   </string-array>
   <string name="p_showNotes">notesVisible</string>
   <string name="p_beastMode">beastMode</string>
-  <string name="p_transparent_deprecated">transparent</string>
-  <string name="p_theme">theme</string>
-  <string name="p_theme_widget">theme_widget</string>
-  
+
   <string name="p_voicePrefSection">voicePrefSection</string>
   <string name="p_voiceInputEnabled">voiceInputEnabled</string>
   <string name="p_voiceInputCreatesTask">voiceInputCreatesTask</string>
   <string name="p_voiceRemindersEnabled">voiceRemindersEnabled</string>
-  
-  <string-array name="EPr_theme_settings">
-    <!-- theme_settings: options for preference menu -->
-    <item>white</item>
-    <item>white-red</item>
-    <item>white-alt</item>
-    <item>black</item>
-    <item>transparent</item>
-    <item>transparent-white</item>
-  </string-array>
-    
-  <string-array name="EPr_theme_widget_settings">
-    <!-- theme_settings: options for preference menu -->
-    <item>same-as-app</item>
-    <item>white</item>
-    <item>white-red</item>
-    <item>white-alt</item>
-    <item>black</item>
-    <item>transparent</item>
-    <item>transparent-white</item>
-    <item>legacy-widget</item>
-  </string-array>
-  
+
   <string-array name="EPr_font_size">
     <!-- font_size: options for preference menu -->
     <item>10</item>
@@ -269,12 +226,7 @@
   <string name="p_hide_plus_button">p_hide_plus_button</string>
   
   <string name="p_show_timer_shortcut">p_show_timer_shortcut</string>
-  
-  <!-- Configurations -->
-  <string name="p_configurations">p_configurations</string>
-  <string name="p_config_default">p_config_default</string>
-  <string name="p_config_lite">p_config_lite</string>
-  
+
   <!-- ========================================================= DEFAULTS == -->
   
   <!-- default urgency setting (corresponds to entry in TEA_urgency) -->  
@@ -329,24 +281,13 @@
   
   <!-- default reminders setting (corresponds to reminder flags) -->
   <string name="p_default_reminders_key">p_def_reminders</string>
-  
-  <!-- default Add To Calendar setting (corresponds to entry in gcal_TEA_addToCalendar) -->
-  <string name="p_default_addtocalendar_key">p_def_addtocalendar</string>
-  
+
   <!-- default reminder mode setting (corresponds to entry in TEA_reminder_mode_once, TEA_reminder_mode_five, TEA_reminder_mode_nonstop) -->
   <string name="p_default_reminders_mode_key">rmd_default_reminder_mode</string>
-  
-  <!-- swipe between lists performance mode setting (DEPRECATED)-->
-  <string name="p_swipe_lists_performance_key">p_swipe_lists_perf</string>
 
-  <string name="p_swipe_lists_enabled">p_swipe_lists_enabled</string>
-  
   <!-- on calendar end at dealline if true, start at deadline if false -->
   <string name="p_end_at_deadline">p_end_at_deadline</string>
   
-  <!-- whether custom filters are enabled -->
-  <string name="p_use_filters">p_use_filters</string>
-
   <string-array name="EPr_default_addtocalendar_values">
     <!-- addtocalendar: labels that map EPr_default_addtocalendar items to calendar selection in settings. -->
     <item>-1</item>
@@ -371,27 +312,16 @@
       <!-- Preference Key (do not translate) -->
     <string name="sync_SPr_status_key">sync_status</string>
     <!-- Preference Key (do not translate) -->
-    <string name="sync_SPr_bgwifi_key">sync_bgwifi</string>
-    <!-- Preference Key (do not translate) -->
-    <string name="sync_SPr_sync_key">sync_sync</string>
-    <!-- Preference Key (do not translate) -->
     <string name="sync_SPr_forget_key">sync_forget</string>
     <!-- Preference Key (do not translate) -->
     <string name="sync_SPr_key_options">sync_options</string>
     <!-- Preference Key (do not translate) -->
     <string name="sync_SPr_key_last_error">sync_last_error</string>
     
-  <!-- ===========================================================ACTFM == -->
-  <string name="actfm_https_key">actfmHttps</string>
-    
   <!-- =========================================================== GTASKS == -->
   
     <string name="gtasks_GPr_interval_key">gtasks_sync_freq</string>
     
-  <!-- ========================================================== SHARING == -->
-  
-    <string name="actfm_APr_interval_key">actfm_sync_freq</string>
-
   <!-- ============================================================ OTHER == -->
   
     <!-- Preference Key (do not translate) -->
@@ -404,9 +334,6 @@
 
     <string name="p_sync_with_dropbox">p_sync_with_dropbox</string>
 
-  <!-- placeholder string for info about translators (i.e. YOU!) -->
-  <string name="about_translators"></string>
-  
   <string-array name="TEA_control_sets_beast">
       <item >@string/TEA_control_when</item>
       <item >@string/TEA_control_importance</item>
@@ -428,7 +355,10 @@
   <string name="TEA_ctrl_hide_section_pref">TEA_ctrl_hide_section_pref</string>
   <string name="TEA_ctrl_reminders_pref">TEA_ctrl_reminders_pref</string>
   <string name="TEA_ctrl_timer_pref">TEA_ctrl_timer_pref</string>
-  <string name="TEA_ctrl_share_pref">TEA_ctrl_share_pref</string> <!-- Deprecated -->
+  <string name="TEA_ctrl_share_pref">TEA_ctrl_share_pref</string>
+    <string name="p_use_dark_theme">use_dark_theme</string>
+    <string name="p_use_dark_theme_widget">use_dark_theme_widget</string>
+    <!-- Deprecated -->
       
   <string-array name="TEA_control_sets_prefs">
       <item>@string/TEA_ctrl_when_pref</item>

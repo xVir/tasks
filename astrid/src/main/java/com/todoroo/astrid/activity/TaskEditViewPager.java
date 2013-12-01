@@ -20,28 +20,15 @@ public class TaskEditViewPager extends PagerAdapter {
     private final String[] titles;
     public TaskEditFragment parent;
 
-    public static final int TAB_SHOW_ACTIVITY = 1 << 0;
+    public static final int TAB_SHOW_ACTIVITY = 1;
 
     public TaskEditViewPager(Context context, int tabStyleMask) {
-        ArrayList<String> titleList = new ArrayList<String>();
+        ArrayList<String> titleList = new ArrayList<>();
         if ((tabStyleMask & TAB_SHOW_ACTIVITY) > 0) {
             titleList.add(context.getString(R.string.TEA_tab_activity));
         }
 
         titles = titleList.toArray(new String[titleList.size()]);
-    }
-
-    public static int getPageForPosition(int position, int tabStyle) {
-        int numOnesEncountered = 0;
-        for (int i = 0; i <= 2; i++) {
-            if ((tabStyle & (1 << i)) > 0) {
-                numOnesEncountered++;
-            }
-            if (numOnesEncountered == position + 1) {
-                return 1 << i;
-            }
-        }
-        return -1;
     }
 
     @Override
@@ -51,7 +38,7 @@ public class TaskEditViewPager extends PagerAdapter {
 
     @Override
     public Object instantiateItem(View pager, int position) {
-        View pageView = parent.getPageView(position);
+        View pageView = parent.getPageView();
 
         ((ViewPager) pager).addView(pageView, 0);
         return pageView;

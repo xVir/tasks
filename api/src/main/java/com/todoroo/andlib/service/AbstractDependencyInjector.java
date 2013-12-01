@@ -5,11 +5,11 @@
  */
 package com.todoroo.andlib.service;
 
+import com.todoroo.andlib.service.ExceptionService.ErrorReporter;
+
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.HashMap;
-
-import com.todoroo.andlib.service.ExceptionService.ErrorReporter;
 
 /**
  * A Dependency Injector knows how to inject certain dependencies based
@@ -42,25 +42,23 @@ abstract public class AbstractDependencyInjector {
     /**
      * Dependencies this class knows how to handle
      */
-    protected final HashMap<String, Object> injectables = new HashMap<String, Object>();
+    protected final HashMap<String, Object> injectables = new HashMap<>();
 
     /**
      * Cache of classes that were instantiated by the injector
      */
     protected final HashMap<Class<?>, WeakReference<Object>> createdObjects =
-        new HashMap<Class<?>, WeakReference<Object>>();
+        new HashMap<>();
 
     /**
      * Gets the injected object for this field. If implementing class does not
      * know how to handle this dependency, it should return null
      *
-     * @param object
-     *            object to perform dependency injection on
      * @param field
      *            field tagged with {link Autowired} annotation
      * @return object to assign to this field, or null
      */
-    public Object getInjection(Object object, Field field) {
+    public Object getInjection(Field field) {
         if(injectables.containsKey(field.getName())) {
             Object injection = injectables.get(field.getName());
 
@@ -73,14 +71,11 @@ abstract public class AbstractDependencyInjector {
                     Class<?> cls = (Class<?>)injection;
                     try {
                         injection = cls.newInstance();
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InstantiationException e) {
+                    } catch (IllegalAccessException | InstantiationException e) {
                         throw new RuntimeException(e);
                     }
 
-                    createdObjects.put(cls,
-                            new WeakReference<Object>(injection));
+                    createdObjects.put(cls, new WeakReference<>(injection));
                 }
             }
 

@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 
-** Copyright (c) 2012 Todoroo Inc
-**
-** See the file "LICENSE" for the full license governing this code. 
--->
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<resources>
 
   <!-- Resources for built-in repeat plug-in -->
 
@@ -38,7 +33,6 @@
     <item>yr</item>
   </string-array>
   
-  
   <string-array name="repeat_interval">
     <!-- slide 20e: repeat interval (days,weeks,months,hours,minutes,years) -->
     <item>Day(s)</item>
@@ -48,15 +42,7 @@
     <item>Minute(s)</item>
     <item>Year(s)</item>
   </string-array>
-  
-  <string name="repeat_days">days</string>
-  <string name="repeat_weekdays">weekdays</string>
-  <string name="repeat_weeks">weeks</string>
-  <string name="repeat_months">months</string>
-  <string name="repeat_years">years</string>
-  <string name="repeat_hours">hours</string>
-  <string name="repeat_minutes">minutes</string>
-  
+
   <string-array name="repeat_until_shortcuts">
       <item>Forever</item>
       <item>Specific Day</item>
@@ -111,20 +97,5 @@
   
   <!-- text for when a repeating task was rescheduled for the last time (%1$s -> repeat end date, %2$s -> encouragement string)-->
   <string name="repeat_rescheduling_dialog_bubble_last_time">You had this repeating until %1$s, and now you\'re all done. %2$s</string>
-  
-  <string-array name="repeat_encouragement">
-      <!-- Encouragement in rescheduling dialog bubble -->
-      <item>Good job!</item>
-      <item>Wow… I\'m so proud of you!</item>
-      <item>I love when you\'re productive!</item>
-      <item>Doesn\'t it feel good to check something off?</item>
-  </string-array>
 
-  <string-array name="repeat_encouragement_last_time">
-      <!-- Encouragement in rescheduling dialog bubble -->
-      <item>Good job!</item>
-      <item>I\'m so proud of you!</item>
-      <item>I love when you\'re productive!</item>
-  </string-array>
-  
 </resources>

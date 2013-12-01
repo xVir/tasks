@@ -5,10 +5,6 @@
  */
 package com.todoroo.astrid.tags;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-
 import android.app.Activity;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -27,7 +23,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.AbstractModel;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.DependencyInjectionService;
@@ -38,6 +33,12 @@ import com.todoroo.astrid.service.ThemeService;
 import com.todoroo.astrid.tags.TagService.Tag;
 import com.todoroo.astrid.ui.PopupControlSet;
 import com.todoroo.astrid.utility.Flags;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 
 /**
  * Control set to manage adding and removing tags
@@ -76,7 +77,7 @@ public final class TagsControlSet extends PopupControlSet {
     }
 
     private HashMap<String, Integer> buildTagIndices(ArrayList<String> tagNames) {
-        HashMap<String, Integer> indices = new HashMap<String, Integer>();
+        HashMap<String, Integer> indices = new HashMap<>();
         for (int i = 0; i < tagNames.size(); i++) {
             indices.put(tagNames.get(i), i);
         }
@@ -84,9 +85,9 @@ public final class TagsControlSet extends PopupControlSet {
     }
 
     private ArrayList<String> getTagNames(Tag[] tags) {
-        ArrayList<String> names = new ArrayList<String>();
-        for (int i = 0; i < tags.length; i++) {
-            names.add(tags[i].toString());
+        ArrayList<String> names = new ArrayList<>();
+        for (Tag tag : tags) {
+            names.add(tag.toString());
         }
         return names;
     }
@@ -118,7 +119,7 @@ public final class TagsControlSet extends PopupControlSet {
     }
 
     private LinkedHashSet<String> getTagSet() {
-        LinkedHashSet<String> tags = new LinkedHashSet<String>();
+        LinkedHashSet<String> tags = new LinkedHashSet<>();
         if (initialized) {
             for(int i = 0; i < selectedTags.getAdapter().getCount(); i++) {
                 if (selectedTags.isItemChecked(i)) {
@@ -143,26 +144,22 @@ public final class TagsControlSet extends PopupControlSet {
     }
 
     /** Adds a tag to the tag field */
-    boolean addTag(String tagName, boolean reuse) {
+    void addTag(String tagName) {
         LayoutInflater inflater = activity.getLayoutInflater();
 
         // check if already exists
-        TextView lastText = null;
+        TextView lastText;
         for(int i = 0; i < newTags.getChildCount(); i++) {
             View view = newTags.getChildAt(i);
             lastText = (TextView) view.findViewById(R.id.text1);
             if(lastText.getText().equals(tagName)) {
-                return false;
+                return;
             }
         }
 
         final View tagItem;
-        if(reuse && lastText != null && lastText.getText().length() == 0) {
-            tagItem = (View) lastText.getParent();
-        } else {
-            tagItem = inflater.inflate(R.layout.tag_edit_row, null);
-            newTags.addView(tagItem);
-        }
+        tagItem = inflater.inflate(R.layout.tag_edit_row, null);
+        newTags.addView(tagItem);
         if(tagName == null) {
             tagName = ""; //$NON-NLS-1$
         }
@@ -186,7 +183,7 @@ public final class TagsControlSet extends PopupControlSet {
                     int count) {
                 if(count > 0 && newTags.getChildAt(newTags.getChildCount()-1) ==
                         tagItem) {
-                    addTag("", false); //$NON-NLS-1$
+                    addTag(""); //$NON-NLS-1$
                 }
             }
         });
@@ -198,7 +195,7 @@ public final class TagsControlSet extends PopupControlSet {
                     return false;
                 }
                 if(getLastTextView().getText().length() != 0) {
-                    addTag("", false); //$NON-NLS-1$
+                    addTag(""); //$NON-NLS-1$
                 }
                 return true;
             }
@@ -221,21 +218,17 @@ public final class TagsControlSet extends PopupControlSet {
                 }
             }
         });
-
-        return true;
     }
 
     /**
      * Get tags container last text view. might be null
-     * @return
      */
     private TextView getLastTextView() {
         if(newTags.getChildCount() == 0) {
             return null;
         }
         View lastItem = newTags.getChildAt(newTags.getChildCount()-1);
-        TextView lastText = (TextView) lastItem.findViewById(R.id.text1);
-        return lastText;
+        return (TextView) lastItem.findViewById(R.id.text1);
     }
 
     @Override
@@ -243,7 +236,7 @@ public final class TagsControlSet extends PopupControlSet {
         super.readFromTask(task);
         if(model.getId() != AbstractModel.NO_ID) {
             TodorooCursor<Metadata> cursor = tagService.getTags(model.getId());
-            LinkedHashSet<String> tags = new LinkedHashSet<String>(cursor.getCount());
+            LinkedHashSet<String> tags = new LinkedHashSet<>(cursor.getCount());
             try {
                 for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                     String tag = cursor.get(TaskToTagMetadata.TAG_NAME);
@@ -267,7 +260,7 @@ public final class TagsControlSet extends PopupControlSet {
         if(model.getId() != AbstractModel.NO_ID) {
             selectTagsFromModel();
         }
-        addTag("", false); //$NON-NLS-1$
+        addTag(""); //$NON-NLS-1$
         refreshDisplayView();
         populated = true;
     }
@@ -294,7 +287,7 @@ public final class TagsControlSet extends PopupControlSet {
         tagIndices = buildTagIndices(allTagNames);
 
         selectedTags = (ListView) getView().findViewById(R.id.existingTags);
-        selectedTags.setAdapter(new ArrayAdapter<String>(activity,
+        selectedTags.setAdapter(new ArrayAdapter<>(activity,
                 R.layout.simple_list_item_multiple_choice_themed, allTagNames));
         selectedTags.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
@@ -302,20 +295,17 @@ public final class TagsControlSet extends PopupControlSet {
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         // this is a case where we're asked to save but the UI was not yet populated
         if(!populated) {
-            return null;
+            return;
         }
 
         LinkedHashSet<String> tags = getTagSet();
 
-        if(TagService.getInstance().synchronizeTags(task.getId(), task.getValue(Task.UUID), tags)) {
-            Flags.set(Flags.TAGS_CHANGED);
-            task.setValue(Task.MODIFICATION_DATE, DateUtilities.now());
-        }
-
-        return null;
+        TagService.getInstance().synchronizeTags(task.getId(), task.getValue(Task.UUID), tags);
+        Flags.set(Flags.TAGS_CHANGED);
+        task.setValue(Task.MODIFICATION_DATE, DateUtilities.now());
     }
 
     @Override
@@ -331,10 +321,4 @@ public final class TagsControlSet extends PopupControlSet {
             image.setImageResource(R.drawable.tea_icn_lists_gray);
         }
     }
-
-    public boolean hasLists() {
-        LinkedHashSet<String> tags = getTagSet();
-        return !tags.isEmpty();
-    }
-
 }

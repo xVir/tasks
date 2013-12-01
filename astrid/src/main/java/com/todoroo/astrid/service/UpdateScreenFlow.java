@@ -1,11 +1,11 @@
 package com.todoroo.astrid.service;
 
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
+
+import java.util.ArrayList;
 
 public class UpdateScreenFlow extends Activity {
 
@@ -48,10 +48,7 @@ public class UpdateScreenFlow extends Activity {
             Class<?> activityClass = Class.forName(className);
             Intent intent = new Intent(this, activityClass);
             startActivityForResult(intent, REQUEST_CODE_SCREEN_FLOW);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            finish();
-        } catch (ActivityNotFoundException e) {
+        } catch (ClassNotFoundException | ActivityNotFoundException e) {
             e.printStackTrace();
             finish();
         }

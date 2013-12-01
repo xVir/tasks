@@ -5,19 +5,13 @@
  */
 package com.todoroo.astrid.service;
 
-import java.io.File;
-import java.util.List;
-
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlarmManager;
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
-import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteException;
@@ -25,7 +19,6 @@ import android.media.AudioManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.DatabaseDao.ModelUpdateListener;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
@@ -38,9 +31,6 @@ import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.andlib.utility.Preferences;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
-import com.todoroo.astrid.actfm.sync.ActFmSyncThread;
-import com.todoroo.astrid.actfm.sync.AstridNewSyncMigrator;
 import com.todoroo.astrid.activity.BeastModePreferences;
 import com.todoroo.astrid.backup.BackupConstants;
 import com.todoroo.astrid.backup.BackupService;
@@ -49,26 +39,24 @@ import com.todoroo.astrid.core.PluginServices;
 import com.todoroo.astrid.dao.Database;
 import com.todoroo.astrid.dao.MetadataDao.MetadataCriteria;
 import com.todoroo.astrid.dao.TagDataDao;
-import com.todoroo.astrid.dao.TaskAttachmentDao;
-import com.todoroo.astrid.dao.TaskDao;
-import com.todoroo.astrid.dao.TaskListMetadataDao;
-import com.todoroo.astrid.dao.UserActivityDao;
 import com.todoroo.astrid.data.Metadata;
 import com.todoroo.astrid.data.TagData;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.gcal.CalendarStartupReceiver;
-import com.todoroo.astrid.gtasks.GtasksMetadata;
 import com.todoroo.astrid.gtasks.GtasksPreferenceService;
 import com.todoroo.astrid.gtasks.sync.GtasksSyncService;
-import com.todoroo.astrid.opencrx.OpencrxCoreUtils;
-import com.todoroo.astrid.reminders.ReengagementService;
 import com.todoroo.astrid.reminders.ReminderStartupReceiver;
-import com.todoroo.astrid.subtasks.SubtasksMetadata;
 import com.todoroo.astrid.tags.TaskToTagMetadata;
-import com.todoroo.astrid.ui.TaskListFragmentPager;
 import com.todoroo.astrid.utility.AstridPreferences;
 import com.todoroo.astrid.utility.Constants;
-import com.todoroo.astrid.widget.TasksWidget.WidgetUpdateService;
+
+import org.tasks.R;
+import org.tasks.dropbox.DropBoxSyncManager;
+
+import java.io.File;
+import java.util.List;
+
+import static org.tasks.widget.WidgetHelper.startWidgetService;
 
 /**
  * Service which handles jobs that need to be run when Astrid starts up.
@@ -95,15 +83,7 @@ public class StartupService {
 
     @Autowired TaskService taskService;
 
-    @Autowired TaskDao taskDao;
-
     @Autowired TagDataDao tagDataDao;
-
-    @Autowired UserActivityDao userActivityDao;
-
-    @Autowired TaskAttachmentDao taskAttachmentDao;
-
-    @Autowired TaskListMetadataDao taskListMetadataDao;
 
     @Autowired MetadataService metadataService;
 
@@ -111,21 +91,15 @@ public class StartupService {
 
     @Autowired GtasksPreferenceService gtasksPreferenceService;
 
-    @Autowired ActFmPreferenceService actFmPreferenceService;
-
     @Autowired GtasksSyncService gtasksSyncService;
+
+    @Autowired
+    private DropBoxSyncManager dropboxSyncManager;
 
     /**
      * bit to prevent multiple initializations
      */
     private static boolean hasStartedUp = false;
-
-    /**
-     * Call to skip initialization steps (i.e. if only a notification screen is needed)
-     */
-    public synchronized static void bypassInitialization() {
-        hasStartedUp = true;
-    }
 
     /** Called when this application is started up */
     public synchronized void onStartupApplication(final Activity context) {
@@ -192,39 +166,27 @@ public class StartupService {
         if(justUpgraded && version > 0) {
             if(latestSetVersion > 0) {
                 upgradeService.performUpgrade(context, latestSetVersion);
-            } else {
-                Preferences.setBoolean(AstridNewSyncMigrator.PREF_SYNC_MIGRATION, true); // New installs should have this flag set up front
             }
             AstridPreferences.setCurrentVersion(version);
             AstridPreferences.setCurrentVersionName(versionName);
         }
 
-        upgradeService.performSecondaryUpgrade(context);
-
         final int finalLatestVersion = latestSetVersion;
 
         initializeDatabaseListeners();
-        ActFmSyncThread.initializeSyncComponents(taskDao, tagDataDao, userActivityDao, taskAttachmentDao, taskListMetadataDao);
 
         // perform startup activities in a background thread
         new Thread(new Runnable() {
             @Override
             public void run() {
-                // start widget updating alarm
-                AlarmManager am = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-                Intent intent = new Intent(context, WidgetUpdateService.class);
-                PendingIntent pendingIntent = PendingIntent.getService(context,
-                        0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-                am.setInexactRepeating(AlarmManager.RTC, 0,
-                        Constants.WIDGET_UPDATE_INTERVAL, pendingIntent);
+                startWidgetService(context);
 
-                ReengagementService.scheduleReengagementAlarm(context);
                 taskService.cleanup();
 
                 // if sync ongoing flag was set, clear it
                 gtasksPreferenceService.stopOngoing();
-                actFmPreferenceService.stopOngoing();
-                OpencrxCoreUtils.INSTANCE.stopOngoing();
+
+                dropboxSyncManager.resumeLink(context);
 
                 // perform initialization
                 ReminderStartupReceiver.startReminderSchedulingService(context);
@@ -236,21 +198,13 @@ public class StartupService {
                 if (finalLatestVersion != 0) {
 //                    new UpdateMessageService(context).processUpdates();
                 }
-
-                checkForSubtasksUse();
-                checkForSwipeListsUse();
-                checkForVoiceRemindersUse();
             }
         }).start();
 
-        AstridPreferences.resetPreferencesFromAbTests(latestSetVersion);
         AstridPreferences.setPreferenceDefaults();
         CalendarStartupReceiver.scheduleCalendarAlarms(context, false); // This needs to be after set preference defaults for the purposes of ab testing
 
-        // check for task killers
-        if(!Constants.OEM) {
-            showTaskKillerHelp(context);
-        }
+        showTaskKillerHelp(context);
 
         hasStartedUp = true;
     }
@@ -260,7 +214,7 @@ public class StartupService {
         // the corresponding metadata will also update
         tagDataDao.addListener(new ModelUpdateListener<TagData>() {
             @Override
-            public void onModelUpdated(TagData model, boolean outstandingEntries) {
+            public void onModelUpdated(TagData model) {
                 ContentValues values = model.getSetValues();
                 Metadata m = new Metadata();
                 if (values != null) {
@@ -274,15 +228,11 @@ public class StartupService {
         });
     }
 
-    /**
-     * @param context
-     * @param e error that was raised
-     */
     public static void handleSQLiteError(Context context, final SQLiteException e) {
         if (context instanceof Activity) {
             Activity activity = (Activity) context;
             DialogUtilities.okDialog(activity, activity.getString(R.string.DB_corrupted_title),
-                    0, activity.getString(R.string.DB_corrupted_body), null);
+                    0, activity.getString(R.string.DB_corrupted_body));
         }
         e.printStackTrace();
     }
@@ -291,7 +241,7 @@ public class StartupService {
         // For some reason these properties are missing for some users.
         // Make them exist!
         try {
-            TodorooCursor<Task> tasks = taskService.query(Query.select(Task.UUID, Task.USER_ID, Task.USER).limit(1));
+            TodorooCursor<Task> tasks = taskService.query(Query.select(Task.UUID, Task.USER_ID).limit(1));
             try {
                 System.err.println(tasks.getCount());
             } finally {
@@ -300,7 +250,6 @@ public class StartupService {
         } catch (SQLiteException e) {
             database.tryAddColumn(Task.TABLE, Task.UUID, "'0'"); //$NON-NLS-1$
             database.tryAddColumn(Task.TABLE, Task.USER_ID, "0"); //$NON-NLS-1$
-            database.tryAddColumn(Task.TABLE, Task.USER, null);
         }
     }
 
@@ -327,59 +276,10 @@ public class StartupService {
         }
     }
 
-    private static final String PREF_SUBTASKS_CHECK = "subtasks_check_stat"; //$NON-NLS-1$
-
-    private void checkForSubtasksUse() {
-        if (!Preferences.getBoolean(PREF_SUBTASKS_CHECK, false)) {
-            if (taskService.countTasks() > 3) {
-                checkMetadataStat(Criterion.and(MetadataCriteria.withKey(SubtasksMetadata.METADATA_KEY),
-                        SubtasksMetadata.ORDER.gt(0)), StatisticsConstants.SUBTASKS_ORDER_USED);
-                checkMetadataStat(Criterion.and(MetadataCriteria.withKey(SubtasksMetadata.METADATA_KEY),
-                        SubtasksMetadata.INDENT.gt(0)), StatisticsConstants.SUBTASKS_INDENT_USED);
-                checkMetadataStat(Criterion.and(MetadataCriteria.withKey(GtasksMetadata.METADATA_KEY),
-                        GtasksMetadata.INDENT.gt(0)), StatisticsConstants.GTASKS_INDENT_USED);
-            }
-            Preferences.setBoolean(PREF_SUBTASKS_CHECK, true);
-        }
-    }
-
-    private static final String PREF_SWIPE_CHECK = "swipe_check_stat"; //$NON-NLS-1$
-
-    private void checkForSwipeListsUse() {
-        if (!Preferences.getBoolean(PREF_SWIPE_CHECK, false)) {
-            if (Preferences.getBoolean(R.string.p_swipe_lists_enabled, false)
-                    && Preferences.getBoolean(TaskListFragmentPager.PREF_SHOWED_SWIPE_HELPER, false)) {
-            }
-            Preferences.setBoolean(PREF_SWIPE_CHECK, true);
-        }
-    }
-
-    private static final String PREF_VOICE_REMINDERS_CHECK = "voice_reminders_check"; //$NON-NLS-1$
-
-    private void checkForVoiceRemindersUse() {
-        if (!Preferences.getBoolean(PREF_VOICE_REMINDERS_CHECK, false)) {
-            if (Preferences.getBoolean(R.string.p_voiceRemindersEnabled, false)) {
-                Preferences.setBoolean(PREF_VOICE_REMINDERS_CHECK, true);
-            }
-        }
-    }
-
-    private void checkMetadataStat(Criterion criterion, String statistic) {
-        TodorooCursor<Metadata> sort = metadataService.query(Query.select(Metadata.ID).where(criterion).limit(1));
-        try {
-            if (sort.getCount() > 0) {
-            }
-        } finally {
-            sort.close();
-        }
-
-    }
-
     private static final String P_TASK_KILLER_HELP = "taskkiller"; //$NON-NLS-1$
 
     /**
      * Show task killer helper
-     * @param context
      */
     private static void showTaskKillerHelp(final Context context) {
         if(!Preferences.getBoolean(P_TASK_KILLER_HELP, false)) {

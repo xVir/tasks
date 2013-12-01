@@ -5,14 +5,6 @@
  */
 package com.todoroo.astrid.repeats;
 
-import java.text.ParseException;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -26,22 +18,25 @@ import com.google.ical.values.DateValueImpl;
 import com.google.ical.values.Frequency;
 import com.google.ical.values.RRule;
 import com.google.ical.values.WeekdayNum;
-import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.utility.DateUtilities;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.api.AstridApiConstants;
 import com.todoroo.astrid.core.PluginServices;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.gcal.GCalHelper;
-import com.todoroo.astrid.service.StatisticsConstants;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.utility.Flags;
 
-public class RepeatTaskCompleteListener extends BroadcastReceiver {
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
 
-    @Autowired ActFmPreferenceService actFmPreferenceService;
+public class RepeatTaskCompleteListener extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -94,7 +89,6 @@ public class RepeatTaskCompleteListener extends BroadcastReceiver {
             broadcastIntent.putExtra(AstridApiConstants.EXTRAS_NEW_DUE_DATE, newDueDate);
             context.sendOrderedBroadcast(broadcastIntent, null);
             Flags.set(Flags.REFRESH);
-            return;
         }
     }
 
@@ -187,8 +181,7 @@ public class RepeatTaskCompleteListener extends BroadcastReceiver {
     private static WeekdayNum findNextWeekday(List<WeekdayNum> byDay,
             Calendar date) {
         WeekdayNum next = byDay.get(0);
-        for (int i = 0; i < byDay.size(); i++) {
-            WeekdayNum weekday = byDay.get(i);
+        for (WeekdayNum weekday : byDay) {
             if (weekday.wday.javaDayNum > date.get(Calendar.DAY_OF_WEEK)) {
                 return weekday;
             }
@@ -196,12 +189,11 @@ public class RepeatTaskCompleteListener extends BroadcastReceiver {
         return next;
     }
 
-    private static long invokeRecurrence(RRule rrule, Date original,
-            DateValue startDateAsDV) {
+    private static long invokeRecurrence(RRule rrule, Date original, DateValue startDateAsDV) {
         long newDueDate = -1;
         RecurrenceIterator iterator = RecurrenceIteratorFactory.createRecurrenceIterator(rrule,
                 startDateAsDV, TimeZone.getDefault());
-        DateValue nextDate = startDateAsDV;
+        DateValue nextDate;
 
         for(int i = 0; i < 10; i++) { // ten tries then we give up
             if(!iterator.hasNext()) {
@@ -257,8 +249,7 @@ public class RepeatTaskCompleteListener extends BroadcastReceiver {
         return rrule;
     }
 
-    /** Set up repeat start date
-     * @param frequency */
+    /** Set up repeat start date */
     private static Date setUpStartDate(Task task, boolean repeatAfterCompletion, Frequency frequency) {
         Date startDate = new Date();
         if(task.hasDueDate()) {

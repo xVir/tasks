@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.model;
 
-import java.util.ArrayList;
-import java.util.TreeSet;
-
 import android.content.ContentValues;
 
 import com.todoroo.andlib.service.Autowired;
@@ -16,6 +13,9 @@ import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.test.DatabaseTestCase;
 import com.todoroo.astrid.utility.AstridPreferences;
+
+import java.util.ArrayList;
+import java.util.TreeSet;
 
 public class TaskTests extends DatabaseTestCase {
 
@@ -28,18 +28,18 @@ public class TaskTests extends DatabaseTestCase {
         assertTrue(Task.IMPORTANCE_MUST_DO < Task.IMPORTANCE_SHOULD_DO);
         assertTrue(Task.IMPORTANCE_SHOULD_DO < Task.IMPORTANCE_NONE);
 
-        ArrayList<Integer> reminderFlags = new ArrayList<Integer>();
+        ArrayList<Integer> reminderFlags = new ArrayList<>();
         reminderFlags.add(Task.NOTIFY_AFTER_DEADLINE);
         reminderFlags.add(Task.NOTIFY_AT_DEADLINE);
         reminderFlags.add(Task.NOTIFY_MODE_NONSTOP);
 
         // assert no duplicates
-        assertEquals(new TreeSet<Integer>(reminderFlags).size(),
+        assertEquals(new TreeSet<>(reminderFlags).size(),
                 reminderFlags.size());
     }
 
     /** Check defaults */
-    public void checkDefaults() {
+    public void testDefaults() {
         AstridPreferences.setPreferenceDefaults();
         ContentValues defaults = new Task().getDefaultValues();
         assertTrue(defaults.containsKey(Task.TITLE.name));
@@ -50,7 +50,7 @@ public class TaskTests extends DatabaseTestCase {
     }
 
     /** Check task gets a creation date at some point */
-    public void checkCreationDate() {
+    public void testCreationDate() {
         Task task = new Task();
         taskService.save(task);
         assertTrue(task.getValue(Task.CREATION_DATE) > 0);
@@ -59,7 +59,7 @@ public class TaskTests extends DatabaseTestCase {
     /**
      * Check various getters
      */
-    public void checkGetters() {
+    public void testGetters() {
         Task task = new Task();
         assertFalse(task.isCompleted());
         task.setValue(Task.COMPLETION_DATE, DateUtilities.now());

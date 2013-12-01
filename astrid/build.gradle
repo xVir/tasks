@@ -1,29 +1,42 @@
 buildscript {
     repositories {
         mavenCentral()
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots/'
+        }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.5.+'
+        classpath 'com.android.tools.build:gradle:0.6.+'
+        classpath 'com.squareup.gradle:gradle-android-test-plugin:0.9.1-SNAPSHOT'
     }
 }
 
 apply plugin: 'android'
+apply plugin: 'android-test'
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
 }
 
 android {
-    compileSdkVersion 17
-    buildToolsVersion "17.0.0"
+    compileSdkVersion 19
+    buildToolsVersion "19"
 
     defaultConfig {
         minSdkVersion 7
-        targetSdkVersion 17
+        targetSdkVersion 19
     }
 
     signingConfigs {
         release
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
     }
 
     buildTypes {
@@ -43,20 +56,35 @@ android {
         android.signingConfigs.release.storeFile = file(storeFile)
         android.signingConfigs.release.storePassword = storePassword
         android.signingConfigs.release.keyPassword = keyPassword
+    } else {
+        buildTypes.release.signingConfig = null
+    }
+}
+
+android.applicationVariants.all { variant ->
+    variant.mergeResources.doLast {
+        if (project.hasProperty('gapiKey')) {
+            File values = file("${buildDir}/res/all/${variant.dirName}/values/values.xml")
+            values.write(
+                    values.getText('UTF-8').replaceAll(/<string name="gapi_key">.*<\/string>/, "<string name=\"gapi_key\">${project.property('gapiKey')}</string>"),
+                    'UTF-8')
+        }
     }
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:18.0.0'
+    compile group: 'com.android.support', name: 'support-v4', version: '19.0.+'
+    compile group: 'com.android.support', name: 'appcompat-v7', version: '19.0.+'
+
+    compile 'net.simonvt.menudrawer:menudrawer:3.0.4@aar'
+
     compile project(":android-aac-enc")
-    compile project(":greendroid")
     compile project(":api")
+
     compile fileTree(dir: "libs", includes: ["*.jar"])
 
     compile group: 'com.google.guava', name: 'guava', version: '11.0.1', transitive: false
     compile group: 'com.google.code.gson', name: 'gson', version: '1.7.1', transitive: false
-    compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.6.7', transitive: false
-    compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.1.1', transitive: false
     compile group: 'com.google.api-client', name: 'google-api-client', version: '1.6.0-beta', transitive: false
     compile group: 'com.google.api-client', name: 'google-api-client-extensions', version: '1.6.0-beta', transitive: false
     compile group: 'com.google.api-client', name: 'google-api-client-extensions-android2', version: '1.6.0-beta', transitive: false
@@ -66,4 +94,10 @@ dependencies {
     compile group: 'com.google.http-client', name: 'google-http-client-extensions-android3', version: '1.6.0-beta', transitive: false
     compile group: 'com.google.oauth-client', name: 'google-oauth-client', version: '1.6.0-beta', transitive: false
     compile group: 'com.google.oauth-client', name: 'google-oauth-client-extensions', version: '1.6.0-beta', transitive: false
+
+    testCompile 'junit:junit:4.10'
+    testCompile 'org.robolectric:robolectric:2.3-SNAPSHOT'
+    // hack to get android studio to import libraries
+    instrumentTestCompile group: 'junit', name: 'junit', version: '4.10', transitive: false
+    instrumentTestCompile group: 'org.robolectric', name: 'robolectric', version: '2.3-SNAPSHOT', transitive: false
 }

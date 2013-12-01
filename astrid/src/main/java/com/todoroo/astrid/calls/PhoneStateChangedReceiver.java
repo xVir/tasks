@@ -5,8 +5,6 @@
  */
 package com.todoroo.astrid.calls;
 
-import java.util.Date;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -18,10 +16,13 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.tasks.R;
 import com.todoroo.andlib.utility.AndroidUtilities;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.andlib.utility.Preferences;
+
+import org.tasks.R;
+
+import java.util.Date;
 
 public class PhoneStateChangedReceiver extends BroadcastReceiver {
 
@@ -151,8 +152,7 @@ public class PhoneStateChangedReceiver extends BroadcastReceiver {
 
         try {
             if (c.moveToFirst()) {
-                long id = c.getLong(c.getColumnIndex(ContactsContract.PhoneLookup._ID));
-                return id;
+                return c.getLong(c.getColumnIndex(ContactsContract.PhoneLookup._ID));
             }
         } finally {
             c.close();

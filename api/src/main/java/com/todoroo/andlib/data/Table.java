@@ -5,7 +5,6 @@
  */
 package com.todoroo.andlib.data;
 
-import com.todoroo.andlib.sql.Field;
 import com.todoroo.andlib.sql.SqlTable;
 
 /**
@@ -37,13 +36,7 @@ public final class Table extends SqlTable {
     public Property<?>[] getProperties() {
         try {
             return (Property<?>[])modelClass.getField("PROPERTIES").get(null);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchFieldException e) {
+        } catch (IllegalArgumentException | NoSuchFieldException | IllegalAccessException | SecurityException e) {
             throw new RuntimeException(e);
         }
     }
@@ -56,18 +49,6 @@ public final class Table extends SqlTable {
     @Override
     public Table as(String newAlias) {
         return new Table(name, modelClass, newAlias);
-    }
-
-    /**
-     * Create a field object based on the given property
-     * @param property
-     * @return
-     */
-    public Field field(Property<?> property) {
-        if(alias != null) {
-            return Field.field(alias + "." + property.name);
-        }
-        return Field.field(name + "." + property.name);
     }
 
     @Override

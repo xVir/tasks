@@ -7,15 +7,13 @@ package com.todoroo.astrid.activity;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
 import android.view.KeyEvent;
-import android.widget.TextView;
 
-import com.actionbarsherlock.app.ActionBar;
-import org.tasks.R;
 import com.todoroo.andlib.utility.AndroidUtilities;
-import com.todoroo.andlib.utility.Preferences;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
 
 public class TaskEditActivity extends AstridActivity {
     /**
@@ -24,39 +22,21 @@ public class TaskEditActivity extends AstridActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
         ThemeService.applyTheme(this);
-        ActionBar actionBar = getSupportActionBar();
-        if (Preferences.getBoolean(R.string.p_save_and_cancel, false)) {
-            if (ThemeService.getTheme() == R.style.Theme_White_Alt) {
-                actionBar.setLogo(R.drawable.ic_menu_save_blue_alt);
-            } else {
-                actionBar.setLogo(R.drawable.ic_menu_save);
-            }
-        } else {
-            actionBar.setLogo(null);
-        }
 
         super.onCreate(savedInstanceState);
-		setContentView(R.layout.task_edit_wrapper_activity);
+
+        ActionBar actionBar = getSupportActionBar();
+        setContentView(R.layout.task_edit_wrapper_activity);
 
 		actionBar.setDisplayHomeAsUpEnabled(true);
-		actionBar.setDisplayShowTitleEnabled(false);
-
-		actionBar.setDisplayShowCustomEnabled(true);
-		actionBar.setCustomView(R.layout.header_title_view);
-		((TextView) actionBar.getCustomView().findViewById(R.id.title)).setText(R.string.TAd_contextEditTask);
-
+		actionBar.setDisplayShowTitleEnabled(true);
 	}
 
 	public void updateTitle(boolean isNewTask) {
 	    ActionBar actionBar = getSupportActionBar();
 	    if (actionBar != null) {
-	        TextView title = ((TextView) actionBar.getCustomView().findViewById(R.id.title));
-	        if (ActFmPreferenceService.isPremiumUser()) {
-                title.setText(""); //$NON-NLS-1$
-            } else {
-                title.setText(isNewTask ? R.string.TEA_new_task : R.string.TAd_contextEditTask);
-            }
-	    }
+            actionBar.setTitle(isNewTask ? R.string.TEA_new_task : R.string.TAd_contextEditTask);
+        }
 	}
 
     /* (non-Javadoc)
@@ -66,11 +46,9 @@ public class TaskEditActivity extends AstridActivity {
     protected void onResume() {
         super.onResume();
 
-        Fragment frag = (Fragment) getSupportFragmentManager()
+        Fragment frag = getSupportFragmentManager()
                 .findFragmentByTag(TaskListFragment.TAG_TASKLIST_FRAGMENT);
-        if (frag != null) {
-            fragmentLayout = LAYOUT_DOUBLE;
-        } else {
+        if (frag == null) {
             fragmentLayout = LAYOUT_SINGLE;
         }
     }

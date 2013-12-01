@@ -11,8 +11,6 @@ import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.sql.Query;
-import com.todoroo.astrid.actfm.sync.messages.NameMaps;
-import com.todoroo.astrid.data.RemoteModel;
 import com.todoroo.astrid.data.TagData;
 import com.todoroo.astrid.data.TaskListMetadata;
 
@@ -30,19 +28,6 @@ public class TaskListMetadataDao extends RemoteModelDao<TaskListMetadata> {
         super(TaskListMetadata.class);
         DependencyInjectionService.getInstance().inject(this);
         setDatabase(database);
-    }
-
-    @Override
-    protected boolean shouldRecordOutstandingEntry(String columnName, Object value) {
-        if (TaskListMetadata.FILTER.name.equals(columnName) || TaskListMetadata.TAG_UUID.name.equals(columnName)) {
-            return !RemoteModel.isUuidEmpty(value.toString());
-        }
-
-        if (TaskListMetadata.TASK_IDS.name.equals(columnName)) {
-            return !TaskListMetadata.taskIdsIsEmpty(value.toString());
-        }
-
-        return NameMaps.shouldRecordOutstandingColumnForTable(NameMaps.TABLE_ID_TASK_LIST_METADATA, columnName);
     }
 
     public TaskListMetadata fetchByTagId(String tagUuid, Property<?>...properties) {

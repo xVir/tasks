@@ -5,8 +5,6 @@
  */
 package com.todoroo.astrid.core;
 
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,18 +14,13 @@ import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.TodorooCursor;
-import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.ContextManager;
-import com.todoroo.andlib.service.DependencyInjectionService;
-import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.sql.Order;
 import com.todoroo.andlib.sql.Query;
 import com.todoroo.andlib.sql.QueryTemplate;
 import com.todoroo.andlib.utility.DialogUtilities;
 import com.todoroo.andlib.utility.Preferences;
-import com.todoroo.astrid.actfm.sync.ActFmPreferenceService;
 import com.todoroo.astrid.activity.FilterListFragment;
 import com.todoroo.astrid.api.AstridApiConstants;
 import com.todoroo.astrid.api.AstridFilterExposer;
@@ -37,9 +30,11 @@ import com.todoroo.astrid.dao.StoreObjectDao;
 import com.todoroo.astrid.dao.TaskDao.TaskCriteria;
 import com.todoroo.astrid.data.StoreObject;
 import com.todoroo.astrid.data.Task;
-import com.todoroo.astrid.gtasks.GtasksPreferenceService;
-import com.todoroo.astrid.service.TagDataService;
 import com.todoroo.astrid.service.ThemeService;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
 
 /**
  * Exposes Astrid's built in filters to the {@link FilterListFragment}
@@ -52,9 +47,6 @@ public final class CustomFilterExposer extends BroadcastReceiver implements Astr
     private static final String TOKEN_FILTER_ID = "id"; //$NON-NLS-1$
     private static final String TOKEN_FILTER_NAME = "name"; //$NON-NLS-1$
 
-    @Autowired TagDataService tagDataService;
-    @Autowired GtasksPreferenceService gtasksPreferenceService;
-
     @Override
     public void onReceive(Context context, Intent intent) {
         FilterListItem[] list = prepareFilters(context);
@@ -66,25 +58,19 @@ public final class CustomFilterExposer extends BroadcastReceiver implements Astr
     }
 
     private FilterListItem[] prepareFilters(Context context) {
-        DependencyInjectionService.getInstance().inject(this);
         Resources r = context.getResources();
 
-        Filter[] savedFilters = buildSavedFilters(context, r);
-        return savedFilters;
+        return buildSavedFilters(context, r);
     }
 
     private Filter[] buildSavedFilters(Context context, Resources r) {
         int themeFlags = ThemeService.getFilterThemeFlags();
 
-        boolean useCustomFilters = Preferences.getBoolean(R.string.p_use_filters, true);
         StoreObjectDao dao = PluginServices.getStoreObjectDao();
-        TodorooCursor<StoreObject> cursor = null;
-        if (useCustomFilters) {
-            cursor = dao.query(Query.select(StoreObject.PROPERTIES).where(
-                    StoreObject.TYPE.eq(SavedFilter.TYPE)).orderBy(Order.asc(SavedFilter.NAME)));
-        }
+        TodorooCursor<StoreObject> cursor = dao.query(Query.select(StoreObject.PROPERTIES).where(
+                StoreObject.TYPE.eq(SavedFilter.TYPE)).orderBy(Order.asc(SavedFilter.NAME)));
         try {
-            ArrayList<Filter> list = new ArrayList<Filter>();
+            ArrayList<Filter> list = new ArrayList<>();
 
             // stock filters
             if (Preferences.getBoolean(R.string.p_show_recently_modified_filter, true)) {
@@ -100,7 +86,7 @@ public final class CustomFilterExposer extends BroadcastReceiver implements Astr
                 list.add(recent);
             }
 
-            if (useCustomFilters && cursor != null) {
+            if (cursor != null) {
                 StoreObject savedFilter = new StoreObject();
                 for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                     savedFilter.readFromCursor(cursor);
@@ -125,19 +111,6 @@ public final class CustomFilterExposer extends BroadcastReceiver implements Astr
         }
     }
 
-    public static Filter getAssignedByMeFilter(Resources r) {
-        int themeFlags = ThemeService.getFilterThemeFlags();
-        Filter f = new Filter(r.getString(R.string.BFE_Assigned),
-                r.getString(R.string.BFE_Assigned),
-                new QueryTemplate().where(Criterion.and(TaskCriteria.isActive(),
-                        Criterion.or(Task.CREATOR_ID.eq(0), Task.CREATOR_ID.eq(ActFmPreferenceService.userId())),
-                        Task.USER_ID.neq(0))),
-                        null);
-        f.listingIcon = ((BitmapDrawable)r.getDrawable(
-                ThemeService.getDrawable(R.drawable.filter_assigned, themeFlags))).getBitmap();
-        return f;
-    }
-
     /**
      * Simple activity for deleting stuff
      *
@@ -158,7 +131,6 @@ public final class CustomFilterExposer extends BroadcastReceiver implements Astr
             }
             final String name = getIntent().getStringExtra(TOKEN_FILTER_NAME);
 
-            DependencyInjectionService.getInstance().inject(this);
             DialogUtilities.okCancelDialog(this,
                     getString(R.string.DLG_delete_this_item_question, name),
                     new DialogInterface.OnClickListener() {

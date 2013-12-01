@@ -25,7 +25,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Vibrator;
 import android.util.AttributeSet;
-import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,12 +35,12 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 
-import com.commonsware.cwac.tlv.TouchListView.DragListener;
 import com.commonsware.cwac.tlv.TouchListView.DropListener;
 import com.commonsware.cwac.tlv.TouchListView.GrabberClickListener;
 import com.commonsware.cwac.tlv.TouchListView.SwipeListener;
-import org.tasks.R;
 import com.todoroo.astrid.utility.Flags;
+
+import org.tasks.R;
 
 public class DraggableListView extends ListView {
 
@@ -71,11 +70,9 @@ public class DraggableListView extends ListView {
 	private int dragndropBackgroundColor = 0x00000000;
 
 	// --- listeners
-    private DragListener mDragListener;
     private DropListener mDropListener;
     private SwipeListener mSwipeListener;
     private GrabberClickListener mClickListener;
-    private GestureDetector mGestureDetector;
 
     // --- other instance variables
     private int mItemHeightNormal = -1;
@@ -109,10 +106,6 @@ public class DraggableListView extends ListView {
 
     public void setItemHightNormal(int itemHeightNormal) {
         this.mItemHeightNormal = itemHeightNormal;
-    }
-
-    protected boolean isDraggableRow(View view) {
-        return true;
     }
 
     /*
@@ -157,18 +150,10 @@ public class DraggableListView extends ListView {
     /*
      * Restore size and visibility for all list items
      */
-    private void unExpandViews(boolean deletion) {
+    private void unExpandViews() {
         for (int i = 0;; i++) {
             View v = getChildAt(i);
             if (v == null) {
-                if (deletion) {
-                    // HACK force update of mItemCount
-                    int position = getFirstVisiblePosition();
-                    int y = getChildAt(0).getTop();
-                    setAdapter(getAdapter());
-                    setSelectionFromTop(position, y);
-                    // end hack
-                }
                 layoutChildren(); // force children to be recreated where needed
                 v = getChildAt(i);
                 if (v == null) {
@@ -176,13 +161,11 @@ public class DraggableListView extends ListView {
                 }
             }
 
-            if (isDraggableRow(v)) {
-                ViewGroup.LayoutParams params = v.getLayoutParams();
-                params.height = LayoutParams.WRAP_CONTENT;
-                v.setLayoutParams(params);
-                v.setVisibility(View.VISIBLE);
-                v.setPadding(0, 0, 0, 0);
-            }
+            ViewGroup.LayoutParams params = v.getLayoutParams();
+            params.height = LayoutParams.WRAP_CONTENT;
+            v.setLayoutParams(params);
+            v.setVisibility(View.VISIBLE);
+            v.setPadding(0, 0, 0, 0);
         }
     }
 
@@ -227,13 +210,11 @@ public class DraggableListView extends ListView {
                 }
             }
 
-            if (isDraggableRow(vv)) {
-                ViewGroup.LayoutParams params = vv.getLayoutParams();
-                params.height = height;
-                vv.setLayoutParams(params);
-                vv.setVisibility(visibility);
-                vv.setPadding(0, marginTop, 0, 0);
-            }
+            ViewGroup.LayoutParams params = vv.getLayoutParams();
+            params.height = height;
+            vv.setLayoutParams(params);
+            vv.setVisibility(visibility);
+            vv.setPadding(0, marginTop, 0, 0);
         }
         // Request re-layout since we changed the items layout
         // and not doing this would cause bogus hitbox calculation
@@ -243,10 +224,6 @@ public class DraggableListView extends ListView {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (mGestureDetector != null) {
-            mGestureDetector.onTouchEvent(ev);
-        }
-
         mTouchCurrentX = ev.getX();
         mTouchCurrentY = ev.getY();
 
@@ -320,7 +297,7 @@ public class DraggableListView extends ListView {
             return null;
         }
 
-        return (View) getChildAt(itemNum - getFirstVisiblePosition());
+        return getChildAt(itemNum - getFirstVisiblePosition());
     }
 
     // --- drag logic
@@ -363,25 +340,18 @@ public class DraggableListView extends ListView {
                 // bye!
             }
         }
-    };
+    }
 
-    /**
-     * @return true if drag was initiated
-     */
-    protected boolean initiateDrag(MotionEvent ev) {
+    protected void initiateDrag(MotionEvent ev) {
         int x = (int) mTouchCurrentX;
         int y = (int) mTouchCurrentY;
         int itemNum = pointToPosition(x, y);
 
         if (itemNum == AdapterView.INVALID_POSITION) {
-            return false;
+            return;
         }
 
-        View item = (View) getChildAt(itemNum - getFirstVisiblePosition());
-
-        if(!isDraggableRow(item)) {
-            return false;
-        }
+        View item = getChildAt(itemNum - getFirstVisiblePosition());
 
         mDragPoint = new Point(x - item.getLeft(), y - item.getTop());
         mCoordOffset = new Point((int)ev.getRawX() - x, (int)ev.getRawY() - y);
@@ -408,8 +378,6 @@ public class DraggableListView extends ListView {
 
         Vibrator v = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(50);
-
-        return true;
     }
 
     private void startDragging(Bitmap bm, int x, int y) {
@@ -460,9 +428,6 @@ public class DraggableListView extends ListView {
         if (itemnum >= 0) {
             if (ev.getAction() == MotionEvent.ACTION_DOWN
                     || itemnum != mDragPos) {
-                if (mDragListener != null) {
-                    mDragListener.drag(mDragPos, itemnum);
-                }
                 mDragPos = itemnum;
                 doExpansion();
             }
@@ -498,7 +463,7 @@ public class DraggableListView extends ListView {
             mDragBitmap = null;
         }
 
-        unExpandViews(false);
+        unExpandViews();
 
         if (mDragView != null) {
             WindowManager wm = (WindowManager) getContext().getSystemService(
@@ -529,10 +494,6 @@ public class DraggableListView extends ListView {
     }
 
     // --- getters and setters
-
-    public void setDragListener(DragListener l) {
-        mDragListener = l;
-    }
 
     public void setDropListener(DropListener l) {
         mDropListener = l;

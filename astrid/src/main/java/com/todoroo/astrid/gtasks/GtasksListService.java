@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.gtasks;
 
-import java.util.HashSet;
-import java.util.List;
-
 import com.google.api.services.tasks.model.TaskList;
 import com.google.api.services.tasks.model.TaskLists;
 import com.todoroo.andlib.data.TodorooCursor;
@@ -17,6 +14,9 @@ import com.todoroo.andlib.sql.Query;
 import com.todoroo.astrid.dao.StoreObjectDao;
 import com.todoroo.astrid.dao.StoreObjectDao.StoreObjectCriteria;
 import com.todoroo.astrid.data.StoreObject;
+
+import java.util.HashSet;
+import java.util.List;
 
 public class GtasksListService {
 
@@ -58,7 +58,6 @@ public class GtasksListService {
 
     /**
      * Get list name
-     * @param listId
      * @return NOT_FOUND if no list by this id exists, otherwise list name
      */
     public String getListName(String listId) {
@@ -69,21 +68,6 @@ public class GtasksListService {
         return LIST_NOT_FOUND;
     }
 
-    public void migrateListIds (TaskLists remoteLists) {
-        readLists();
-
-        List<TaskList> items = remoteLists.getItems();
-        for (TaskList remote : items) {
-            for (StoreObject list : lists) {
-                if (list.getValue(GtasksList.NAME).equals(remote.getTitle())) {
-                    list.setValue(GtasksList.REMOTE_ID, remote.getId());
-                    storeObjectDao.persist(list);
-                    break;
-                }
-            }
-        }
-    }
-
     /**
      * Reads in remote list information and updates local list objects.
      *
@@ -92,7 +76,7 @@ public class GtasksListService {
     public synchronized void updateLists(TaskLists remoteLists) {
         readLists();
 
-        HashSet<Long> previousLists = new HashSet<Long>(lists.length);
+        HashSet<Long> previousLists = new HashSet<>(lists.length);
         for(StoreObject list : lists) {
             previousLists.add(list.getId());
         }

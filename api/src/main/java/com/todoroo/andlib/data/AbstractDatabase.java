@@ -5,15 +5,11 @@
  */
 package com.todoroo.andlib.data;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
@@ -23,6 +19,8 @@ import com.todoroo.andlib.service.ContextManager;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.service.ExceptionService;
 import com.todoroo.andlib.utility.AndroidUtilities;
+
+import java.util.ArrayList;
 
 /**
  * AbstractDatabase is a database abstraction which wraps a SQLite database.
@@ -66,8 +64,6 @@ abstract public class AbstractDatabase {
 
     /**
      * Upgrades an open database from one version to the next
-     * @param oldVersion
-     * @param newVersion
      * @return true if upgrade was handled, false otherwise
      */
     protected abstract boolean onUpgrade(int oldVersion, int newVersion);
@@ -97,7 +93,7 @@ abstract public class AbstractDatabase {
         public void onDatabaseUpdated();
     }
 
-    private final ArrayList<DatabaseUpdateListener> listeners = new ArrayList<DatabaseUpdateListener>();
+    private final ArrayList<DatabaseUpdateListener> listeners = new ArrayList<>();
 
     public void addListener(DatabaseUpdateListener listener) {
         listeners.add(listener);
@@ -120,8 +116,6 @@ abstract public class AbstractDatabase {
 
     /**
      * Return the name of the table containing these models
-     * @param modelType
-     * @return
      */
     public final Table getTable(Class<? extends AbstractModel> modelType) {
         for(Table table : getTables()) {
@@ -132,29 +126,13 @@ abstract public class AbstractDatabase {
         throw new UnsupportedOperationException("Unknown model class " + modelType); //$NON-NLS-1$
     }
 
-    public final Table getOutstandingTable(Class<? extends AbstractModel> modelType) {
-        try {
-            Field f = modelType.getDeclaredField("OUTSTANDING_MODEL");
-            Class<? extends AbstractModel> outstandingModelType = (Class<? extends AbstractModel>) f.get(null);
-            return getTable(outstandingModelType);
-        } catch (NoSuchFieldException n) {
-            //
-        } catch (IllegalAccessException i) {
-            //
-        } catch (ClassCastException c) {
-            throw new RuntimeException("Outstanding model class for type " + modelType + " could not be cast");
-        }
-
-        return null;
-    }
-
     protected synchronized final void initializeHelper() {
         if(helper == null) {
             if(ContextManager.getContext() == null) {
                 throw new NullPointerException("Null context creating database helper");
             }
             helper = new DatabaseHelper(ContextManager.getContext(),
-                    getName(), null, getVersion());
+                    getName(), getVersion());
         }
     }
 
@@ -240,18 +218,15 @@ abstract public class AbstractDatabase {
 
     // --- database wrapper
 
-    /*
-     * @see android.database.sqlite.SQLiteDatabase#rawQuery(String  sql, String[] selectionArgs)
-     */
-    public synchronized Cursor rawQuery(String sql, String[] selectionArgs) {
-        return getDatabase().rawQuery(sql, selectionArgs);
+    public synchronized Cursor rawQuery(String sql) {
+        return getDatabase().rawQuery(sql, null);
     }
 
     /*
      * @see android.database.sqlite.SQLiteDatabase#insert(String  table, String  nullColumnHack, ContentValues  values)
      */
     public synchronized long insert(String table, String nullColumnHack, ContentValues values) {
-        long result = -1;
+        long result;
         try {
             result = getDatabase().insertOrThrow(table, nullColumnHack, values);
         } catch (SQLiteConstraintException e) { // Throw these exceptions
@@ -273,11 +248,8 @@ abstract public class AbstractDatabase {
         return result;
     }
 
-    /*
-     * @see android.database.sqlite.SQLiteDatabase#update(String  table, ContentValues  values, String  whereClause, String[] whereArgs)
-     */
-    public synchronized int update(String  table, ContentValues  values, String  whereClause, String[] whereArgs) {
-        int result = getDatabase().update(table, values, whereClause, whereArgs);
+    public synchronized int update(String  table, ContentValues  values, String whereClause) {
+        int result = getDatabase().update(table, values, whereClause, null);
         onDatabaseUpdated();
         return result;
     }
@@ -289,9 +261,8 @@ abstract public class AbstractDatabase {
      */
     private class DatabaseHelper extends SQLiteOpenHelper {
 
-        public DatabaseHelper(Context context, String name,
-                CursorFactory factory, int version) {
-            super(context, name, factory, version);
+        public DatabaseHelper(Context context, String name, int version) {
+            super(context, name, null, version);
         }
 
         /**
@@ -354,11 +325,6 @@ abstract public class AbstractDatabase {
      *
      */
     public static class SqlConstructorVisitor implements PropertyVisitor<String, Void> {
-
-        @Override
-        public String visitDouble(Property<Double> property, Void data) {
-            return String.format("%s REAL", property.getColumnName());
-        }
 
         @Override
         public String visitInteger(Property<Integer> property, Void data) {

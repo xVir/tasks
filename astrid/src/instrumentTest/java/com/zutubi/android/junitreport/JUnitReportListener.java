@@ -16,13 +16,9 @@
 
 package com.zutubi.android.junitreport;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.Locale;
+import android.content.Context;
+import android.util.Log;
+import android.util.Xml;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -31,9 +27,13 @@ import junit.framework.TestListener;
 
 import org.xmlpull.v1.XmlSerializer;
 
-import android.content.Context;
-import android.util.Log;
-import android.util.Xml;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Locale;
 
 /**
  * Custom test listener that outputs test results to XML files. The files
@@ -111,7 +111,6 @@ public class JUnitReportListener implements TestListener {
     /**
      * Creates a new listener.
      *
-     * @param context context of the test application
      * @param targetContext context of the application under test
      * @param reportFile name of the report file(s) to create
      * @param reportDir  path of the directory under which to write files
@@ -121,7 +120,7 @@ public class JUnitReportListener implements TestListener {
      *            framework methods) omitted for clarity
      * @param multiFile if true, use a separate file for each test suite
      */
-    public JUnitReportListener(Context context, Context targetContext, String reportFile, String reportDir, boolean filterTraces, boolean multiFile) {
+    public JUnitReportListener(Context targetContext, String reportFile, String reportDir, boolean filterTraces, boolean multiFile) {
         Log.i(LOG_TAG, "Listener created with arguments:\n" +
                 "  report file  : '" + reportFile + "'\n" +
                 "  report dir   : '" + reportDir + "'\n" +
@@ -204,7 +203,7 @@ public class JUnitReportListener implements TestListener {
             return mTargetContext.openFileOutput(fileName, Context.MODE_WORLD_READABLE);
         } else {
             if (mReportDir.contains(TOKEN_EXTERNAL)) {
-                File externalDir = Compatibility.getExternalFilesDir(mTargetContext, null);
+                File externalDir = Compatibility.getExternalFilesDir(mTargetContext);
                 if (externalDir == null) {
                     Log.e(LOG_TAG, "reportDir references external storage, but external storage is not available (check mounting and permissions)");
                     throw new IOException("Cannot access external storage");

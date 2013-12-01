@@ -5,9 +5,6 @@
  */
 package com.todoroo.astrid.alarms;
 
-import java.util.Date;
-import java.util.LinkedHashSet;
-
 import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +13,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import org.tasks.R;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.utility.DateUtilities;
 import com.todoroo.astrid.data.Metadata;
@@ -25,6 +21,11 @@ import com.todoroo.astrid.helper.TaskEditControlSet;
 import com.todoroo.astrid.ui.DateAndTimeDialog;
 import com.todoroo.astrid.ui.DateAndTimeDialog.DateAndTimeDialogListener;
 import com.todoroo.astrid.ui.DateAndTimePicker;
+
+import org.tasks.R;
+
+import java.util.Date;
+import java.util.LinkedHashSet;
 
 /**
  * Control set to manage adding and removing tags
@@ -71,16 +72,16 @@ public final class AlarmControlSet extends TaskEditControlSet {
     }
 
     @Override
-    public String writeToModel(Task task) {
+    public void writeToModel(Task task) {
         if (initialized && pickerDialog != null) {
             pickerDialog.dismiss();
         }
-        return super.writeToModel(task);
+        super.writeToModel(task);
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
-        LinkedHashSet<Long> alarms = new LinkedHashSet<Long>();
+    protected void writeToModelAfterInitialized(Task task) {
+        LinkedHashSet<Long> alarms = new LinkedHashSet<>();
         for(int i = 0; i < alertsContainer.getChildCount(); i++) {
             Long dateValue = (Long) alertsContainer.getChildAt(i).getTag();
             if(dateValue == null) {
@@ -92,11 +93,9 @@ public final class AlarmControlSet extends TaskEditControlSet {
         if(AlarmService.getInstance().synchronizeAlarms(task.getId(), alarms)) {
             task.setValue(Task.MODIFICATION_DATE, DateUtilities.now());
         }
-
-        return null;
     }
 
-    private boolean addAlarm(Date alert) {
+    private void addAlarm(Date alert) {
         final View alertItem = LayoutInflater.from(activity).inflate(R.layout.alarm_edit_row, null);
         alertsContainer.addView(alertItem);
 
@@ -142,7 +141,5 @@ public final class AlarmControlSet extends TaskEditControlSet {
                 alertsContainer.removeView(alertItem);
             }
         });
-
-        return true;
     }
 }

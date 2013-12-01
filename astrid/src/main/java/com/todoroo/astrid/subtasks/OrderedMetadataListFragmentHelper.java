@@ -5,13 +5,6 @@
  */
 package com.todoroo.astrid.subtasks;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
 import android.app.Activity;
 import android.database.Cursor;
 import android.text.TextUtils;
@@ -24,7 +17,6 @@ import android.widget.ListView;
 import com.commonsware.cwac.tlv.TouchListView.DropListener;
 import com.commonsware.cwac.tlv.TouchListView.GrabberClickListener;
 import com.commonsware.cwac.tlv.TouchListView.SwipeListener;
-import org.tasks.R;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.TodorooCursor;
 import com.todoroo.andlib.service.Autowired;
@@ -45,6 +37,15 @@ import com.todoroo.astrid.subtasks.OrderedMetadataListUpdater.Node;
 import com.todoroo.astrid.subtasks.OrderedMetadataListUpdater.OrderedListNodeVisitor;
 import com.todoroo.astrid.ui.DraggableListView;
 import com.todoroo.astrid.utility.AstridPreferences;
+
+import org.tasks.R;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragmentHelperInterface<LIST> {
 
@@ -75,13 +76,8 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
         return fragment.getListView();
     }
 
-    private Filter getFilter() {
-        return fragment.getFilter();
-    }
-
     public DraggableListView getTouchListView() {
-        DraggableListView tlv = (DraggableListView) fragment.getListView();
-        return tlv;
+        return (DraggableListView) fragment.getListView();
     }
 
     @Override
@@ -118,7 +114,6 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
 
     @Override
     public void beforeSetUpTaskList(Filter filter) {
-        updater.initialize(list, filter);
     }
 
     @Override
@@ -128,7 +123,7 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
             baseProperties = TaskAdapter.BASIC_PROPERTIES;
         }
 
-        ArrayList<Property<?>> properties = new ArrayList<Property<?>>(Arrays.asList(baseProperties));
+        ArrayList<Property<?>> properties = new ArrayList<>(Arrays.asList(baseProperties));
         properties.add(updater.indentProperty());
         properties.add(updater.orderProperty());
         return properties.toArray(new Property<?>[properties.size()]);
@@ -146,9 +141,9 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
 
             try {
                 if(to >= getListView().getCount()) {
-                    updater.moveTo(getFilter(), list, targetTaskId, -1);
+                    updater.moveTo(list, targetTaskId, -1);
                 } else {
-                    updater.moveTo(getFilter(), list, targetTaskId, destinationTaskId);
+                    updater.moveTo(list, targetTaskId, destinationTaskId);
                 }
             } catch (Exception e) {
                 Log.e("drag", "Drag Error", e); //$NON-NLS-1$ //$NON-NLS-2$
@@ -175,7 +170,7 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
                 return; // This can happen with gestures on empty parts of the list (e.g. extra space below tasks)
             }
             try {
-                updater.indent(getFilter(), list, targetTaskId, delta);
+                updater.indent(list, targetTaskId, delta);
             } catch (Exception e) {
                 Log.e("drag", "Indent Error", e); //$NON-NLS-1$ //$NON-NLS-2$
             }
@@ -200,7 +195,7 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
             if(v == null) {
                 return;
             }
-            ((DraggableTaskAdapter) taskAdapter).getListener().onClick(v);
+            taskAdapter.getListener().onClick(v);
         }
     };
 
@@ -209,7 +204,7 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
             AtomicReference<String> sqlQueryTemplate) {
 
         taskAdapter = new DraggableTaskAdapter(fragment, TaskListFragment.getTaskRowResource(),
-                cursor, sqlQueryTemplate, false, null);
+                cursor, sqlQueryTemplate);
 
         taskAdapter.addOnCompletedTaskListener(new OnCompletedTaskListener() {
             @Override
@@ -224,12 +219,8 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
     private final class DraggableTaskAdapter extends TaskAdapter {
 
         private DraggableTaskAdapter(TaskListFragment activity, int resource,
-                Cursor c, AtomicReference<String> query, boolean autoRequery,
-                OnCompletedTaskListener onCompletedTaskListener) {
-            super(activity, resource, c, query, autoRequery,
-                    onCompletedTaskListener);
-
-            applyListeners = APPLY_LISTENERS_NONE;
+                Cursor c, AtomicReference<String> query) {
+            super(activity, resource, c, query, null);
         }
 
         @Override
@@ -265,7 +256,7 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
         final Task model = new Task();
         final long completionDate = completedState ? DateUtilities.now() : 0;
 
-        if(completedState == false) {
+        if(!completedState) {
             ArrayList<Long> chained = chainedCompletions.get(itemId);
             if(chained != null) {
                 for(Long taskId : chained) {
@@ -281,14 +272,14 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
             return;
         }
 
-        final ArrayList<Long> chained = new ArrayList<Long>();
+        final ArrayList<Long> chained = new ArrayList<>();
         final int parentIndent = item.getValue(updater.indentProperty());
-        updater.applyToChildren(getFilter(), list, itemId, new OrderedListNodeVisitor() {
+        updater.applyToChildren(list, itemId, new OrderedListNodeVisitor() {
             @Override
             public void visitNode(Node node) {
                 Task childTask = taskService.fetchById(node.taskId, Task.RECURRENCE);
                 if(!TextUtils.isEmpty(childTask.getValue(Task.RECURRENCE))) {
-                    Metadata metadata = updater.getTaskMetadata(list, node.taskId);
+                    Metadata metadata = updater.getTaskMetadata(node.taskId);
                     metadata.setValue(updater.indentProperty(), parentIndent);
                     metadataService.save(metadata);
                 }
@@ -320,7 +311,7 @@ public class OrderedMetadataListFragmentHelper<LIST> implements OrderedListFragm
 
     @Override
     public void onDeleteTask(Task task) {
-        updater.onDeleteTask(getFilter(), list, task.getId());
+        updater.onDeleteTask(list, task.getId());
         taskAdapter.notifyDataSetInvalidated();
     }
 

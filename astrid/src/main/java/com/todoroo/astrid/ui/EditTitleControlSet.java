@@ -16,7 +16,6 @@ import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.widget.EditText;
 
-import org.tasks.R;
 import com.todoroo.andlib.service.Autowired;
 import com.todoroo.andlib.service.DependencyInjectionService;
 import com.todoroo.andlib.utility.AndroidUtilities;
@@ -26,6 +25,8 @@ import com.todoroo.astrid.helper.TaskEditControlSet;
 import com.todoroo.astrid.repeats.RepeatControlSet.RepeatChangedListener;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.ui.ImportanceControlSet.ImportanceChangedListener;
+
+import org.tasks.R;
 
 /**
  * Control set for mapping a Property to an EditText
@@ -83,17 +84,16 @@ public class EditTitleControlSet extends TaskEditControlSet implements Importanc
     }
 
     @Override
-    protected String writeToModelAfterInitialized(Task task) {
+    protected void writeToModelAfterInitialized(Task task) {
         task.setValue(Task.TITLE, editText.getText().toString());
         boolean newState = completeBox.isChecked();
         if (newState != task.isCompleted()) {
             taskService.setComplete(task, newState);
         }
-        return null;
     }
 
     @Override
-    public void importanceChanged(int i, int color) {
+    public void importanceChanged(int i) {
         importanceValue = i;
         updateCompleteBox();
     }
