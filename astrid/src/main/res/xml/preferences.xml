@@ -17,10 +17,15 @@
             android:key="@string/p_use_dark_theme"
             android:defaultValue="false"/>
 
-        <CheckBoxPreference
-            android:title="@string/EPr_use_dark_theme_widget"
-            android:key="@string/p_use_dark_theme_widget"
-            android:defaultValue="false"/>
+        <net.margaritov.preference.colorpicker.ColorPickerPreference
+            android:key="@string/p_widget_background_color"
+            android:title="@string/widget_background_color"
+            android:defaultValue="@integer/color_white"/>
+
+        <net.margaritov.preference.colorpicker.ColorPickerPreference
+            android:key="@string/p_widget_text_color"
+            android:title="@string/widget_text_color"
+            android:defaultValue="@integer/color_black"/>
 
         <PreferenceScreen android:title="@string/EPr_taskRowPrefs_title" android:key="@string/p_taskRowPrefs">
         

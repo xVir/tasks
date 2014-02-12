@@ -132,8 +132,7 @@ public class WidgetUpdateService extends Service {
 
                 String textContent;
                 Resources r = context.getResources();
-                int textColor = r
-                        .getColor(ThemeService.isDarkWidgetTheme() ? R.color.widget_text_color_dark : R.color.widget_text_color_light);
+                int textColor = r.getColor(ThemeService.getWidgetTextColor());
 
                 textContent = task.getTitle();
 
@@ -197,22 +196,14 @@ public class WidgetUpdateService extends Service {
         int layout;
         RemoteViews views;
 
-        int titleColor;
-        int buttonDrawable;
-
-        if (ThemeService.isDarkWidgetTheme()) {
-            layout = R.layout.widget_initialized_dark;
-            titleColor = r.getColor(R.color.widget_text_color_dark);
-            buttonDrawable = R.drawable.ic_action_new_light;
-        } else {
-            layout = R.layout.widget_initialized;
-            titleColor = r.getColor(R.color.widget_text_color_light);
-            buttonDrawable = R.drawable.ic_action_new;
-        }
+        layout = R.layout.widget_initialized;
+        int titleColor = r.getColor(R.color.widget_text_color_light);
+        int buttonDrawable = R.drawable.ic_action_new;
 
         views = new RemoteViews(packageName, layout);
         views.setTextColor(R.id.widget_title, titleColor);
         views.setInt(R.id.widget_button, "setImageResource", buttonDrawable);
+        views.setInt(layout, "setBackground", Preferences.getInt(R.string.p_widget_background_color, 0xffffff));
         return views;
     }
 }

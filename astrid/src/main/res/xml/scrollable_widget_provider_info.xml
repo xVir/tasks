@@ -12,5 +12,5 @@
     android:minResizeWidth="142dip"
     android:minResizeHeight="142dip"
     android:updatePeriodMillis="86400000"
-    android:initialLayout="@layout/scrollable_widget_light"
+    android:initialLayout="@layout/scrollable_widget"
     android:resizeMode="horizontal|vertical"/>

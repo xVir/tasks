@@ -32,7 +32,6 @@
         <item name="asHeaderTextColorInverse">?attr/asAbBackgroundColor</item>
         <item name="ic_action_camera">@drawable/ic_action_camera_light</item>
         <item name="ic_action_mic">@drawable/ic_action_mic_light</item>
-        <item name="ic_action_new">@drawable/ic_action_new_light</item>
         <item name="ic_action_search">@drawable/ic_action_search_light</item>
         <item name="ic_drawer">@drawable/ic_drawer_light</item>
         <item name="drawer_background">#303030</item>

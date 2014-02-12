@@ -397,14 +397,17 @@ public class EditPreferences extends TodorooPreferenceActivity {
 
         findPreference(getString(R.string.p_hide_plus_button)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
 
-        findPreference(getString(R.string.p_use_dark_theme_widget)).setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+        OnPreferenceChangeListener widgetChange = new OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                WidgetHelper.triggerUpdate(EditPreferences.this);
                 updatePreferences(preference, newValue);
+                WidgetHelper.triggerUpdate(EditPreferences.this);
                 return true;
             }
-        });
+        };
+
+        findPreference(getString(R.string.p_widget_background_color)).setOnPreferenceChangeListener(widgetChange);
+        findPreference(getString(R.string.p_widget_text_color)).setOnPreferenceChangeListener(widgetChange);
 
         if (AndroidUtilities.getSdkVersion() <= 7) {
             searchForAndRemovePreference(getPreferenceScreen(), getString(R.string.p_calendar_reminders));

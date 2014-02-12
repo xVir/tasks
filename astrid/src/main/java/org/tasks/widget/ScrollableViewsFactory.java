@@ -47,15 +47,13 @@ public class ScrollableViewsFactory implements RemoteViewsService.RemoteViewsFac
     private final Context context;
     private final Filter filter;
     private final int widgetId;
-    private boolean dark;
 
     private TodorooCursor<Task> cursor;
 
-    public ScrollableViewsFactory(Context context, Filter filter, int widgetId, boolean dark) {
+    public ScrollableViewsFactory(Context context, Filter filter, int widgetId) {
         this.context = context;
         this.filter = filter;
         this.widgetId = widgetId;
-        this.dark = dark;
     }
 
     @Override
@@ -128,7 +126,7 @@ public class ScrollableViewsFactory implements RemoteViewsService.RemoteViewsFac
 
             String textContent;
             Resources r = context.getResources();
-            int textColor = r.getColor(dark ? R.color.widget_text_color_dark : R.color.widget_text_color_light);
+            int textColor = Preferences.getInt(R.string.p_widget_text_color, 0x000000);
 
             textContent = task.getTitle();
 

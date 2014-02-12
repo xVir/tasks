@@ -42,8 +42,12 @@ public class ThemeService {
         return getStyleForSetting(preference);
     }
 
-    public static boolean isDarkWidgetTheme() {
-        return Preferences.getBoolean(R.string.p_use_dark_theme_widget, false);
+    public static int getWidgetBackgroundColor() {
+        return Preferences.getInt(R.string.p_widget_background_color, 0xffffff);
+    }
+
+    public static int getWidgetTextColor() {
+        return Preferences.getInt(R.string.p_widget_text_color, 0x000000);
     }
 
     private static int getStyleForSetting(String setting) {

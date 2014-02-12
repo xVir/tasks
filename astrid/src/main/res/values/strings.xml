@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="EPr_use_dark_theme">Dark theme</string>
-    <string name="EPr_use_dark_theme_widget">Dark widget theme</string>
     <string name="delete_task">Delete task</string>
+    <string name="dialog_color_picker">Color Picker</string>
+    <string name="press_color_to_apply">Press on Color to apply</string>
+    <string name="widget_background_color">Widget Background</string>
+    <string name="widget_text_color">Widget Text</string>
 </resources>
