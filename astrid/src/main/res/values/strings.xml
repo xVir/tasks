@@ -6,4 +6,6 @@
     <string name="press_color_to_apply">Press on Color to apply</string>
     <string name="widget_background_color">Widget Background</string>
     <string name="widget_text_color">Widget Text</string>
+    <string name="TLA_menu_support">Support</string>
+    <string name="voice_command_added_task">Added task</string>
 </resources>
