@@ -4,6 +4,7 @@
 ** See the file "LICENSE" for the full license governing this code. 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/widget_row"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     android:minHeight="35dp">

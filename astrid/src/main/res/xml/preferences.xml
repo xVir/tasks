@@ -20,12 +20,12 @@
         <net.margaritov.preference.colorpicker.ColorPickerPreference
             android:key="@string/p_widget_background_color"
             android:title="@string/widget_background_color"
-            android:defaultValue="@integer/color_white"/>
+            android:defaultValue="@color/widget_body_light"/>
 
         <net.margaritov.preference.colorpicker.ColorPickerPreference
             android:key="@string/p_widget_text_color"
             android:title="@string/widget_text_color"
-            android:defaultValue="@integer/color_black"/>
+            android:defaultValue="@color/widget_text_color_light"/>
 
         <PreferenceScreen android:title="@string/EPr_taskRowPrefs_title" android:key="@string/p_taskRowPrefs">
         

@@ -44,9 +44,9 @@ import com.todoroo.astrid.utility.Flags;
 import com.todoroo.astrid.voice.VoiceInputAssistant;
 import com.todoroo.astrid.voice.VoiceOutputService;
 import com.todoroo.astrid.voice.VoiceRecognizer;
+import com.todoroo.astrid.widget.TasksWidget;
 
 import org.tasks.R;
-import org.tasks.widget.WidgetHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -353,6 +353,12 @@ public class EditPreferences extends TodorooPreferenceActivity {
                 preference.setSummary(R.string.EPr_voiceRemindersEnabled_desc_enabled);
             }
             onVoiceReminderStatusChanged(preference, (Boolean) value);
+        } else if (r.getString(R.string.p_widget_background_color).equals(preference.getKey())) {
+            // update widget background
+            TasksWidget.updateWidgets(getApplicationContext());
+        } else if (r.getString(R.string.p_widget_text_color).equals(preference.getKey())) {
+            // update widget text
+            TasksWidget.updateWidgets(getApplicationContext());
         }
     }
 
@@ -391,23 +397,13 @@ public class EditPreferences extends TodorooPreferenceActivity {
     }
 
     public void addPreferenceListeners() {
-        findPreference(getString(R.string.p_use_dark_theme)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
+        final SetResultOnPreferenceChangeListener performancePrefChangedListener = new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED);
 
-        findPreference(getString(R.string.p_fontSize)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
-
-        findPreference(getString(R.string.p_hide_plus_button)).setOnPreferenceChangeListener(new SetResultOnPreferenceChangeListener(RESULT_CODE_PERFORMANCE_PREF_CHANGED));
-
-        OnPreferenceChangeListener widgetChange = new OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                updatePreferences(preference, newValue);
-                WidgetHelper.triggerUpdate(EditPreferences.this);
-                return true;
-            }
-        };
-
-        findPreference(getString(R.string.p_widget_background_color)).setOnPreferenceChangeListener(widgetChange);
-        findPreference(getString(R.string.p_widget_text_color)).setOnPreferenceChangeListener(widgetChange);
+        findPreference(getString(R.string.p_use_dark_theme)).setOnPreferenceChangeListener(performancePrefChangedListener);
+        findPreference(getString(R.string.p_fontSize)).setOnPreferenceChangeListener(performancePrefChangedListener);
+        findPreference(getString(R.string.p_hide_plus_button)).setOnPreferenceChangeListener(performancePrefChangedListener);
+//        findPreference(getString(R.string.p_widget_background_color)).setOnPreferenceChangeListener(performancePrefChangedListener);
+//        findPreference(getString(R.string.p_widget_text_color)).setOnPreferenceChangeListener(performancePrefChangedListener);
 
         if (AndroidUtilities.getSdkVersion() <= 7) {
             searchForAndRemovePreference(getPreferenceScreen(), getString(R.string.p_calendar_reminders));
