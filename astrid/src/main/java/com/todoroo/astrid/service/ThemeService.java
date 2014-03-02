@@ -42,10 +42,6 @@ public class ThemeService {
         return getStyleForSetting(preference);
     }
 
-    public static int getWidgetBackgroundColor() {
-        return Preferences.getInt(R.string.p_widget_background_color, 0xffffff);
-    }
-
     public static int getWidgetTextColor() {
         return Preferences.getInt(R.string.p_widget_text_color, 0x000000);
     }

@@ -105,7 +105,7 @@ public class ColorPickerView extends View {
     private String mAlphaSliderText = "";
     private int mSliderTrackerColor = 0xff1c1c1c;
     private int mBorderColor = 0xff6E6E6E;
-    private boolean mShowAlphaPanel = false;
+    private boolean mShowAlphaPanel = true;
 
     /*
      * To remember which panel that has the "focus" when

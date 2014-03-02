@@ -60,18 +60,6 @@ public class WidgetHelper {
                 Constants.WIDGET_UPDATE_INTERVAL, pendingIntent);
     }
 
-    public static void triggerUpdate(Context context) {
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-        if (appWidgetManager == null) {
-            return;
-        }
-        ComponentName thisWidget = new ComponentName(context, TasksWidget.class);
-        Intent intent = new Intent(context, TasksWidget.class);
-        intent.setAction("android.appwidget.action.APPWIDGET_UPDATE");
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(thisWidget));
-        context.sendBroadcast(intent);
-    }
-
     @Autowired
     TagDataService tagDataService;
 
