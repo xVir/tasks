@@ -355,6 +355,7 @@ public class EditPreferences extends TodorooPreferenceActivity {
             onVoiceReminderStatusChanged(preference, (Boolean) value);
         } else if (r.getString(R.string.p_widget_background_color).equals(preference.getKey())) {
             // update widget background
+            TasksWidget.applyConfigSelection(getApplicationContext());
             TasksWidget.updateWidgets(getApplicationContext());
         } else if (r.getString(R.string.p_widget_text_color).equals(preference.getKey())) {
             // update widget text
@@ -402,8 +403,6 @@ public class EditPreferences extends TodorooPreferenceActivity {
         findPreference(getString(R.string.p_use_dark_theme)).setOnPreferenceChangeListener(performancePrefChangedListener);
         findPreference(getString(R.string.p_fontSize)).setOnPreferenceChangeListener(performancePrefChangedListener);
         findPreference(getString(R.string.p_hide_plus_button)).setOnPreferenceChangeListener(performancePrefChangedListener);
-//        findPreference(getString(R.string.p_widget_background_color)).setOnPreferenceChangeListener(performancePrefChangedListener);
-//        findPreference(getString(R.string.p_widget_text_color)).setOnPreferenceChangeListener(performancePrefChangedListener);
 
         if (AndroidUtilities.getSdkVersion() <= 7) {
             searchForAndRemovePreference(getPreferenceScreen(), getString(R.string.p_calendar_reminders));

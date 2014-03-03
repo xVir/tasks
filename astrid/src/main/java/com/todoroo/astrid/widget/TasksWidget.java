@@ -114,6 +114,15 @@ public class TasksWidget extends AppWidgetProvider {
         }
     }
 
+    public static void applyConfigSelection(Context context) {
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        ComponentName thisWidget = new ComponentName(context, TasksWidget.class);
+        int[] ids = appWidgetManager.getAppWidgetIds(thisWidget);
+        for (int id : ids) {
+            applyConfigSelection(context, id);
+        }
+    }
+
     public static void applyConfigSelection(Context context, int id) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             Intent intent = new Intent(ContextManager.getContext(), WidgetUpdateService.class);

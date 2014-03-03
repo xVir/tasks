@@ -80,6 +80,11 @@ public class WidgetHelper {
         rvIntent.setData(Uri.parse(rvIntent.toUri(Intent.URI_INTENT_SCHEME)));
         RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.scrollable_widget);
         remoteViews.setTextViewText(R.id.widget_title, filter.title);
+
+        int backgroundColor = Preferences.getInt(R.string.p_widget_background_color, context.getResources().getColor(R.color.widget_body_light));
+        remoteViews.setInt(R.id.list_view, "setBackgroundColor", backgroundColor);
+        remoteViews.setInt(R.id.empty_view, "setBackgroundColor", backgroundColor);
+
         remoteViews.setRemoteAdapter(R.id.list_view, rvIntent);
         remoteViews.setEmptyView(R.id.list_view, R.id.empty_view);
         PendingIntent listIntent = getListIntent(context, filter, id);

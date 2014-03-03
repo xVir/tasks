@@ -127,7 +127,6 @@ public class ScrollableViewsFactory implements RemoteViewsService.RemoteViewsFac
             String textContent;
             Resources r = context.getResources();
             int textColor = Preferences.getInt(R.string.p_widget_text_color, context.getResources().getColor(R.color.widget_text_color_light));
-            int backgroundColor = Preferences.getInt(R.string.p_widget_background_color, context.getResources().getColor(R.color.widget_body_light));
 
             textContent = task.getTitle();
 
@@ -145,7 +144,6 @@ public class ScrollableViewsFactory implements RemoteViewsService.RemoteViewsFac
 
             row.setTextViewText(R.id.text, textContent);
             row.setTextColor(R.id.text, textColor);
-            row.setInt(R.id.widget_row, "setBackgroundColor", backgroundColor);
             row.setImageViewResource(R.id.completeBox, getCheckbox(task));
 
             Intent editIntent = new Intent();
