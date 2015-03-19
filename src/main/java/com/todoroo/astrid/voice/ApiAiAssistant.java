@@ -2,6 +2,7 @@ package com.todoroo.astrid.voice;
 
 import android.app.Activity;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 import com.todoroo.andlib.data.Callback;
 import com.todoroo.astrid.data.Task;
@@ -21,26 +22,29 @@ import ai.api.AIService;
 import ai.api.model.AIError;
 import ai.api.model.AIResponse;
 import ai.api.model.Result;
+import ai.api.ui.AIDialog;
 
 @Singleton
 public class ApiAiAssistant {
 
     private static final Logger log = LoggerFactory.getLogger(ApiAiAssistant.class);
+    private final Activity context;
 
     private AIService aiService;
     private Callback<Task> addTaskCallback;
+    private AIDialog aiDialog;
 
     @Inject
-    public ApiAiAssistant(Activity activity) {
+    public ApiAiAssistant(final Activity activity) {
+        context = activity;
 
         final AIConfiguration aiConfiguration = new AIConfiguration("7d34f099a1484de1be4dec9fc75d1d0c",
                 "cb9693af-85ce-4fbf-844a-5563722fc27f",
                 AIConfiguration.SupportedLanguages.English,
                 AIConfiguration.RecognitionEngine.System);
 
-        aiService = AIService.getService(activity, aiConfiguration);
-
-        aiService.setListener(new AIListener() {
+        aiDialog = new AIDialog(context, aiConfiguration);
+        aiDialog.setResultsListener(new AIDialog.AIDialogListener() {
             @Override
             public void onResult(AIResponse aiResponse) {
                 try {
@@ -49,7 +53,7 @@ public class ApiAiAssistant {
 
                         final String action = result.getAction();
                         if (!TextUtils.isEmpty(action)) {
-                            if ("task_create".equalsIgnoreCase(action)) {
+                            if ("task.create".equalsIgnoreCase(action)) {
                                 Task newTask = new Task();
                                 newTask.setTitle(result.getParameters().get("text").getAsString());
 
@@ -82,11 +86,14 @@ public class ApiAiAssistant {
                                     addTaskCallback.apply(newTask);
                                 }
 
-                            } else if ("task_complete".equalsIgnoreCase(action)) {
+                            } else if ("task.complete".equalsIgnoreCase(action)) {
 
                             }
                         }
                     }
+
+                    aiDialog.close();
+
                 } catch (ParseException e) {
                     log.error(e.getMessage(), e);
                 }
@@ -94,33 +101,14 @@ public class ApiAiAssistant {
 
             @Override
             public void onError(AIError aiError) {
-                log.error(aiError.toString());
-            }
-
-            @Override
-            public void onAudioLevel(float v) {
-
-            }
-
-            @Override
-            public void onListeningStarted() {
-                log.debug("onListeningStarted");
-            }
-
-            @Override
-            public void onListeningFinished() {
-                log.debug("onListeningFinished");
+                Toast.makeText(context, aiError.toString(), Toast.LENGTH_SHORT).show();
+                aiDialog.close();
             }
         });
-
     }
 
     public void startRecognition() {
-        aiService.startListening();
-    }
-
-    public void stopRecognition() {
-        aiService.stopListening();
+        aiDialog.showAndListen();
     }
 
     public void setAddTaskCallback(Callback<Task> addTaskCallback) {
