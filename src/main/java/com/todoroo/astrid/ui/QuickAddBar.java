@@ -94,6 +94,36 @@ public class QuickAddBar {
         return null;
     }
 
+    public Task quickAddTask(final Task task) {
+        TagData tagData = fragment.getActiveTagData();
+        if(tagData != null && (!tagData.containsNonNullValue(TagData.NAME) ||
+                tagData.getName().length() == 0)) {
+            DialogUtilities.okDialog(activity, activity.getString(R.string.tag_no_title_error), null);
+            return null;
+        }
+
+        try {
+            taskService.createWithValues(task, fragment.getFilter().valuesForNewTasks, null);
+
+            taskCreator.addToCalendar(task, task.getTitle());
+
+            fragment.loadTaskListContent();
+            fragment.selectCustomId(task.getId());
+            if (task.getTransitory(TaskService.TRANS_QUICK_ADD_MARKUP) != null) {
+                showAlertForMarkupTask(activity, task, task.getTitle());
+            } else if (!TextUtils.isEmpty(task.getRecurrence())) {
+                showAlertForRepeatingTask(activity, task);
+            }
+            activity.onTaskListItemClicked(task.getId());
+
+            fragment.onTaskCreated(task);
+            return task;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
     private void showAlertForMarkupTask(AstridActivity activity, Task task, String originalText) {
         dateChangedAlerts.showQuickAddMarkupDialog(activity, task, originalText);
     }

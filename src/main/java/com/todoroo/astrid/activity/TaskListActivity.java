@@ -42,6 +42,7 @@ import com.todoroo.astrid.gtasks.GtasksListFragment;
 import com.todoroo.astrid.gtasks.GtasksPreferenceService;
 import com.todoroo.astrid.tags.TagFilterExposer;
 import com.todoroo.astrid.utility.Flags;
+import com.todoroo.astrid.voice.ApiAiAssistant;
 import com.todoroo.astrid.voice.VoiceInputAssistant;
 
 import org.tasks.R;
@@ -59,6 +60,9 @@ public class TaskListActivity extends AstridActivity implements OnPageChangeList
     @Inject ActivityPreferences preferences;
     @Inject GtasksPreferenceService gtasksPreferenceService;
     @Inject VoiceInputAssistant voiceInputAssistant;
+
+    @Inject
+    ApiAiAssistant apiAiAssistant;
 
     private NavigationDrawerFragment navigationDrawer;
 
@@ -113,6 +117,16 @@ public class TaskListActivity extends AstridActivity implements OnPageChangeList
         if (savedFilter != null) {
             setListsTitle(savedFilter.title);
         }
+
+        Callback<Task> addTask = new Callback<Task>() {
+            @Override
+            public void apply(Task task) {
+                getTaskListFragment().quickAddBar.quickAddTask(task);
+            }
+        };
+
+        apiAiAssistant.setAddTaskCallback(addTask);
+
     }
 
     public NavigationDrawerFragment getNavigationDrawerFragment() {
@@ -316,9 +330,6 @@ public class TaskListActivity extends AstridActivity implements OnPageChangeList
                 getTaskListFragment().quickAddBar.quickAddTask(title);
             }
         };
-        if (voiceInputAssistant.handleActivityResult(requestCode, resultCode, data, quickAddTask)) {
-            return;
-        }
 
         if ((requestCode == NavigationDrawerFragment.REQUEST_NEW_LIST ||
                 requestCode == TaskListFragment.ACTIVITY_REQUEST_NEW_FILTER) &&
@@ -445,7 +456,7 @@ public class TaskListActivity extends AstridActivity implements OnPageChangeList
         TaskListFragment tlf = getTaskListFragment();
         switch(item.getItemId()) {
             case R.id.menu_voice_add:
-                voiceInputAssistant.startVoiceRecognitionActivity(R.string.voice_create_prompt);
+                apiAiAssistant.startRecognition();
                 return true;
             case R.id.menu_sort:
                 AlertDialog dialog = SortSelectionActivity.createDialog(
