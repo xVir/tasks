@@ -23,7 +23,7 @@ import ai.api.model.Result;
 import ai.api.ui.AIDialog;
 
 @Singleton
-public class ApiAiAssistant {
+public class ApiAiTasksAgent {
 
     private Callback<Task> addTaskCallback;
     private AIDialog aiDialog;
@@ -34,7 +34,7 @@ public class ApiAiAssistant {
             AIConfiguration.RecognitionEngine.System);
 
     @Inject
-    public ApiAiAssistant(final Activity activity) {
+    public ApiAiTasksAgent(final Activity activity) {
 
         aiDialog = new AIDialog(activity, aiConfiguration);
 

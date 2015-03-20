@@ -42,7 +42,7 @@ import com.todoroo.astrid.gtasks.GtasksListFragment;
 import com.todoroo.astrid.gtasks.GtasksPreferenceService;
 import com.todoroo.astrid.tags.TagFilterExposer;
 import com.todoroo.astrid.utility.Flags;
-import com.todoroo.astrid.voice.ApiAiAssistant;
+import com.todoroo.astrid.voice.ApiAiTasksAgent;
 import com.todoroo.astrid.voice.VoiceInputAssistant;
 
 import org.tasks.R;
@@ -62,7 +62,7 @@ public class TaskListActivity extends AstridActivity implements OnPageChangeList
     @Inject VoiceInputAssistant voiceInputAssistant;
 
     @Inject
-    ApiAiAssistant apiAiAssistant;
+    ApiAiTasksAgent apiAiTasksAgent;
 
     private NavigationDrawerFragment navigationDrawer;
 
@@ -125,7 +125,7 @@ public class TaskListActivity extends AstridActivity implements OnPageChangeList
             }
         };
 
-        apiAiAssistant.setAddTaskCallback(addTask);
+        apiAiTasksAgent.setAddTaskCallback(addTask);
 
     }
 
@@ -456,7 +456,7 @@ public class TaskListActivity extends AstridActivity implements OnPageChangeList
         TaskListFragment tlf = getTaskListFragment();
         switch(item.getItemId()) {
             case R.id.menu_voice_add:
-                apiAiAssistant.startRecognition();
+                apiAiTasksAgent.startRecognition();
                 return true;
             case R.id.menu_sort:
                 AlertDialog dialog = SortSelectionActivity.createDialog(
