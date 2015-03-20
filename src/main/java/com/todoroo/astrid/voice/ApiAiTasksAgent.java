@@ -1,17 +1,12 @@
 package com.todoroo.astrid.voice;
 
 import android.app.Activity;
-import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.todoroo.andlib.data.Callback;
 import com.todoroo.astrid.data.Task;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,57 +40,50 @@ public class ApiAiTasksAgent {
                     if (!aiResponse.isError()) {
                         Result result = aiResponse.getResult();
 
-                        final String action = result.getAction();
-                        if (!TextUtils.isEmpty(action)) {
-                            if ("task.create".equalsIgnoreCase(action)) {
+                        switch (result.getAction()) {
+                            case "task.create":
+
                                 Task newTask = new Task();
-                                newTask.setTitle(result.getParameters().get("text").getAsString());
+                                newTask.setTitle(result.getStringParameter("text"));
 
-                                if (result.getParameters().containsKey("priority")) {
-                                    final String priority = result.getParameters().get("priority").getAsString();
-
-                                    if ("urgent".equalsIgnoreCase(priority)) {
+                                switch (result.getStringParameter("priority")) {
+                                    case "urgent":
                                         newTask.setImportance(Task.IMPORTANCE_DO_OR_DIE);
-                                    } else if ("important".equalsIgnoreCase(priority)) {
-                                        newTask.setImportance(Task.IMPORTANCE_MUST_DO);
-                                    }
+                                        break;
 
+                                    case "important":
+                                        newTask.setImportance(Task.IMPORTANCE_MUST_DO);
+                                        break;
                                 }
 
-                                if (result.getParameters().containsKey("date-time")) {
-                                    final String dateTimeString = result.getParameters().get("date-time").getAsString();
-                                    final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US);
-                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, dateFormat.parse(dateTimeString).getTime());
-                                } else if (result.getParameters().containsKey("date")) {
-                                    final String dateString = result.getParameters().get("date").getAsString();
-                                    final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY, dateFormat.parse(dateString).getTime());
-                                } else if (result.getParameters().containsKey("time")) {
-                                    final String timeString = result.getParameters().get("time").getAsString();
-                                    final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
-                                    final Date timeParameter = timeFormat.parse(timeString);
+                                if (result.getDateParameter("date") != null) {
+                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY, result.getDateParameter("date"));
+                                } else {
+                                    Date taskDueDate = result.getDateTimeParameter("date-time");
+                                    if (taskDueDate == null) {
+                                        taskDueDate = result.getDateParameter("time");
+                                    }
 
-                                    Calendar taskDueDate = Calendar.getInstance();
-                                    taskDueDate.set(Calendar.HOUR_OF_DAY, timeParameter.getHours());
-                                    taskDueDate.set(Calendar.MINUTE, timeParameter.getMinutes());
-                                    taskDueDate.set(Calendar.SECOND, timeParameter.getSeconds());
-
-                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, taskDueDate.getTime().getTime());
+                                    if (taskDueDate != null) {
+                                        newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, taskDueDate);
+                                    }
                                 }
 
                                 if (addTaskCallback != null) {
                                     addTaskCallback.apply(newTask);
                                 }
 
-                            } else if ("task.complete".equalsIgnoreCase(action)) {
+                                break;
 
-                            }
+                            case "task.complete":
+                                break;
                         }
+
                     }
 
                     aiDialog.close();
 
-                } catch (ParseException e) {
+                } catch (Exception e) {
                     Toast.makeText(activity, e.toString(), Toast.LENGTH_SHORT).show();
                 }
             }
