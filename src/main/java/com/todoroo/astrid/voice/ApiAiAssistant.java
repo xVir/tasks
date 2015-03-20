@@ -7,9 +7,6 @@ import android.widget.Toast;
 import com.todoroo.andlib.data.Callback;
 import com.todoroo.astrid.data.Task;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -28,22 +25,19 @@ import ai.api.ui.AIDialog;
 @Singleton
 public class ApiAiAssistant {
 
-    private static final Logger log = LoggerFactory.getLogger(ApiAiAssistant.class);
-    private final Activity context;
-
     private Callback<Task> addTaskCallback;
     private AIDialog aiDialog;
 
+    private final AIConfiguration aiConfiguration = new AIConfiguration("7d34f099a1484de1be4dec9fc75d1d0c",
+            "cb9693af-85ce-4fbf-844a-5563722fc27f",
+            AIConfiguration.SupportedLanguages.English,
+            AIConfiguration.RecognitionEngine.System);
+
     @Inject
     public ApiAiAssistant(final Activity activity) {
-        context = activity;
 
-        final AIConfiguration aiConfiguration = new AIConfiguration("7d34f099a1484de1be4dec9fc75d1d0c",
-                "cb9693af-85ce-4fbf-844a-5563722fc27f",
-                AIConfiguration.SupportedLanguages.English,
-                AIConfiguration.RecognitionEngine.System);
+        aiDialog = new AIDialog(activity, aiConfiguration);
 
-        aiDialog = new AIDialog(context, aiConfiguration);
         aiDialog.setResultsListener(new AIDialog.AIDialogListener() {
             @Override
             public void onResult(AIResponse aiResponse) {
@@ -59,13 +53,13 @@ public class ApiAiAssistant {
 
                                 if (result.getParameters().containsKey("priority")) {
                                     final String priority = result.getParameters().get("priority").getAsString();
-                                    if (!TextUtils.isEmpty(priority)) {
-                                        if ("urgent".equalsIgnoreCase(priority)) {
-                                            newTask.setImportance(Task.IMPORTANCE_DO_OR_DIE);
-                                        } else if ("important".equalsIgnoreCase(priority)) {
-                                            newTask.setImportance(Task.IMPORTANCE_MUST_DO);
-                                        }
+
+                                    if ("urgent".equalsIgnoreCase(priority)) {
+                                        newTask.setImportance(Task.IMPORTANCE_DO_OR_DIE);
+                                    } else if ("important".equalsIgnoreCase(priority)) {
+                                        newTask.setImportance(Task.IMPORTANCE_MUST_DO);
                                     }
+
                                 }
 
                                 if (result.getParameters().containsKey("date-time")) {
@@ -102,13 +96,13 @@ public class ApiAiAssistant {
                     aiDialog.close();
 
                 } catch (ParseException e) {
-                    log.error(e.getMessage(), e);
+                    Toast.makeText(activity, e.toString(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onError(AIError aiError) {
-                Toast.makeText(context, aiError.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, aiError.toString(), Toast.LENGTH_SHORT).show();
                 aiDialog.close();
             }
         });
