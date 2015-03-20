@@ -61,7 +61,7 @@ public class ApiAiTasksAgent {
                                 } else {
                                     Date taskDueDate = result.getDateTimeParameter("date-time");
                                     if (taskDueDate == null) {
-                                        taskDueDate = result.getDateParameter("time");
+                                        taskDueDate = result.getTimeParameter("time");
                                     }
 
                                     if (taskDueDate != null) {
