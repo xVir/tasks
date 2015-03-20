@@ -58,15 +58,14 @@ public class ApiAiTasksAgent {
 
                                 if (result.getDateParameter("date") != null) {
                                     newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY, result.getDateParameter("date"));
-                                } else {
-                                    Date taskDueDate = result.getDateTimeParameter("date-time");
-                                    if (taskDueDate == null) {
-                                        taskDueDate = result.getTimeParameter("time");
-                                    }
+                                }
 
-                                    if (taskDueDate != null) {
-                                        newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, taskDueDate);
-                                    }
+                                if (result.getDateTimeParameter("date-time") != null) {
+                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, result.getDateTimeParameter("date-time"));
+                                }
+
+                                if (result.getTimeParameter("time") != null) {
+                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, result.getTimeParameter("time"));
                                 }
 
                                 if (addTaskCallback != null) {
