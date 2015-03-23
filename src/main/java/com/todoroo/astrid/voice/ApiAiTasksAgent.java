@@ -6,8 +6,6 @@ import android.widget.Toast;
 import com.todoroo.andlib.data.Callback;
 import com.todoroo.astrid.data.Task;
 
-import java.util.Date;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -23,13 +21,14 @@ public class ApiAiTasksAgent {
     private Callback<Task> addTaskCallback;
     private AIDialog aiDialog;
 
-    private final AIConfiguration aiConfiguration = new AIConfiguration("7d34f099a1484de1be4dec9fc75d1d0c",
-            "cb9693af-85ce-4fbf-844a-5563722fc27f",
-            AIConfiguration.SupportedLanguages.English,
-            AIConfiguration.RecognitionEngine.System);
-
     @Inject
     public ApiAiTasksAgent(final Activity activity) {
+
+        AIConfiguration aiConfiguration = new AIConfiguration(
+                "7d34f099a1484de1be4dec9fc75d1d0c",
+                "cb9693af-85ce-4fbf-844a-5563722fc27f",
+                AIConfiguration.SupportedLanguages.English,
+                AIConfiguration.RecognitionEngine.System);
 
         aiDialog = new AIDialog(activity, aiConfiguration);
 
@@ -56,16 +55,8 @@ public class ApiAiTasksAgent {
                                         break;
                                 }
 
-                                if (result.getDateParameter("date") != null) {
-                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY, result.getDateParameter("date"));
-                                }
-
                                 if (result.getDateTimeParameter("date-time") != null) {
-                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, result.getDateTimeParameter("date-time"));
-                                }
-
-                                if (result.getTimeParameter("time") != null) {
-                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, result.getTimeParameter("time"));
+                                    newTask.setDueDate(Task.URGENCY_SPECIFIC_DAY_TIME, result.getDateTimeParameter("date-time").getTime());
                                 }
 
                                 if (addTaskCallback != null) {
@@ -75,6 +66,7 @@ public class ApiAiTasksAgent {
                                 break;
 
                             case "task.complete":
+                                // TODO
                                 break;
                         }
 
